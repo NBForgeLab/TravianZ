@@ -141,7 +141,7 @@
         }
         
         if(isset($_GET['revive']) && $_GET['revive'] == 1 && isset($_GET['hid']) && $_GET['hid'] == $hero_datarow['heroid'] && $hero_datarow['inrevive'] == 0 && $hero_datarow['intraining'] == 0 && $hero_datarow['dead'] == 1){
-            mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."hero SET `inrevive` = '1', `trainingtime` = '".(int) $training_time2."', `wref` = '".(int) $village->wid."' WHERE `heroid` = ".(int) $_GET['hid']." AND `uid` = '".(int) $session->uid."'");
+            $database->query("UPDATE ".TB_PREFIX."hero SET inrevive = 1, trainingtime = ".(int)$training_time2.", wref = ".(int)$village->wid." WHERE heroid = ".(int)$_GET['hid']." AND uid = ".(int)$session->uid);
             $database->modifyResource($village->wid, $wood, $clay, $iron, $crop, 0);
             header("Location: build.php?id=".$id."");
             exit;

@@ -1,16 +1,16 @@
 <?php
 //TODO: Reduce this file by a lot, by using arrays
-$MyGold = mysqli_query($database->dblink, "SELECT * FROM " . TB_PREFIX . "users WHERE `id`='" . $session->uid . "'") or die(mysqli_error($database->dblink));
-$golds = mysqli_fetch_array($MyGold);
+$rows = $database->query_return("SELECT * FROM " . TB_PREFIX . "users WHERE id = " . (int)$session->uid . " LIMIT 1");
+$golds = isset($rows[0]) ? $rows[0] : [];
 
 include ("Templates/Plus/pmenu.tpl");
 
-$MyGold = mysqli_query($database->dblink, "SELECT * FROM " . TB_PREFIX . "users WHERE `id`='" . $session->uid . "'") or die(mysqli_error($database->dblink));
-$golds = mysqli_fetch_array($MyGold);
+$rows = $database->query_return("SELECT * FROM " . TB_PREFIX . "users WHERE id = " . (int)$session->uid . " LIMIT 1");
+$golds = isset($rows[0]) ? $rows[0] : [];
 
 $today = date("mdHi");
 
-if (mysqli_num_rows($MyGold)) {
+if (!empty($golds)) {
     if ($session->gold == 0)
         echo "<p>You currently don't own gold.</p>";
     else
@@ -57,7 +57,7 @@ else
 {
     if ($datetimep <= $date2) {
         print "Your PLUS advantage has ended.<br>";
-        mysqli_query($database->dblink, "UPDATE " . TB_PREFIX . "users set plus = '0' where `id`='" . $session->uid . "'") or die(mysqli_error($database->dblink));
+        $database->query("UPDATE " . TB_PREFIX . "users SET plus = 0 WHERE id = " . (int)$session->uid);
     } else {
         
         $holdtotmin = (($datetimep - $date2) / 60);
@@ -88,10 +88,10 @@ if (PLUS_TIME >= 86400) {
 			<td class="act">
 
 <?php
-    $MyGold = mysqli_query($database->dblink, "SELECT * FROM " . TB_PREFIX . "users WHERE `id`='" . $session->uid . "'") or die(mysqli_error($database->dblink));
-    $golds = mysqli_fetch_array($MyGold);
+    $rows = $database->query_return("SELECT * FROM " . TB_PREFIX . "users WHERE id = " . (int)$session->uid . " LIMIT 1");
+    $golds = isset($rows[0]) ? $rows[0] : [];
     
-    if (mysqli_num_rows($MyGold)) {
+    if (!empty($golds)) {
         if ($golds['gold'] > 9 && $datetimep < $date2) {
             echo '
                 <a href="plus.php?id=8"><span>Activate';
@@ -156,7 +156,7 @@ if (PLUS_PRODUCTION >= 86400) {
 
 <?php
 if ($session->access != BANNED) {
-    if (mysqli_num_rows($MyGold)) {
+    if (!empty($golds)) {
         if ($golds['gold'] > 4 && $tl_b1 < $date2) {
             echo '<a href="plus.php?id=9"><span>Activate';
         } elseif ($golds['gold'] > 4 && $datetime1 > $date2) {
@@ -166,7 +166,7 @@ if ($session->access != BANNED) {
         }
     }
 } else {
-    if (mysqli_num_rows($MyGold)) {
+    if (!empty($golds)) {
         if ($golds['gold'] > 4 && $tl_b1 < $date2) {
             echo '<a href="banned.php"><span>Activate';
         } elseif ($golds['gold'] > 4 && $datetime1 > $date2) {
@@ -483,10 +483,10 @@ if ($session->access != BANNED) {
 			<td class="act">
 
 <?php
-$MyGold = mysqli_query($database->dblink, "SELECT * FROM " . TB_PREFIX . "users WHERE `id`='" . $session->uid . "'") or die(mysqli_error($database->dblink));
-$golds = mysqli_fetch_array($MyGold);
+$rows = $database->query_return("SELECT * FROM " . TB_PREFIX . "users WHERE id = " . (int)$session->uid . " LIMIT 1");
+$golds = isset($rows[0]) ? $rows[0] : [];
 
-if (mysqli_num_rows($MyGold)) {
+if (!empty($golds)) {
     if ($golds['goldclub'] == 0) {
         if ($golds['gold'] > 99) {
             echo '

@@ -5,29 +5,29 @@ if(time() - (!empty($_SESSION['time_p']) ? $_SESSION['time_p'] : 0) > 5){
 }
 
 if($_POST and $_GET['action'] == 'change_capital' && !$village->capital){
-	$pass = mysqli_escape_string($database->dblink, $_POST['pass']);
-	$query = mysqli_query($database->dblink, 'SELECT password FROM `'.TB_PREFIX.'users` WHERE `id` = '.(int)$session->uid);
-	$data = mysqli_fetch_assoc($query);
+	$pass = (string)$_POST['pass'];
+	$rowsPwd = $database->query_return('SELECT password FROM `'.TB_PREFIX.'users` WHERE `id` = '.(int)$session->uid.' LIMIT 1');
+	$data = isset($rowsPwd[0]) ? $rowsPwd[0] : [];
 	if(password_verify($pass, $data['password'])){
-		$query1 = mysqli_query($database->dblink, 'SELECT wref FROM `'.TB_PREFIX.'vdata` WHERE `owner` = '.(int)$session->uid.' AND `capital` = 1');
-		$data1 = mysqli_fetch_assoc($query1);
-		$query2 = mysqli_query($database->dblink, 'SELECT * FROM `'.TB_PREFIX.'fdata` WHERE `vref` = '.(int)$data1['wref']);
-		$data2 = mysqli_fetch_assoc($query2);
+		$rowsCap = $database->query_return('SELECT wref FROM `'.TB_PREFIX.'vdata` WHERE `owner` = '.(int)$session->uid.' AND `capital` = 1');
+		$data1 = isset($rowsCap[0]) ? $rowsCap[0] : [];
+		$rowsF = $database->query_return('SELECT * FROM `'.TB_PREFIX.'fdata` WHERE `vref` = '.(int)$data1['wref'].' LIMIT 1');
+		$data2 = isset($rowsF[0]) ? $rowsF[0] : [];
 		if($data2['vref'] != $village->wid){
 			for($i = 1; $i <= 18; ++$i){
 				if($data2['f'.$i] > 10){
-					$query2 = mysqli_query($database->dblink, 'UPDATE `'.TB_PREFIX.'fdata` SET `f'.$i.'` = 10 WHERE `vref` = '.(int)$data2['vref']);
+					$database->query('UPDATE `'.TB_PREFIX.'fdata` SET `f'.$i.'` = 10 WHERE `vref` = '.(int)$data2['vref']);
 				}
 			}
 			for($i = 19; $i <= 40; ++$i){
 				if($data2['f'.$i.'t'] == 34){
-					$query3 = mysqli_query($database->dblink, 'UPDATE `'.TB_PREFIX.'fdata` SET `f'.$i.'t` = 0, `f'.$i.'` = 0 WHERE `vref` = '.(int)$data2['vref']);
+					$database->query('UPDATE `'.TB_PREFIX.'fdata` SET `f'.$i.'t` = 0, `f'.$i.'` = 0 WHERE `vref` = '.(int)$data2['vref']);
 				}
 			}
 			
 			for($i = 19; $i <= 40; ++$i){
 				if($data2['f'.$i.'t'] == 29 || $data2['f'.$i.'t'] == 30 || $data2['f'.$i.'t'] == 38 || $data2['f'.$i.'t'] == 39 || $data2['f'.$i.'t'] == 42){
-					$query3 = mysqli_query($database->dblink, 'UPDATE `'.TB_PREFIX.'fdata` SET `f'.$i.'t` = 0, `f'.$i.'` = 0 WHERE `vref` = '.(int)$village->wid);
+					$database->query('UPDATE `'.TB_PREFIX.'fdata` SET `f'.$i.'t` = 0, `f'.$i.'` = 0 WHERE `vref` = '.(int)$village->wid);
 				}
 			}	
 			

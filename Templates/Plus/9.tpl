@@ -1,25 +1,25 @@
 <?php
 //////////////     made by alq0rsan, improved by evader   /////////////////////////
 if($session->gold >= 5){
-    $MyGold = mysqli_query($database->dblink,"SELECT gold, b1 FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-    $golds = mysqli_fetch_array($MyGold);
+    $rows = $database->query_return("SELECT gold, b1 FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+    $golds = isset($rows[0]) ? $rows[0] : null;
 	if($session->sit == 0) {
-		if (mysqli_num_rows($MyGold) == 1) {
-			if($golds['gold'] >= 5) {
-				if($golds['b1'] < time()) {
-					mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set b1 = '".(time()+PLUS_PRODUCTION)."' where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
+		if ($golds) {
+			if((int)$golds['gold'] >= 5) {
+				if((int)$golds['b1'] < time()) {
+					$database->query("UPDATE ".TB_PREFIX."users SET b1 = ".(time()+PLUS_PRODUCTION)." WHERE id = ".(int)$session->uid);
 				} else {
-					mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set b1 = '".($golds['b1']+PLUS_PRODUCTION)."' where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
+					$database->query("UPDATE ".TB_PREFIX."users SET b1 = ".((int)$golds['b1']+PLUS_PRODUCTION)." WHERE id = ".(int)$session->uid);
 				}
 				$done1 = "+25% Production: Lumber";
-				mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set gold = ".($session->gold-5)." where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-				mysqli_query($database->dblink,"INSERT INTO ".TB_PREFIX."gold_fin_log (wid,log) VALUES ('".$village->wid."', '+25%  Production: Lumber')") or die(mysqli_error($database->dblink));
+				$database->query("UPDATE ".TB_PREFIX."users SET gold = ".((int)$session->gold-5)." WHERE id = ".(int)$session->uid);
+				$database->query("INSERT INTO ".TB_PREFIX."gold_fin_log (wid,log) VALUES (".(int)$village->wid.", '+25%  Production: Lumber')");
 			} else {
 				$done1 = "You need more gold";
 			}
 		} else {
 			$done1 = "Failed lumber attempt";
-			mysqli_query($database->dblink,"INSERT INTO ".TB_PREFIX."gold_fin_log (wid,log) VALUES ('".$village->wid."', 'Failed +25%  Production: Lumber')") or die(mysqli_error($database->dblink));
+			$database->query("INSERT INTO ".TB_PREFIX."gold_fin_log (wid,log) VALUES (".(int)$village->wid.", 'Failed +25%  Production: Lumber')");
 		}
 	}
 	header("Location: plus.php?id=3");

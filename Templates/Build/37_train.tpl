@@ -3,11 +3,11 @@
 
 //check if there is unit needed in the village
 
-$result      = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."units WHERE `vref` = ".(int) $village->wid."");
-$units_array = mysqli_fetch_array($result);
+$rowsUnits = $database->query_return("SELECT * FROM ".TB_PREFIX."units WHERE vref = ".(int)$village->wid." LIMIT 1");
+$units_array = isset($rowsUnits[0]) ? $rowsUnits[0] : [];
 
-$count_hero = mysqli_fetch_array(mysqli_query($database->dblink,"SELECT Count(*) as Total FROM " . TB_PREFIX . "hero WHERE `uid` = " . $database->escape($session->uid) . ""), MYSQLI_ASSOC);
-$count_hero = $count_hero['Total'];
+$rowsHero = $database->query_return("SELECT Count(*) as Total FROM " . TB_PREFIX . "hero WHERE uid = ".(int)$session->uid);
+$count_hero = (int)($rowsHero[0]['Total'] ?? 0);
 
 if ($count_hero < 3) {
 

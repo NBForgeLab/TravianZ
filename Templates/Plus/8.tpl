@@ -1,25 +1,25 @@
 <?php
 //////////////     made by alq0rsan, improved by evader   /////////////////////////
 if($session->gold >= 10){
-    $MyGold = mysqli_query($database->dblink,"SELECT gold, plus FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-    $golds = mysqli_fetch_array($MyGold);
+    $rows = $database->query_return("SELECT gold, plus FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+    $golds = isset($rows[0]) ? $rows[0] : null;
 	if($session->sit == 0) {
-		if (mysqli_num_rows($MyGold) == 1) {
-			if($golds['gold'] >= 10) {
-				if($golds['plus'] == 0) {
-					mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set plus = ('".mktime(date("H"),date("i"), date("s"),date("m") , date("d"), date("Y"))."')+".PLUS_TIME." where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
+		if ($golds) {
+			if((int)$golds['gold'] >= 10) {
+				if((int)$golds['plus'] == 0) {
+					$database->query("UPDATE ".TB_PREFIX."users SET plus = ".(mktime(date("H"),date("i"), date("s"),date("m") , date("d"), date("Y"))+PLUS_TIME)." WHERE id = ".(int)$session->uid);
 				} else {
-					mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set plus = '".($golds['plus']+PLUS_TIME)."' where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
+					$database->query("UPDATE ".TB_PREFIX."users SET plus = ".((int)$golds['plus']+PLUS_TIME)." WHERE id = ".(int)$session->uid);
 				}
 				$done1 = "&nbsp;&nbsp;Plus Account";
-				mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set gold = ".($session->gold-10)." where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-				mysqli_query($database->dblink,"INSERT INTO ".TB_PREFIX."gold_fin_log (wid,log) VALUES ('".$village->wid."', 'Plus Account')") or die(mysqli_error($database->dblink));
+				$database->query("UPDATE ".TB_PREFIX."users SET gold = ".((int)$session->gold-10)." WHERE id = ".(int)$session->uid);
+				$database->query("INSERT INTO ".TB_PREFIX."gold_fin_log (wid,log) VALUES (".(int)$village->wid.", 'Plus Account')");
 			} else {
 				$done1 = "&nbsp;&nbsp;You need more gold";
 			}
 		} else {
 			$done1 = "Failed plus attempt";
-			mysqli_query($database->dblink,"INSERT INTO ".TB_PREFIX."gold_fin_log (wid,log) VALUES ('".$village->wid."', 'Failed Plus Account')") or die(mysqli_error($database->dblink));
+			$database->query("INSERT INTO ".TB_PREFIX."gold_fin_log (wid,log) VALUES (".(int)$village->wid.", 'Failed Plus Account')");
 		}
 	}
 	header("Location: plus.php?id=3");
