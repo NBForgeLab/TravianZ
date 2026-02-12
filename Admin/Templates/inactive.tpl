@@ -1,15 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       inactive.tpl                                                ##
-##  Developed by:  Dzoki                                                       ##
-##  Reworked:      aggenkeech                                                  ##
-##  Fix by:        ronix                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2013. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 global $database;
 ?>
 <style>
@@ -45,8 +34,7 @@ global $database;
                     $q = "SELECT * FROM ".TB_PREFIX."users where $from_time > timestamp AND id>5";
                 }
                 
-                $result = $database->query($q);
-                $active = $database->mysqli_fetch_all($result);
+                $active = $database->query_return($q);
                 for ($i = 0; $i <= count($active)-1; $i++){
                     $uid = $database->getUserField($active[$i]['username'],'id',1);
                     $varray = $database->getProfileVillages($uid);

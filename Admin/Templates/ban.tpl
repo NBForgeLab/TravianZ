@@ -1,15 +1,3 @@
-<?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       ban.tpl                                                     ##
-##  Developed by:  Dzoki                                                       ##
-##  Reworked:      aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
 <style>
 	.del {width:12px; height:12px; background-image: url(img/admin/icon/del.gif);}
 </style>

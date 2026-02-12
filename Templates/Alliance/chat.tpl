@@ -26,8 +26,8 @@ document.form1.msg.value="";
 </script>
 
 
-<body onload="start_it()">
-<form name="form1" onSubmit="send_data()">
+<body>
+<form name="form1">
 	<div id="TitleName" class="chatHeader">Ally-Chat</div>
 			<div id="chatContainer" style="position:relative; top:0; right:0; height: 220px; width: 500px; overflow: hidden; background-color: #FFF; border: 1px solid #C0C0C0;">
 				<div id="masnun" style="position:absolute; top:0; right:5px; width:470px; background-color: #FFF; "></div>
@@ -41,7 +41,7 @@ document.form1.msg.value="";
 				<input name="s" value="6" type="hidden" />
 				<input class="text" type="text" name="msg" style="width: 415px;" />
 				</td><td>
-				<input type="button" src="img/x.gif" id="btn_ok" style="border: 0px; float:left;" alt="ok" onClick="send_data()" />
+				<input type="button" src="img/x.gif" id="btn_ok" style="border: 0px; float:left;" alt="ok" data-submit-callback="send_data" />
 				</td></tr></table>
 			</div>
 </form>

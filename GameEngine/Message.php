@@ -55,8 +55,14 @@ class Message {
 					$this->quoteMessage($post['id']);
 					break;
 				case "m2":
-					if ($post['an'] == "[ally]") $this->sendAMessage($post['be'],addslashes($post['message']));
-					else $this->sendMessage($post['an'],$post['be'],addslashes($post['message']));
+					$topic = isset($post['be']) ? (string) $post['be'] : '';
+					$text  = isset($post['message']) ? (string) $post['message'] : '';
+					if (isset($post['an']) && $post['an'] == "[ally]") {
+						$this->sendAMessage($topic, addslashes($text));
+					} else {
+						$to = isset($post['an']) ? (string) $post['an'] : '';
+						$this->sendMessage($to, $topic, addslashes($text));
+					}
 					header("Location: nachrichten.php?t=2");
 					exit;
 				case "m3":
@@ -213,8 +219,8 @@ class Message {
 		
 		for($i = 1; $i <= 10; $i++){
 			if(isset($post['n' . $i])){
-				$message1 = mysqli_query($database->dblink, "SELECT target, owner FROM " . TB_PREFIX . "mdata where id = " . (int)$post['n' . $i] . "");
-				$message = mysqli_fetch_array($message1);
+				$rows = $database->query_new("SELECT target, owner FROM " . TB_PREFIX . "mdata WHERE id = ? LIMIT 1", (int)$post['n' . $i]);
+				$message = (is_array($rows) && count($rows)) ? $rows[0] : null;
 				
 				if($message['target'] == $session->uid && $message['owner'] == $session->uid) $mode8updates[] = $post['n' . $i];
 				else if($message['target'] == $session->uid) $mode5updates[] = $post['n' . $i];
@@ -396,16 +402,18 @@ class Message {
 
 		// Vulnerability closed by Shadow
 
-		$q = "SELECT Count(*) as Total FROM ".TB_PREFIX."mdata WHERE owner='".$session->uid."' AND time > ".(time() - 60);
-		$res = mysqli_fetch_array(mysqli_query($database->dblink,$q), MYSQLI_ASSOC);
-		if($res['Total'] > 5) return; //flooding prevention
+		$q = "SELECT Count(*) as Total FROM ".TB_PREFIX."mdata WHERE owner= ? AND time > ?";
+		$rows = $database->query_new($q, (int)$session->uid, (int)(time() - 60));
+		$res = (is_array($rows) && count($rows)) ? $rows[0] : ['Total' => 0];
+		if((int)($res['Total'] ?? 0) > 5) return;
 
 
 		// Vulnerability closed by Shadow
 
-		$allmembersQ = mysqli_query($database->dblink,"SELECT id FROM ".TB_PREFIX."users WHERE alliance='".$session->alliance."'");
+		$allmembersQ = $database->query_new("SELECT id FROM ".TB_PREFIX."users WHERE alliance = ?", $session->alliance);
 		$userally = $database->getUserField($session->uid,"alliance",0);
-		$permission=mysqli_fetch_array(mysqli_query($database->dblink,"SELECT opt7 FROM ".TB_PREFIX."ali_permission WHERE uid='".$session->uid."'"));
+		$permRows = $database->query_new("SELECT opt7 FROM ".TB_PREFIX."ali_permission WHERE uid = ? LIMIT 1", (int)$session->uid);
+		$permission = (is_array($permRows) && count($permRows)) ? $permRows[0] : ['opt7' => 0];
 
 		if(defined('WORD_CENSOR')) {
             $topic = $this->wordCensor($topic);
@@ -476,8 +484,8 @@ class Message {
 
             if($permission['opt7'] == 1){
                 if ($userally > 0) {
-                    while ($allmembers = mysqli_fetch_array($allmembersQ)) {
-                        $database->sendMessage($allmembers[id],$session->uid,htmlspecialchars(addslashes($topic)),htmlspecialchars(addslashes($text)),0,$alliance,$player,$coor,$report);
+                    foreach ($allmembersQ as $allmembers) {
+						$database->sendMessage((int)$allmembers['id'],(int)$session->uid,htmlspecialchars(addslashes($topic)),htmlspecialchars(addslashes($text)),0,$alliance,$player,$coor,$report);
                     }
                 }
             }
@@ -486,13 +494,15 @@ class Message {
 
 	private function sendMessage($recieve, $topic, $text, $security_check = true) {
 		global $session, $database;
-		$user = $database->getUserField($recieve, "id", 1);
+		$toUser = (string) $recieve;
+		$user = $database->getUserField($toUser, "id", 1);
 
 		// Vulnerability closed by Shadow
 		if ($security_check) {
-    		$q = "SELECT Count(*) as Total FROM ".TB_PREFIX."mdata WHERE owner='".$session->uid."' AND time > ".(time() - 60);
-    		$res = mysqli_fetch_array(mysqli_query($database->dblink,$q), MYSQLI_ASSOC);
-    		if($res['Total'] > 5) return; //flooding prevention
+		$q = "SELECT Count(*) as Total FROM ".TB_PREFIX."mdata WHERE owner= ? AND time > ?";
+		$rows = $database->query_new($q, (int)$session->uid, (int)(time() - 60));
+		$res = (is_array($rows) && count($rows)) ? $rows[0] : ['Total' => 0];
+		if((int)($res['Total'] ?? 0) > 5) return;
 		}
 
 		// Vulnerability closed by Shadow
@@ -565,7 +575,7 @@ class Message {
 
             // check if we're not sending this as Support or Multihunter
             $support_from_admin_allowed = ($session->access == ADMIN && ADMIN_RECEIVE_SUPPORT_MESSAGES);
-			$send_as = $session->uid;
+			$send_as = (int)$session->uid;
 			
 			// send as Support?
 			if((!empty($_POST['as_support']) && $support_from_admin_allowed)) $send_as = 1;
@@ -573,7 +583,7 @@ class Message {
 			// send as Multihunter
 			if((!empty($_POST['as_multihunter']) && $session->access == MULTIHUNTER)) $send_as = 5;
 
-            $database->sendMessage($user, $send_as, htmlspecialchars(addslashes($topic)), htmlspecialchars(addslashes($text)), 0, $alliance, $player, $coor, $report);
+            $database->sendMessage((int)$user, (int)$send_as, htmlspecialchars(addslashes((string)$topic)), htmlspecialchars(addslashes((string)$text)), 0, $alliance, $player, $coor, $report);
         }
 	}
 
@@ -591,8 +601,10 @@ class Message {
 	}
 
 	private function wordCensor($text) {
-		$censorarray = explode(",", CENSORED);
-		foreach($censorarray as $key => $value) {
+		$words = defined('CENSORED') ? CENSORED : '';
+		if ($words === '') return $text;
+		$censorarray = explode(",", $words);
+		foreach ($censorarray as $key => $value) {
 			$censorarray[$key] = "/" . $value . "/i";
 		}
 		return preg_replace($censorarray, "****", $text);

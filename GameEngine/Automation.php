@@ -1,20 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Version:       22.06.2015                    			                   ##
-##  Filename       Automation.php                                              ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix   ##
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		           ##
-##  Fixed by:      InCube - double troops				                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2018. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro                		           ##
-##  Source code:   https://github.com/Shadowss/TravianZ		                   ##
-##                                                                             ##
-#################################################################################
 
 // make sure we only run the automation script once and wait until it's done,
 // so concurrent AJAX calls from many different users won't overload the server
@@ -547,7 +532,7 @@ class Automation {
         $database->addMovement(3, $row['wref'], $vid, $ref, $time, $endtime);
 
         // wave 2
-        $ref2 = $database->addAttack($row['wref'], 0, $units[1][0], $units[1][1], 0, $units[1][2], $units[1][3], $units[1][4], $units[1][5], 0, 0, 0, 3, 40, 0, 0, 0, 20, 20, 0, 20, 20, 20, 20, ['vid' => $vid, 'endtime' => ($endtime + 1)]);
+        $ref2 = $database->addAttack($row['wref'], 0, $units[1][0], $units[1][1], 0, $units[1][2], $units[1][3], $units[1][4], $units[1][5], 0, 0, 0, 3, 40, 0, 0, 0, 20, 20, 0, 20, 20, 20, 20);
         $database->addMovement(3, $row['wref'], $vid, $ref2, $time, $endtime + 1);
     }
 
@@ -602,34 +587,41 @@ class Automation {
     private function marketComplete() {
         global $database, $units;
 
-        $time = microtime(true);
+        $time = time();
         $q = "SELECT s.wood, s.clay, s.iron, s.crop, `to`, `from`, endtime, merchant, send, moveid FROM ".TB_PREFIX."movement m, ".TB_PREFIX."send s WHERE m.ref = s.id AND m.proc = 0 AND sort_type = 0 AND endtime < $time";
         $dataarray = $database->query_return($q);
 
-        foreach($dataarray as $data) {
-            $userData_from = $database->getUserFields($database->getVillageField($data['from'], "owner"), "alliance, tribe", 0);
-            $userData_to = $database->getUserFields($database->getVillageField($data['to'], "owner"), "alliance, tribe", 0);
+        $database->begin();
+        try {
+            foreach($dataarray as $data) {
+                $userData_from = $database->getUserFields($database->getVillageField($data['from'], "owner"), "alliance, tribe", 0);
+                $userData_to = $database->getUserFields($database->getVillageField($data['to'], "owner"), "alliance, tribe", 0);
 
-            if($data['wood'] >= $data['clay'] && $data['wood'] >= $data['iron'] && $data['wood'] >= $data['crop']) $sort_type = 10;
-            elseif($data['clay'] >= $data['wood'] && $data['clay'] >= $data['iron'] && $data['clay'] >= $data['crop']) $sort_type = 11;
-            elseif($data['iron'] >= $data['wood'] && $data['iron'] >= $data['clay'] && $data['iron'] >= $data['crop']) $sort_type = 12;
-            elseif($data['crop'] >= $data['wood'] && $data['crop'] >= $data['clay'] && $data['crop'] >= $data['iron']) $sort_type = 13;
+                if($data['wood'] >= $data['clay'] && $data['wood'] >= $data['iron'] && $data['wood'] >= $data['crop']) $sort_type = 10;
+                elseif($data['clay'] >= $data['wood'] && $data['clay'] >= $data['iron'] && $data['clay'] >= $data['crop']) $sort_type = 11;
+                elseif($data['iron'] >= $data['wood'] && $data['iron'] >= $data['clay'] && $data['iron'] >= $data['crop']) $sort_type = 12;
+                elseif($data['crop'] >= $data['wood'] && $data['crop'] >= $data['clay'] && $data['crop'] >= $data['iron']) $sort_type = 13;
 
-            $to = $database->getMInfo($data['to']);
-            $from = $database->getMInfo($data['from']);
+                $to = $database->getMInfo($data['to']);
+                $from = $database->getMInfo($data['from']);
 
-            $ownally = $userData_from['alliance'];
-            $targetally = $userData_to['alliance'];
+                $ownally = $userData_from['alliance'];
+                $targetally = $userData_to['alliance'];
 
-            $database->addNotice($to['owner'],$to['wref'],$targetally,$sort_type,''.addslashes($from['name']).' send resources to '.addslashes($to['name']).'',''.$from['owner'].','.$from['wref'].','.$data['wood'].','.$data['clay'].','.$data['iron'].','.$data['crop'].'',$data['endtime']);
-            if($from['owner'] != $to['owner']) {
-                $database->addNotice($from['owner'],$to['wref'],$ownally,$sort_type,''.addslashes($from['name']).' send resources to '.addslashes($to['name']).'',''.$from['owner'].','.$from['wref'].','.$data['wood'].','.$data['clay'].','.$data['iron'].','.$data['crop'].'',$data['endtime']);
+                $database->addNotice($to['owner'],$to['wref'],$targetally,$sort_type,''.addslashes($from['name']).' send resources to '.addslashes($to['name']).'',''.$from['owner'].','.$from['wref'].','.$data['wood'].','.$data['clay'].','.$data['iron'].','.$data['crop'].'',$data['endtime']);
+                if($from['owner'] != $to['owner']) {
+                    $database->addNotice($from['owner'],$to['wref'],$ownally,$sort_type,''.addslashes($from['name']).' send resources to '.addslashes($to['name']).'',''.$from['owner'].','.$from['wref'].','.$data['wood'].','.$data['clay'].','.$data['iron'].','.$data['crop'].'',$data['endtime']);
+                }
+                $database->modifyResource($data['to'],$data['wood'],$data['clay'],$data['iron'],$data['crop'],1);
+                $targettribe = $userData_to["tribe"];
+                $endtime = $units->getWalkingTroopsTime($data['from'], $data['to'], 0, 0, [$targettribe], 0) + $data['endtime'];
+                $database->addMovement(2, $data['to'], $data['from'], $data['merchant'], time(), $endtime, $data['send'], $data['wood'], $data['clay'], $data['iron'], $data['crop']);
+                $database->setMovementProc($data['moveid']);
             }
-            $database->modifyResource($data['to'],$data['wood'],$data['clay'],$data['iron'],$data['crop'],1);
-            $targettribe = $userData_to["tribe"];
-            $endtime = $units->getWalkingTroopsTime($data['from'], $data['to'], 0, 0, [$targettribe], 0) + $data['endtime'];
-            $database->addMovement(2, $data['to'], $data['from'], $data['merchant'], time(), $endtime, $data['send'], $data['wood'], $data['clay'], $data['iron'], $data['crop']);
-            $database->setMovementProc($data['moveid']);
+            $database->commit();
+        } catch (\Throwable $e) {
+            $database->rollback();
+            throw $e;
         }
 
         $q1 = "SELECT send, moveid, `to`, wood, clay, iron, crop, `from` FROM ".TB_PREFIX."movement WHERE proc = 0 and sort_type = 2 and endtime < $time";
@@ -643,13 +635,20 @@ class Automation {
         $vilIDs = array_keys($vilIDs);
         $database->getVillageByWorldID($vilIDs);
 
-        foreach($dataarray1 as $data1) {
-            $database->setMovementProc($data1['moveid']);
-            if($data1['send'] > 1){
-                $targettribe1 = $database->getUserFields($database->getVillageField($data1['to'],"owner"),"alliance, tribe",0)['tribe'];
-                $send = $data1['send']-1;
-                $this->sendResource2($data1['wood'],$data1['clay'],$data1['iron'],$data1['crop'],$data1['to'],$data1['from'],$targettribe1,$send);
+        $database->begin();
+        try {
+            foreach($dataarray1 as $data1) {
+                $database->setMovementProc($data1['moveid']);
+                if($data1['send'] > 1){
+                    $targettribe1 = $database->getUserFields($database->getVillageField($data1['to'],"owner"),"alliance, tribe",0)['tribe'];
+                    $send = $data1['send']-1;
+                    $this->sendResource2($data1['wood'],$data1['clay'],$data1['iron'],$data1['crop'],$data1['to'],$data1['from'],$targettribe1,$send);
+                }
             }
+            $database->commit();
+        } catch (\Throwable $e) {
+            $database->rollback();
+            throw $e;
         }
     }
 
@@ -860,22 +859,30 @@ class Automation {
         $time = time();
         $q = "
             SELECT
-                `from`, `to`, endtime, ref, ctar1, ctar2, spy, moveid, attack_type,
-                t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, (SELECT oasistype FROM ".TB_PREFIX."wdata WHERE id = `to`) as oasistype
+                m.`from`,
+                m.`to`,
+                m.endtime,
+                m.ref,
+                a.ctar1,
+                a.ctar2,
+                a.spy,
+                m.moveid,
+                a.attack_type,
+                a.t1, a.t2, a.t3, a.t4, a.t5, a.t6, a.t7, a.t8, a.t9, a.t10, a.t11,
+                w.oasistype as oasistype
             FROM
-                ".TB_PREFIX."movement,
-                ".TB_PREFIX."attacks
+                ".TB_PREFIX."movement m
+                INNER JOIN ".TB_PREFIX."attacks a ON m.ref = a.id
+                LEFT JOIN ".TB_PREFIX."wdata w ON w.id = m.`to`
             WHERE
-                ".TB_PREFIX."movement.ref = ".TB_PREFIX."attacks.id
+                m.proc = 0
                 AND
-                ".TB_PREFIX."movement.proc = 0
+                m.sort_type = 3
                 AND
-                ".TB_PREFIX."movement.sort_type = 3
+                a.attack_type != 2
                 AND
-                ".TB_PREFIX."attacks.attack_type != 2
-                AND
-                endtime < $time
-            ORDER BY endtime ASC";
+                m.endtime < $time
+            ORDER BY m.endtime ASC";
         $dataarray = $database->query_return($q);
         $totalattackdead = $data_num = 0;
 
@@ -2005,7 +2012,8 @@ class Automation {
                                             } else if (!$village_destroyed) {
                                                 // you took over the village
                                                 $villname = addslashes($database->getVillageField($data['to'],"name"));
-                                                $artifact = reset($database->getOwnArtefactInfo($data['to']));
+                                                $artefacts = $database->getOwnArtefactInfo($data['to']);
+                                                $artifact = reset($artefacts);
 
                                                 $info_chief = "".$chief_pic.",Inhabitants of ".$villname." village decided to join your empire.";
 
@@ -2175,7 +2183,8 @@ class Automation {
                             if ($heroxp == 0) $xp=" no XP from the battle.";
                             else $xp=" gained <b>".$heroxp."</b> XP from the battle.";
                              
-                            $artifact = reset($database->getOwnArtefactInfo($data['to']));
+                            $artefacts = $database->getOwnArtefactInfo($data['to']);
+                            $artifact = reset($artefacts);
                             if (!empty($artifact)) {
                                 if ($type == 3) {
                                     if (empty($artifactError = $database->canClaimArtifact($data['from'], $artifact['vref'], $artifact['size'], $artifact['type']))) {
@@ -2812,7 +2821,7 @@ class Automation {
     private function sendSettlersComplete() {
         global $database;
 
-        $time = microtime(true);
+        $time = time();
         $q = "SELECT `to`, `from`, moveid, starttime, ref FROM ".TB_PREFIX."movement where proc = 0 and sort_type = 5 and endtime < $time";
 
         $dataarray = $database->query_return($q);
@@ -2821,7 +2830,7 @@ class Automation {
         $addUnitsWrefs = [];
         $addTechWrefs = [];
         $addABTechWrefs = [];
-        $time = microtime(true);
+        $now = time();
         $types = [];
         $froms = [];
         $tos = [];
@@ -2875,8 +2884,8 @@ class Automation {
                 $froms[] = $data['to'];
                 $tos[] = $data['from'];
                 $refs[] = $data['ref'];
-                $times[] = $time;
-                $endtimes[] = $time + ($time - $data['starttime']);
+                $times[] = $now;
+                $endtimes[] = $now + ($now - (int) $data['starttime']);
                 $movementProcIDs[] = $data['moveid'];
             }
         }

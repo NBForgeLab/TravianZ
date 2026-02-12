@@ -16,10 +16,10 @@ if(isset($id))
 			</tr>
 		</thead>
 			<?php
-				$sql = "SELECT * FROM ".TB_PREFIX."tech_log WHERE wid = ".(int) $_GET['did']."";
-				$result = mysqli_query($GLOBALS["link"], $sql);
+				$sql = "SELECT * FROM ".TB_PREFIX."tech_log WHERE wid = ".(int) $_GET['did'];
+				$result = $database->query_return($sql);
 				$j = 0;
-				while($row = mysqli_fetch_assoc($result))
+				foreach ($result as $row)
 				{
 					echo '
 					<tr>

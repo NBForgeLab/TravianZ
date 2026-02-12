@@ -1,0 +1,67 @@
+name: quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - "8.3"
+          - "8.4"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Composer validate
+        run: composer validate --strict
+
+      - name: Lint
+        run: composer lint:php
+
+      - name: PHPStan
+        run: composer analyse
+
+      - name: PHPStan (legacy)
+        run: composer analyse:legacy
+
+      - name: CS check
+        run: composer cs:check
+
+      - name: Rector dry-run
+        run: composer rector:dry
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - "8.3"
+          - "8.4"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: PHPUnit
+        run: composer test

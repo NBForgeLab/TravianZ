@@ -1,15 +1,3 @@
-<?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       home.tpl                                                    ##
-##  Developed by:  Dzoki                                                       ##
-##  Reworked:      aggenekech												   ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
 <font size="3">
 	<b>
 		<center>

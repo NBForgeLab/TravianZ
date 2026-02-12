@@ -20,8 +20,7 @@ $free = $session->uid;
 			<td class="desc">
 							Pay by phone              <br />
                 
-            				<a href="#"
-					onclick="window.open('http://billing.micropayment.de/call2pay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix-1000+Gold&amount=1999','nsrpay','scrollbars=yes,status=yes,resizable=yes,toolbar=yes,width=800,height=600');return false;">
+            				<a href="#" data-open-url="http://billing.micropayment.de/call2pay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix-1000+Gold&amount=1999">
 				<img src="img/bezahlung/call2pay1.png" style="width:126px; height:38px;" alt="call2pay" /></a>
 						
 			<br />
@@ -48,8 +47,7 @@ $free = $session->uid;
 			<td class="desc">
 							Pay by online banktransfer               <br />
                 
-            				<a href="#"
-					onclick="window.open('http://billing.micropayment.de/ebank2pay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix+1000+Gold&amount=1999&currency=EUR&paytext=travianix+1000+Gold','nsrpay','scrollbars=yes,status=yes,resizable=yes,toolbar=yes,width=800,height=600');return false;">
+            				<a href="#" data-open-url="http://billing.micropayment.de/ebank2pay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix+1000+Gold&amount=1999&currency=EUR&paytext=travianix+1000+Gold">
 				<img src="img/bezahlung/ebank2pay2.png" style="width:181px; height:38px;" alt="ebank2pay" /></a>
 						
 			<br />
@@ -106,7 +104,7 @@ $free = $session->uid;
     
                 <br />
                 More Info about PayPal can be found here: <br />
-                <a href="#" onclick="window.open('https://www.paypal.com/en/cgi-bin/webscr?cmd=xpt/cps/popup/OLCWhatIsPayPal-outside','external','scrollbars=yes,status=yes,resizable=yes,toolbar=yes,width=800,height=600');return false;">More Info</a>
+                <a href="#" data-open-url="https://www.paypal.com/en/cgi-bin/webscr?cmd=xpt/cps/popup/OLCWhatIsPayPal-outside">More Info</a>
                 <br />
             </td>
 		</tr>
@@ -128,7 +126,7 @@ $free = $session->uid;
 			</td>
 			<td class="desc">
 							Mit Skrill (moneybookers) kannst du mit deiner Kreditkarte oder per Überweisung von deinem Konto zahlen.                <br />
-                <? echo'<form action="https://www.moneybookers.com/app/payment.pl" target="_blank">
+                <?php echo '<form action="https://www.moneybookers.com/app/payment.pl" target="_blank">
  <input type="hidden" name="pay_to_email" value="novgorodschi@icloud.com">
  <input type="hidden" name="recipient_description" value="netsoundradio">
  <input type="hidden" name="transaction_id" value="113">

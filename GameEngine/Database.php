@@ -1,19 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Version:       22.06.2015                    			       ##
-##  Filename       db_MYSQL.php                                                ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix   ##
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		       ##
-##  Fixed by:      InCube - double troops				       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2015. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro                		       ##
-##  Source code:   https://github.com/Shadowss/TravianZ		               ##
-##                                                                             ##
-#################################################################################
 
 global $autoprefix;
 
@@ -400,6 +385,26 @@ class MYSQLi_DB implements IDbConnection {
 
 	public $dblink;
 
+    private bool $profileEnabled = false;
+    private bool $profileLogEnabled = false;
+    private bool $profileIncludeSql = false;
+    private int $profileSlowQueryMs = 50;
+    private float $profileTotalTimeMs = 0.0;
+    private int $profileTotalQueries = 0;
+    private array $profileSlowQueries = [];
+    private int $profileTopN = 0;
+    private int $profileTopMinMs = 0;
+    private array $profileTopQueries = [];
+    private float $profileRequestStart = 0.0;
+    private string $profileRequestId = '';
+    private string $profileLogFile = '';
+    private string $profileSlowLogFile = '';
+    private string $profileTopLogFile = '';
+    private string $profileTopLogFileLegacy = '';
+    private bool $autoIndexEnabled = false;
+    private int $autoIndexMinMs = 250;
+    private static array $autoIndexEnsured = [];
+
 	/**
 	 *
 	 * Constructor.
@@ -416,24 +421,60 @@ class MYSQLi_DB implements IDbConnection {
 	 * @return  void   This method doesn't have a return value.
 	 */
 	public function __construct($hostname, $username, $password, $dbname, $port = 3306) {
+        global $autoprefix;
+
 	    $this->hostname = $hostname;
 	    $this->port     = $port;
 	    $this->username = $username;
 	    $this->password = $password;
 	    $this->dbname   = $dbname;
 
+        $this->profileRequestStart = microtime(true);
+        try {
+            $this->profileRequestId = bin2hex(random_bytes(6));
+        } catch (\Throwable $e) {
+            $this->profileRequestId = substr(md5((string) microtime(true)), 0, 12);
+        }
+        $this->profileEnabled = (defined('DB_PROFILE') && DB_PROFILE);
+        $this->profileLogEnabled = (defined('DB_PROFILE_LOG') && DB_PROFILE_LOG);
+        $this->profileIncludeSql = (defined('DB_PROFILE_INCLUDE_SQL') && DB_PROFILE_INCLUDE_SQL);
+        $this->profileSlowQueryMs = (defined('DB_SLOW_QUERY_MS') && is_int(DB_SLOW_QUERY_MS)) ? DB_SLOW_QUERY_MS : 50;
+        $this->profileTopN = (defined('DB_PROFILE_TOP_N') && is_int(DB_PROFILE_TOP_N)) ? max(0, DB_PROFILE_TOP_N) : 0;
+        $this->profileTopMinMs = (defined('DB_PROFILE_TOP_MIN_MS') && is_int(DB_PROFILE_TOP_MIN_MS)) ? max(0, DB_PROFILE_TOP_MIN_MS) : 0;
+
+        $this->profileLogFile = $autoprefix . 'var/log/db-profile.log';
+        $this->profileSlowLogFile = $autoprefix . 'var/log/db-slow.log';
+        $this->profileTopLogFile = $autoprefix . 'var/log/top.log';
+        $this->profileTopLogFileLegacy = $autoprefix . 'var/log/db-top.log';
+
+        $this->autoIndexEnabled = (defined('DB_AUTO_INDEX') && DB_AUTO_INDEX);
+        $this->autoIndexMinMs = (defined('DB_AUTO_INDEX_MIN_MS') && is_int(DB_AUTO_INDEX_MIN_MS)) ? max(0, DB_AUTO_INDEX_MIN_MS) : 250;
+
 	    // connect to the DB
 	    if (!$this->connect()) die(mysqli_error($this->dblink));
 
 		// we will operate in UTF8
-		mysqli_query($this->dblink,"SET NAMES 'UTF8'");
+        if (function_exists('mysqli_set_charset')) {
+            @mysqli_set_charset($this->dblink, 'utf8mb4');
+        }
+		$this->query("SET NAMES 'utf8mb4'");
+        $this->query("SET SESSION collation_connection = 'utf8mb4_unicode_ci'");
+        $this->query("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'");
+
+        $this->ensureSecurityTables();
+        register_shutdown_function([$this, 'flushQueryProfile']);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 * @see \App\Database\IDbConnection::connect()
 	 */
-	public function connect() {
+	public function connect(): bool {
+        if(!function_exists('mysqli_connect')) {
+            http_response_code(500);
+            die('MySQLi extension is required.');
+        }
+
 	    // try to connect
         try {
             $this->dblink = mysqli_connect( $this->hostname, $this->username, $this->password, $this->dbname, $this->port );
@@ -458,11 +499,126 @@ class MYSQLi_DB implements IDbConnection {
 	    }
 	}
 
+    private function ensureSecurityTables() {
+        $prefix = TB_PREFIX;
+        $this->query("CREATE TABLE IF NOT EXISTS `{$prefix}failed_logins` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `username` VARCHAR(100) NOT NULL,
+            `ip` VARCHAR(45) NOT NULL,
+            `ts` INT UNSIGNED NOT NULL,
+            PRIMARY KEY (`id`),
+            INDEX (`username`),
+            INDEX (`ip`),
+            INDEX (`ts`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        $this->query("CREATE TABLE IF NOT EXISTS `{$prefix}password_reset` (
+            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            `uid` INT UNSIGNED NOT NULL,
+            `token_hash` VARCHAR(128) NOT NULL,
+            `expires` INT UNSIGNED NOT NULL,
+            `used` TINYINT(1) NOT NULL DEFAULT 0,
+            `created_at` INT UNSIGNED NOT NULL,
+            PRIMARY KEY (`id`),
+            INDEX (`uid`),
+            INDEX (`expires`),
+            INDEX (`used`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+
+    private function now(): int {
+        return time();
+    }
+
+    public function recordFailedLogin(string $username, string $ip): void {
+        $stmt = mysqli_prepare($this->dblink, "INSERT INTO " . TB_PREFIX . "failed_logins (username, ip, ts) VALUES (?, ?, ?)");
+        if ($stmt) {
+            $ts = $this->now();
+            mysqli_stmt_bind_param($stmt, "ssi", $username, $ip, $ts);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+        }
+    }
+
+    public function tooManyFailedLogins(string $username, string $ip, int $windowSeconds = 900, int $maxAttempts = 5): bool {
+        $since = $this->now() - $windowSeconds;
+        $count = 0;
+        $stmt = mysqli_prepare($this->dblink, "SELECT COUNT(*) FROM " . TB_PREFIX . "failed_logins WHERE username = ? AND ip = ? AND ts >= ?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "ssi", $username, $ip, $since);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_bind_result($stmt, $count);
+            mysqli_stmt_fetch($stmt);
+            mysqli_stmt_close($stmt);
+        }
+        return (int)$count >= $maxAttempts;
+    }
+
+    public function clearFailedLogins(string $username, string $ip): void {
+        $stmt = mysqli_prepare($this->dblink, "DELETE FROM " . TB_PREFIX . "failed_logins WHERE username = ? AND ip = ?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "ss", $username, $ip);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+        }
+    }
+
+    public function createPasswordResetToken(int $uid, string $token, int $ttlSeconds = 3600): bool {
+        $hash = hash('sha256', $token);
+        $expires = $this->now() + $ttlSeconds;
+        $created = $this->now();
+        $stmt = mysqli_prepare($this->dblink, "INSERT INTO " . TB_PREFIX . "password_reset (uid, token_hash, expires, used, created_at) VALUES (?, ?, ?, 0, ?)");
+        if (!$stmt) return false;
+        mysqli_stmt_bind_param($stmt, "isii", $uid, $hash, $expires, $created);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return (bool)$ok;
+    }
+
+    public function verifyPasswordResetToken(int $uid, string $token): bool {
+        $hash = hash('sha256', $token);
+        $now = $this->now();
+        $count = 0;
+        $stmt = mysqli_prepare($this->dblink, "SELECT COUNT(*) FROM " . TB_PREFIX . "password_reset WHERE uid = ? AND token_hash = ? AND used = 0 AND expires >= ?");
+        if (!$stmt) return false;
+        mysqli_stmt_bind_param($stmt, "isi", $uid, $hash, $now);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $count);
+        mysqli_stmt_fetch($stmt);
+        mysqli_stmt_close($stmt);
+        return (int)$count > 0;
+    }
+
+    public function consumePasswordResetToken(int $uid, string $token): void {
+        $hash = hash('sha256', $token);
+        $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "password_reset SET used = 1 WHERE uid = ? AND token_hash = ? AND used = 0");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "is", $uid, $hash);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+        }
+    }
+
+    public function begin(): void
+    {
+        @mysqli_begin_transaction($this->dblink, 0);
+    }
+
+    public function commit(): void
+    {
+        @mysqli_commit($this->dblink);
+    }
+
+    public function rollback(): void
+    {
+        @mysqli_rollback($this->dblink);
+    }
+
 	/**
 	 * {@inheritDoc}
 	 * @see \App\Database\IDbConnection::disconnect()
 	 */
-	public function disconnect() {
+	public function disconnect(): bool {
 	    if ($this->dblink) {
 	        if (!$this->dblink->close()) {
 	            return false;
@@ -478,7 +634,7 @@ class MYSQLi_DB implements IDbConnection {
 	 * {@inheritDoc}
 	 * @see \App\Database\IDbConnection::reconnect()
 	 */
-	public function reconnect() {
+	public function reconnect(): bool {
 	    $this->disconnect();
 	    return $this->connect();
 	}
@@ -487,7 +643,7 @@ class MYSQLi_DB implements IDbConnection {
 	 * {@inheritDoc}
 	 * @see \App\Database\IDbConnection::query_new()
 	 */
-	public function query_new($statement, ...$params) {
+	public function query_new(string $statement, mixed ...$params): mixed {
 	    if ($prep = mysqli_prepare($this->dblink, $statement)) {
 	        // if we're doing a multi-update/insert/delete query,
 	        // we'll need to mark it as such
@@ -548,8 +704,12 @@ class MYSQLi_DB implements IDbConnection {
         	    // SELECT
         	    if (count($select_matches)) {
                     // execute the statement to get its value back
-                    if (mysqli_stmt_execute($prep)) {
-                        $this->selectQueryCount++;
+                    $start = microtime(true);
+                    $ok = mysqli_stmt_execute($prep);
+                    $elapsedMs = (microtime(true) - $start) * 1000;
+                    $this->incrementQueryTypeCounters((string) $statement);
+                    $this->recordQueryProfile((string) $statement, $elapsedMs);
+                    if ($ok) {
                         $queryResult = [];
 
                         // read metadata, so we know what fields we were actually selecting
@@ -609,9 +769,222 @@ class MYSQLi_DB implements IDbConnection {
 	 * {@inheritDoc}
 	 * @see \App\Database\IDbConnection::is_connected()
 	 */
-	public function is_connected() {
-	    return ($this->dblink ? true : false);
+	public function is_connected(): bool {
+	    return (bool) $this->dblink;
 	}
+
+    private function incrementQueryTypeCounters(string $sql): void
+    {
+        $sql = ltrim($sql);
+        $upper = strtoupper(substr($sql, 0, 12));
+
+        if (str_starts_with($upper, 'SELECT')) {
+            $this->selectQueryCount++;
+            return;
+        }
+        if (str_starts_with($upper, 'INSERT')) {
+            $this->insertQueryCount++;
+            return;
+        }
+        if (str_starts_with($upper, 'UPDATE')) {
+            $this->updateQueryCount++;
+            return;
+        }
+        if (str_starts_with($upper, 'DELETE')) {
+            $this->deleteQueryCount++;
+            return;
+        }
+        if (str_starts_with($upper, 'REPLACE')) {
+            $this->replaceQueryCount++;
+        }
+    }
+
+    private function normalizeSql(string $sql, int $maxLen = 500): string
+    {
+        $sql = preg_replace('/\s+/', ' ', trim($sql));
+        if (!is_string($sql)) {
+            $sql = '';
+        }
+        if (strlen($sql) > $maxLen) {
+            return substr($sql, 0, $maxLen) . '…';
+        }
+        return $sql;
+    }
+
+    private function recordQueryProfile(string $sql, float $elapsedMs): void
+    {
+        if (!$this->profileEnabled && !$this->profileLogEnabled) {
+            return;
+        }
+
+        $this->profileTotalQueries++;
+        $this->profileTotalTimeMs += $elapsedMs;
+
+        if ($this->autoIndexEnabled && $elapsedMs >= $this->autoIndexMinMs) {
+            $this->ensureMovementHotpathIndexesForSql($sql, $elapsedMs);
+            $this->ensureEnforcementHotpathIndexesForSql($sql, $elapsedMs);
+        }
+
+        if ($this->profileTopN > 0 && $elapsedMs >= $this->profileTopMinMs) {
+            $entry = [
+                'ms' => $elapsedMs,
+                'sql' => $this->profileIncludeSql ? $this->normalizeSql($sql) : '',
+                'hash' => md5($sql),
+            ];
+            $this->profileTopQueries[] = $entry;
+            usort($this->profileTopQueries, static fn($a, $b) => ($b['ms'] <=> $a['ms']));
+            if (count($this->profileTopQueries) > $this->profileTopN) {
+                $this->profileTopQueries = array_slice($this->profileTopQueries, 0, $this->profileTopN);
+            }
+        }
+
+        if ($this->profileSlowQueryMs > 0 && $elapsedMs >= $this->profileSlowQueryMs) {
+            $entry = [
+                'ms' => $elapsedMs,
+                'sql' => $this->profileIncludeSql ? $this->normalizeSql($sql) : '',
+                'hash' => md5($sql),
+            ];
+            $this->profileSlowQueries[] = $entry;
+            if (count($this->profileSlowQueries) > 50) {
+                array_shift($this->profileSlowQueries);
+            }
+        }
+    }
+
+    private function ensureMovementHotpathIndexesForSql(string $sql, float $elapsedMs): void
+    {
+        $movementTable = TB_PREFIX . 'movement';
+        if (stripos($sql, $movementTable) === false) {
+            return;
+        }
+        if (!preg_match('/\\bFROM\\s+' . preg_quote($movementTable, '/') . '\\b/i', $sql)) {
+            return;
+        }
+
+        $this->ensureIndex(
+            $movementTable,
+            'to-proc-sort_type-ref-endtime',
+            '`to`,`proc`,`sort_type`,`ref`,`endtime`',
+            $elapsedMs
+        );
+        $this->ensureIndex(
+            $movementTable,
+            'from-proc-sort_type-ref-endtime',
+            '`from`,`proc`,`sort_type`,`ref`,`endtime`',
+            $elapsedMs
+        );
+    }
+
+    private function ensureEnforcementHotpathIndexesForSql(string $sql, float $elapsedMs): void
+    {
+        $enforcementTable = TB_PREFIX . 'enforcement';
+        if (stripos($sql, $enforcementTable) === false) {
+            return;
+        }
+        if (!preg_match('/\\bFROM\\s+' . preg_quote($enforcementTable, '/') . '\\b/i', $sql)) {
+            return;
+        }
+
+        $this->ensureIndex(
+            $enforcementTable,
+            'from-vref',
+            '`from`,`vref`',
+            $elapsedMs
+        );
+    }
+    private function ensureIndex(string $tableName, string $indexName, string $columnsSql, float $elapsedMs): void
+    {
+        $cacheKey = $tableName . '|' . $indexName;
+        if (isset(self::$autoIndexEnsured[$cacheKey])) {
+            return;
+        }
+
+        $tableNameEsc = mysqli_real_escape_string($this->dblink, $tableName);
+        $indexNameEsc = mysqli_real_escape_string($this->dblink, $indexName);
+        $existsSql = "SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '{$tableNameEsc}' AND index_name = '{$indexNameEsc}' LIMIT 1";
+        $existsRes = mysqli_query($this->dblink, $existsSql);
+        $exists = ($existsRes && mysqli_fetch_row($existsRes));
+        if ($existsRes) {
+            mysqli_free_result($existsRes);
+        }
+        if ($exists) {
+            self::$autoIndexEnsured[$cacheKey] = true;
+            return;
+        }
+
+        $alterSql = "ALTER TABLE `{$tableName}` ADD INDEX `{$indexName}` ({$columnsSql})";
+        $ok = @mysqli_query($this->dblink, $alterSql);
+        self::$autoIndexEnsured[$cacheKey] = true;
+
+        if ($ok) {
+            $dir = dirname($this->profileTopLogFile);
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0777, true);
+            }
+            $date = date('Y-m-d H:i:s');
+            $uri = $_SERVER['REQUEST_URI'] ?? ($_SERVER['PHP_SELF'] ?? '-');
+            $line = $date . ' auto_index table=' . $tableName . ' index=' . $indexName . ' ms=' . number_format($elapsedMs, 2, '.', '') . ' uri=' . $uri . "\n";
+            @file_put_contents($this->profileTopLogFile, $line, FILE_APPEND);
+            if ($this->profileTopLogFileLegacy !== '' && $this->profileTopLogFileLegacy !== $this->profileTopLogFile) {
+                @file_put_contents($this->profileTopLogFileLegacy, $line, FILE_APPEND);
+            }
+        }
+    }
+
+    public function flushQueryProfile(): void
+    {
+        if (!$this->profileEnabled && !$this->profileLogEnabled) {
+            return;
+        }
+        if ($this->profileTotalQueries === 0) {
+            return;
+        }
+
+        $dir = dirname($this->profileLogFile);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+
+        $date = date('Y-m-d H:i:s');
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '-';
+        $uri = $_SERVER['REQUEST_URI'] ?? ($_SERVER['PHP_SELF'] ?? '-');
+        $timeMs = number_format($this->profileTotalTimeMs, 2, '.', '');
+        $line = $date . ' rid=' . $this->profileRequestId . ' ip=' . $ip . ' uri=' . $uri . ' queries=' . $this->profileTotalQueries . ' timeMs=' . $timeMs . "\n";
+
+        if ($this->profileLogEnabled) {
+            @file_put_contents($this->profileLogFile, $line, FILE_APPEND);
+        }
+
+        if ($this->profileLogEnabled && count($this->profileSlowQueries)) {
+            foreach ($this->profileSlowQueries as $q) {
+                $slowLine = $date . ' rid=' . $this->profileRequestId . ' ms=' . number_format((float) $q['ms'], 2, '.', '') . ' hash=' . $q['hash'];
+                if ($this->profileIncludeSql && $q['sql'] !== '') {
+                    $slowLine .= ' sql="' . str_replace('"', '\"', (string) $q['sql']) . '"';
+                }
+                $slowLine .= "\n";
+                @file_put_contents($this->profileSlowLogFile, $slowLine, FILE_APPEND);
+            }
+        }
+
+        if ($this->profileLogEnabled && $this->profileTopN > 0 && count($this->profileTopQueries)) {
+            foreach ($this->profileTopQueries as $q) {
+                $topLine = $date . ' rid=' . $this->profileRequestId . ' ip=' . $ip . ' uri=' . $uri . ' ms=' . number_format((float) $q['ms'], 2, '.', '') . ' hash=' . $q['hash'];
+                if ($this->profileIncludeSql && $q['sql'] !== '') {
+                    $topLine .= ' sql="' . str_replace('"', '\"', (string) $q['sql']) . '"';
+                }
+                $topLine .= "\n";
+                @file_put_contents($this->profileTopLogFile, $topLine, FILE_APPEND);
+                if ($this->profileTopLogFileLegacy !== '' && $this->profileTopLogFileLegacy !== $this->profileTopLogFile) {
+                    @file_put_contents($this->profileTopLogFileLegacy, $topLine, FILE_APPEND);
+                }
+            }
+        }
+
+        $this->profileTotalQueries = 0;
+        $this->profileTotalTimeMs = 0.0;
+        $this->profileSlowQueries = [];
+        $this->profileTopQueries = [];
+    }
 	
 	
     /***************************
@@ -622,6 +995,10 @@ class MYSQLi_DB implements IDbConnection {
 public function getBestOasisCropBonus($x, $y) {
     $x = (int)$x;
     $y = (int)$y;
+    $xMin = $x - 3;
+    $xMax = $x + 3;
+    $yMin = $y - 3;
+    $yMax = $y + 3;
 
     // Adjust oasis type codes if your fork differs:
     //  - 50% crop only: type IN (12)
@@ -629,12 +1006,11 @@ public function getBestOasisCropBonus($x, $y) {
     $sql = "SELECT COALESCE(SUM(bonus), 0) AS total FROM (SELECT CASE
             WHEN o.type IN (12) THEN 50 WHEN o.type IN (4,9,10,11) THEN 25 ELSE 0
             END AS bonus FROM " . TB_PREFIX . "wdata w JOIN " . TB_PREFIX . "odata o ON o.wref = w.id
-            WHERE w.fieldtype = 0 AND ABS(w.x - $x) <= 3 AND ABS(w.y - $y) <= 3 AND o.type IN (12,4,9,10,11)
+            WHERE w.fieldtype = 0 AND w.x BETWEEN $xMin AND $xMax AND w.y BETWEEN $yMin AND $yMax AND o.type IN (12,4,9,10,11)
             ORDER BY bonus DESC LIMIT 3) t";
 
-    $q = mysqli_query($this->dblink, $sql);
-    $row = mysqli_fetch_assoc($q);
-    $total = (int)($row['total'] ?? 0);
+    $rows = $this->query_return($sql);
+    $total = (int)($rows[0]['total'] ?? 0);
     if ($total > 150) $total = 150; // safety cap
     return $total;
 }
@@ -647,17 +1023,25 @@ public function getBestOasisCropBonus($x, $y) {
         list($result) = $this->escape_input($result);
 
         $all = [];
-        if($result) {
-            while($row = mysqli_fetch_assoc($result)) {
-                $all[] = $row;
-            }
+        if(!$result) {
             return $all;
         }
+
+        while($row = mysqli_fetch_assoc($result)) {
+            $all[] = $row;
+        }
+
+        return $all;
     }
 
     function query_return($q) {
-        $result = mysqli_query($this->dblink,$q);
-        return $this->mysqli_fetch_all($result);
+        $start = microtime(true);
+        $result = mysqli_query($this->dblink, $q);
+        $rows = $this->mysqli_fetch_all($result);
+        $elapsedMs = (microtime(true) - $start) * 1000;
+        $this->incrementQueryTypeCounters((string) $q);
+        $this->recordQueryProfile((string) $q, $elapsedMs);
+        return $rows;
     }
 
     /***************************
@@ -665,7 +1049,12 @@ public function getBestOasisCropBonus($x, $y) {
     References: Query
      ***************************/
     function query($query) {
-        return mysqli_query($this->dblink,$query);
+        $start = microtime(true);
+        $result = mysqli_query($this->dblink, $query);
+        $elapsedMs = (microtime(true) - $start) * 1000;
+        $this->incrementQueryTypeCounters((string) $query);
+        $this->recordQueryProfile((string) $query, $elapsedMs);
+        return $result;
     }
 
     function RemoveXSS($val) {
@@ -680,7 +1069,7 @@ public function getBestOasisCropBonus($x, $y) {
      * @param $arrayVariable  array  Reference to the static array in Database class to use for the lookup.
      * @param $arrayFieldName string The actual array field name to look a cached value for.
      *
-     * @return Returns the requested cached value or null if it's not cached yet.
+     * @return mixed|null Cached value or null if it's not cached yet.
      */
 	private static function returnCachedContent(&$arrayVariable, $arrayStructure) {
         if (!isset($arrayVariable[$arrayStructure])) {
@@ -730,6 +1119,7 @@ public function getBestOasisCropBonus($x, $y) {
 	    $numargs = func_num_args();
 	    $arg_list = func_get_args();
 	    $ret = [];
+        $res = [];
 
 	    for ($i = 0; $i < $numargs; $i++) {
 	        if (is_string($arg_list[$i])) {
@@ -743,38 +1133,47 @@ public function getBestOasisCropBonus($x, $y) {
 	    return $res;
 	}
 
-	function return_link() {
+	function return_link(): mysqli {
 		return $this->dblink;
 	}
 
 	function register($username, $password, $email, $tribe, $act, $uid = 0, $desc = null) {
-        list($username, $password, $email, $tribe, $act, $uid, $desc) = $this->escape_input($username, $password, $email, (int) $tribe, $act, (int) $uid, $desc);
-
-		$time = time();
+        $time = time();
         $startTime = strtotime(START_DATE) - strtotime(date('d.m.Y')) + strtotime(START_TIME);
+		$protectionTime = $uid != 3 ? (($startTime > $time) ? $startTime : $time) + PROTECTION : 0;
+        $uid = (int) $uid;
+        $tribe = (int) $tribe;
 
-        //If we're registering the Natars tribe, the protection must be 0
-		$protectionTime = $uid != 3 ? (($startTime > $time) ? $stime : $time) + PROTECTION : 0;
+        $stmt = mysqli_prepare($this->dblink, "INSERT INTO " . TB_PREFIX . "users (id, username, password, access, email, timestamp, tribe, act, protect, lastupdate, regtime, desc2, is_bcrypt) VALUES (?, ?, ?, " . USER . ", ?, ?, ?, ?, ?, ?, ?, ?, 1)");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "isssiisiiis", $uid, $username, $password, $email, $time, $tribe, $act, $protectionTime, $time, $time, $desc);
+            $ok = mysqli_stmt_execute($stmt);
+            $id = $ok ? mysqli_insert_id($this->dblink) : 0;
+            mysqli_stmt_close($stmt);
+            if ($ok && $id > 0) return (int)$id;
+        }
 
-		$q = "INSERT INTO " . TB_PREFIX . "users (id, username, password, access, email, timestamp, tribe, act, protect, lastupdate, regtime, desc2, is_bcrypt) VALUES ($uid, '$username', '$password', " . USER . ", '$email', $time, $tribe, '$act', $protectionTime, $time, $time, '$desc', 1)";
-		
-		if(mysqli_query($this->dblink, $q)) return mysqli_insert_id($this->dblink);		
-		else 
-		{
-		    // if an error has occured, we probably don't have DB converted to handle bcrypt passwords yet
-		    $q = "INSERT INTO " . TB_PREFIX . "users (id, username, password, access, email, timestamp, tribe, act, protect, lastupdate, regtime, desc2) VALUES ($uid, '$username', '$password', " . USER . ", '$email', $time, $tribe, '$act', $protectionTime, $time, $time, '$desc')";
-		    if(mysqli_query($this->dblink, $q)) return mysqli_insert_id($this->dblink);	      
-		    else return false;
-		}
+        $stmt2 = mysqli_prepare($this->dblink, "INSERT INTO " . TB_PREFIX . "users (id, username, password, access, email, timestamp, tribe, act, protect, lastupdate, regtime, desc2) VALUES (?, ?, ?, " . USER . ", ?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt2) {
+            mysqli_stmt_bind_param($stmt2, "isssiisiiis", $uid, $username, $password, $email, $time, $tribe, $act, $protectionTime, $time, $time, $desc);
+            $ok2 = mysqli_stmt_execute($stmt2);
+            $id2 = $ok2 ? mysqli_insert_id($this->dblink) : 0;
+            mysqli_stmt_close($stmt2);
+            if ($ok2 && $id2 > 0) return (int)$id2;
+        }
+        return false;
 	}
 
 	function activate($username, $password, $email, $tribe, $locate, $act, $act2) {
-        list($username, $password, $email, $tribe, $locate, $act, $act2) = $this->escape_input($username, $password, $email, $tribe, $locate, $act, $act2);
-
-		$time = time();
-		$q = "INSERT INTO " . TB_PREFIX . "activate (username,password,access,email,tribe,timestamp,location,act,act2) VALUES ('$username', '$password', " . USER . ", '$email', " . (int) $tribe .", $time, $locate, '$act', '$act2')";
-		if(mysqli_query($this->dblink,$q)) return mysqli_insert_id($this->dblink);
-		else return false;
+        $time = time();
+        $tribe = (int) $tribe;
+        $stmt = mysqli_prepare($this->dblink, "INSERT INTO " . TB_PREFIX . "activate (username, password, access, email, tribe, timestamp, location, act, act2) VALUES (?, ?, " . USER . ", ?, ?, ?, ?, ?, ?)");
+        if (!$stmt) return false;
+        mysqli_stmt_bind_param($stmt, "sssiiiss", $username, $password, $email, $tribe, $time, $locate, $act, $act2);
+        $ok = mysqli_stmt_execute($stmt);
+        $id = $ok ? mysqli_insert_id($this->dblink) : 0;
+        mysqli_stmt_close($stmt);
+        return $ok && $id > 0 ? (int)$id : false;
 	}
 
 	function unreg($username) {
@@ -902,8 +1301,14 @@ public function getBestOasisCropBonus($x, $y) {
 
 		$q = "UPDATE " . TB_PREFIX . "users set sit1 = 0 where id = $uid and sit1 = $uid2";
 		mysqli_query($this->dblink,$q);
-		$q2 = "UPDATE " . TB_PREFIX . "users set sit2 = 0 where id = $uid and sit2 = $uid2";
-		mysqli_query($this->dblink,$q2);
+		$stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "users SET sit2 = 0 WHERE id = ? AND sit2 = ?");
+		if ($stmt) {
+		    $uid = (int) $uid;
+		    $uid2 = (int) $uid2;
+		    mysqli_stmt_bind_param($stmt, "ii", $uid, $uid2);
+		    mysqli_stmt_execute($stmt);
+		    mysqli_stmt_close($stmt);
+		}
 	}
 
     function getUserField($ref, $field, $mode, $use_cache = true) {
@@ -1071,70 +1476,136 @@ public function getBestOasisCropBonus($x, $y) {
 	}
 
 	function login($username, $password) {
+        $username = (string) $username;
+        $password = (string) $password;
         static $cachedResult = null;
 
         if ($cachedResult !== null) {
             return $cachedResult;
         }
 
-        list($username, $password) = $this->escape_input($username, $password);
-		$q = "SELECT id,password,sessid,is_bcrypt FROM " . TB_PREFIX . "users where username = '$username'";
-		$result = mysqli_query($this->dblink,$q);
-
-		// if we didn't update the database for bcrypt hashes yet...
-		if (mysqli_error($this->dblink) != '') {
-		    $q = "SELECT id, password,sessid,0 as is_bcrypt FROM " . TB_PREFIX . "users where username = '$username' LIMIT 1";
-		    $result = mysqli_query($this->dblink,$q);
-		    $bcrypt_update_done = false;
-		} else {
-		    $bcrypt_update_done = true;
-		}
-
-		$dbarray = mysqli_fetch_array($result);
-
-		// even if we didn't do a DB conversion for bcrypt passwords,
-		// we still need to check if this password wasn't encrypted via password_hash,
-		// since all methods were updated to use that instead of md5 and therefore
-		// new passwords in DB will be bcrypt already even without the is_bcrypt field present
-		$bcrypted = true;
-		$pwOk = password_verify($password, $dbarray['password']);
-
-		if (!$pwOk && !$dbarray['is_bcrypt']) {
-		    $pwOk = ($dbarray['password'] == md5($password));
-		    $bcrypted = false;
-		}
-
-		if($pwOk) {
-		    // update password to bcrypt, if correct
-		    if (!$dbarray['is_bcrypt'] && !$bcrypted) {
-		        mysqli_query($this->dblink, "UPDATE " . TB_PREFIX . "users SET password = '".password_hash($password, PASSWORD_BCRYPT,['cost' => 12])."'".($bcrypt_update_done ? ', is_bcrypt = 1' : '')." where id = ".(int) $dbarray['id']);
-		    }
-            $cachedResult = true;
-		} else {
+        // rate limit check
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? (string) $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
+        if ($this->tooManyFailedLogins($username, $ip)) {
             $cachedResult = false;
+            return $cachedResult;
+        }
+
+        $id = null;
+		$hash = null;
+		$sessid = null;
+		$isBcrypt = 0;
+		$hasIsBcrypt = true;
+
+		$stmt = mysqli_prepare($this->dblink, "SELECT id, password, sessid, is_bcrypt FROM " . TB_PREFIX . "users WHERE username = ? LIMIT 1");
+		if (!$stmt) {
+			$hasIsBcrypt = false;
+			$stmt = mysqli_prepare($this->dblink, "SELECT id, password, sessid, 0 as is_bcrypt FROM " . TB_PREFIX . "users WHERE username = ? LIMIT 1");
+		}
+
+		if (!$stmt) {
+			$cachedResult = false;
+			return $cachedResult;
+		}
+
+		mysqli_stmt_bind_param($stmt, "s", $username);
+		mysqli_stmt_execute($stmt);
+		mysqli_stmt_bind_result($stmt, $id, $hash, $sessid, $isBcrypt);
+		$found = mysqli_stmt_fetch($stmt);
+		mysqli_stmt_close($stmt);
+
+		if (!$found || $hash === null) {
+			$cachedResult = false;
+			return $cachedResult;
+		}
+
+		$pwOk = password_verify($password, $hash);
+		$legacyOk = false;
+		if (!$pwOk && !$isBcrypt && trz_allow_legacy_md5_passwords() && is_string($hash) && preg_match('/^[a-f0-9]{32}$/i', $hash)) {
+			$legacyOk = hash_equals(strtolower($hash), md5($password));
+			$pwOk = $legacyOk;
+		}
+
+		if ($pwOk) {
+			if ($legacyOk || trz_password_needs_rehash($hash) || ($hasIsBcrypt && !$isBcrypt)) {
+				$newHash = trz_password_hash($password);
+				if ($hasIsBcrypt) {
+					$u = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "users SET password = ?, is_bcrypt = 1 WHERE id = ? LIMIT 1");
+					if ($u) {
+						mysqli_stmt_bind_param($u, "si", $newHash, $id);
+						mysqli_stmt_execute($u);
+						mysqli_stmt_close($u);
+					}
+				} else {
+					$u = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "users SET password = ? WHERE id = ? LIMIT 1");
+					if ($u) {
+						mysqli_stmt_bind_param($u, "si", $newHash, $id);
+						mysqli_stmt_execute($u);
+						mysqli_stmt_close($u);
+					}
+				}
+			}
+            $this->clearFailedLogins($username, $ip);
+			$cachedResult = true;
+		} else {
+            $this->recordFailedLogin($username, $ip);
+			$cachedResult = false;
 		}
 
 		return $cachedResult;
 	}
 
 	function sitterLogin($username, $password) {
-        list($username, $password) = $this->escape_input($username, $password);
+        $username = (string) $username;
+        $password = (string) $password;
+		$sit1 = 0;
+		$sit2 = 0;
 
-		$q = "SELECT sit1,sit2 FROM " . TB_PREFIX . "users where username = '$username' and access != " . BANNED ." LIMIT 1";
-		$result = mysqli_query($this->dblink,$q);
-		$dbarray = mysqli_fetch_array($result);
-		if($dbarray['sit1'] != 0) {
-		    $q2 = "SELECT password FROM " . TB_PREFIX . "users where id = " . (int) $dbarray['sit1'] . " and access != " . BANNED . " LIMIT 1";
-			$result2 = mysqli_query($this->dblink,$q2);
-			$dbarray2 = mysqli_fetch_array($result2);
+		$stmt = mysqli_prepare($this->dblink, "SELECT sit1, sit2 FROM " . TB_PREFIX . "users WHERE username = ? AND access != " . BANNED . " LIMIT 1");
+		if (!$stmt) {
+			return false;
 		}
-		if($dbarray['sit2'] != 0) {
-		    $q3 = "SELECT password FROM " . TB_PREFIX . "users where id = " . (int) $dbarray['sit2'] . " and access != " . BANNED . " LIMIT 1";
-				$result3 = mysqli_query($this->dblink,$q3);
-				$dbarray3 = mysqli_fetch_array($result3);
+		mysqli_stmt_bind_param($stmt, "s", $username);
+		mysqli_stmt_execute($stmt);
+		mysqli_stmt_bind_result($stmt, $sit1, $sit2);
+		$found = mysqli_stmt_fetch($stmt);
+		mysqli_stmt_close($stmt);
+
+		if (!$found) {
+			return false;
 		}
-		if($dbarray['sit1'] != 0 || $dbarray['sit2'] != 0) {
-		    if(password_verify($password, $dbarray2['password']) || password_verify($password, $dbarray3['password'])) {
+
+		$pwOk = false;
+		if ((int) $sit1 !== 0) {
+			$hash = null;
+			$s = mysqli_prepare($this->dblink, "SELECT password FROM " . TB_PREFIX . "users WHERE id = ? AND access != " . BANNED . " LIMIT 1");
+			if ($s) {
+				mysqli_stmt_bind_param($s, "i", $sit1);
+				mysqli_stmt_execute($s);
+				mysqli_stmt_bind_result($s, $hash);
+				if (mysqli_stmt_fetch($s) && $hash !== null) {
+					$pwOk = $pwOk || password_verify($password, $hash);
+				}
+				mysqli_stmt_close($s);
+			}
+		}
+
+		if ((int) $sit2 !== 0) {
+			$hash = null;
+			$s = mysqli_prepare($this->dblink, "SELECT password FROM " . TB_PREFIX . "users WHERE id = ? AND access != " . BANNED . " LIMIT 1");
+			if ($s) {
+				mysqli_stmt_bind_param($s, "i", $sit2);
+				mysqli_stmt_execute($s);
+				mysqli_stmt_bind_result($s, $hash);
+				if (mysqli_stmt_fetch($s) && $hash !== null) {
+					$pwOk = $pwOk || password_verify($password, $hash);
+				}
+				mysqli_stmt_close($s);
+			}
+		}
+
+		if ((int) $sit1 !== 0 || (int) $sit2 !== 0) {
+		    if ($pwOk) {
 				return true;
 			} else {
 				return false;
@@ -1162,16 +1633,22 @@ public function getBestOasisCropBonus($x, $y) {
 		$q = "SELECT timestamp from " . TB_PREFIX . "deleting where uid = $uid LIMIT 1";
 		$result = mysqli_query($this->dblink,$q);
 		$dbarray = mysqli_fetch_array($result);
-		return $dbarray['timestamp'];
+		return (int) ($dbarray['timestamp'] ?? 0);
 	}
 
 	function modifyGold($userid, $amt, $mode) {
 	    list($userid, $amt, $mode) = $this->escape_input((int) $userid, (int) $amt, $mode);
 
-	    if(!$mode) $q = "UPDATE " . TB_PREFIX . "users set gold = gold - $amt where id = $userid";		
-		else $q = "UPDATE " . TB_PREFIX . "users set gold = gold + $amt where id = $userid";
-		
-		return mysqli_query($this->dblink,$q);
+	    if(!$mode) {
+	        $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "users SET gold = gold - ? WHERE id = ?");
+	    } else {
+	        $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "users SET gold = gold + ? WHERE id = ?");
+	    }
+	    if (!$stmt) return false;
+	    mysqli_stmt_bind_param($stmt, "ii", $amt, $userid);
+	    $ok = mysqli_stmt_execute($stmt);
+	    mysqli_stmt_close($stmt);
+	    return (bool)$ok;
 	}
 
 	/**
@@ -1184,44 +1661,59 @@ public function getBestOasisCropBonus($x, $y) {
 	 */
 
 	function getUserArray($ref, $mode, $use_cache = true) {
-        list($ref, $mode) = $this->escape_input($ref, $mode);
-
-        // first of all, check if we should be using cache and whether the field
-        // required is already cached
         if ($use_cache && ($cachedValue = self::returnCachedContent(self::$fieldsCache, $ref.$mode)) && !is_null($cachedValue)) {
             return $cachedValue;
         }
-
-        if(!$mode) $q = "SELECT * FROM " . TB_PREFIX . "users where username = '$ref' LIMIT 1";
-		else $q = "SELECT * FROM " . TB_PREFIX . "users where id = " . (int) $ref . " LIMIT 1";
-		
-		$result = mysqli_query($this->dblink,$q);
-
-        self::$fieldsCache[$ref.$mode] = mysqli_fetch_array($result);
+        $stmt = null;
+        if(!$mode) {
+            $stmt = mysqli_prepare($this->dblink, "SELECT * FROM " . TB_PREFIX . "users WHERE username = ? LIMIT 1");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "s", $ref);
+            }
+        } else {
+            $id = (int) $ref;
+            $stmt = mysqli_prepare($this->dblink, "SELECT * FROM " . TB_PREFIX . "users WHERE id = ? LIMIT 1");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "i", $id);
+            }
+        }
+        if (!$stmt) {
+            self::$fieldsCache[$ref.$mode] = [];
+            return self::$fieldsCache[$ref.$mode];
+        }
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        self::$fieldsCache[$ref.$mode] = $result ? mysqli_fetch_array($result) : [];
+        mysqli_stmt_close($stmt);
         return self::$fieldsCache[$ref.$mode];
 	}
 
 	function activeModify($username, $mode) {
-        list($username, $mode) = $this->escape_input($username, $mode);
-
-		$time = time();
-		if(!$mode) {
-			$q = "INSERT into " . TB_PREFIX . "active VALUES ('$username',$time)";
-		} else {
-			$q = "DELETE FROM " . TB_PREFIX . "active where username = '$username'";
-		}
-		return mysqli_query($this->dblink,$q);
+        $time = time();
+        if(!$mode) {
+            $stmt = mysqli_prepare($this->dblink, "REPLACE INTO " . TB_PREFIX . "active (username, timestamp) VALUES (?, ?)");
+            if (!$stmt) return false;
+            mysqli_stmt_bind_param($stmt, "si", $username, $time);
+            $ok = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return $ok;
+        } else {
+            $stmt = mysqli_prepare($this->dblink, "DELETE FROM " . TB_PREFIX . "active WHERE username = ?");
+            if (!$stmt) return false;
+            mysqli_stmt_bind_param($stmt, "s", $username);
+            $ok = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return $ok;
+        }
 	}
 
 	function addActiveUser($username, $time) {
-        list($username, $time) = $this->escape_input($username, $time);
-
-		$q = "REPLACE into " . TB_PREFIX . "active values ('$username',$time)";
-		if(mysqli_query($this->dblink,$q)) {
-			return true;
-		} else {
-			return false;
-		}
+        $stmt = mysqli_prepare($this->dblink, "REPLACE INTO " . TB_PREFIX . "active (username, timestamp) VALUES (?, ?)");
+        if (!$stmt) return false;
+        mysqli_stmt_bind_param($stmt, "si", $username, $time);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return (bool)$ok;
 	}
 
 	function updateActiveUser($username, $time) {
@@ -1231,11 +1723,14 @@ public function getBestOasisCropBonus($x, $y) {
 	        return;
         }
 
-        list($username, $time) = $this->escape_input($username, $time);
-
         $res1 = $this->addActiveUser($username, $time);
-        $q = "UPDATE " . TB_PREFIX . "users set timestamp = $time where username = '$username'";
-		$res2 = mysqli_query($this->dblink,$q);
+        $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "users SET timestamp = ? WHERE username = ?");
+        $res2 = false;
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "is", $time, $username);
+            $res2 = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+        }
 		if($res1 && $res2) {
             $updated = true;
 			return true;
@@ -1245,51 +1740,65 @@ public function getBestOasisCropBonus($x, $y) {
 	}
 
 	function submitProfile($uid, $gender, $location, $birthday, $des1, $des2) {
-	    // temporarily replace newlines with placeholders, so they don't get escaped and backslashed stripped out of them
-	    $des1 = str_replace(['\\r', '\\n'], ['[!RETURN_CARRIAGE!]','[!NEW_LINE!]'], $des1);
-	    $des2 = str_replace(['\\r', '\\n'], ['[!RETURN_CARRIAGE!]','[!NEW_LINE!]'], $des2);
-
-	    list($uid, $gender, $location, $birthday, $des1, $des2) = $this->escape_input((int) $uid, (int) $gender, $location, $birthday, $des1, $des2);
-
-	    // return new lines and return carriages to descriptions
-	    $des1 = str_replace(['[!RETURN_CARRIAGE!]','[!NEW_LINE!]'], ['\\r', '\\n'], $des1);
-	    $des2 = str_replace(['[!RETURN_CARRIAGE!]','[!NEW_LINE!]'], ['\\r', '\\n'], $des2);
-
-		$q = "UPDATE " . TB_PREFIX . "users set gender = $gender, location = '$location', birthday = '$birthday', desc1 = '$des1', desc2 = '$des2' where id = $uid";
-		return mysqli_query($this->dblink,$q);
+        $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "users SET gender = ?, location = ?, birthday = ?, desc1 = ?, desc2 = ? WHERE id = ?");
+        if (!$stmt) return false;
+        $uid = (int) $uid;
+        $gender = (int) $gender;
+        mysqli_stmt_bind_param($stmt, "issssi", $gender, $location, $birthday, $des1, $des2, $uid);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return (bool)$ok;
 	}
 
 	function gpack($uid, $gpack) {
-	    list($uid, $gpack) = $this->escape_input((int) $uid, $gpack);
-
-		$q = "UPDATE " . TB_PREFIX . "users set gpack = '$gpack' where id = $uid";
-		return mysqli_query($this->dblink,$q);
+        $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "users SET gpack = ? WHERE id = ?");
+        if (!$stmt) return false;
+        $uid = (int) $uid;
+        mysqli_stmt_bind_param($stmt, "si", $gpack, $uid);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return (bool)$ok;
 	}
 
     // no need to cache this method
 	function GetOnline($uid) {
-	    list($uid) = $this->escape_input((int) $uid);
-
-		$q = "SELECT sit FROM " . TB_PREFIX . "online WHERE uid = $uid LIMIT 1";
-		$result = mysqli_query($this->dblink,$q);
-		$dbarray = mysqli_fetch_array($result);
-		return $dbarray['sit'];
+        $stmt = mysqli_prepare($this->dblink, "SELECT sit FROM " . TB_PREFIX . "online WHERE uid = ? LIMIT 1");
+        if (!$stmt) return 0;
+        $uid = (int) $uid;
+        mysqli_stmt_bind_param($stmt, "i", $uid);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $sit);
+        $found = mysqli_stmt_fetch($stmt);
+        mysqli_stmt_close($stmt);
+        return $found ? (int) $sit : 0;
 	}
 
 	function UpdateOnline($mode, $name = "", $time = "", $uid = 0) {
-	    list($mode, $name, $time, $uid) = $this->escape_input($mode, $name, $time, (int) $uid);
-
-		global $session;
-		if($mode == "login") {
-			$q = "INSERT IGNORE INTO " . TB_PREFIX . "online (name, uid, time, sit) VALUES ('$name', $uid, '" . time() . "', 0)";
-			return mysqli_query($this->dblink,$q);
-		} else if($mode == "sitter") {
-			$q = "INSERT IGNORE INTO " . TB_PREFIX . "online (name, uid, time, sit) VALUES ('$name', $uid, '" . time() . "', 1)";
-			return mysqli_query($this->dblink,$q);
-		} else {
-			$q = "DELETE FROM " . TB_PREFIX . "online WHERE name ='" . $this->escape($session->username) . "'";
-			return mysqli_query($this->dblink,$q);
-		}
+        global $session;
+        $now = time();
+        if($mode == "login") {
+            $stmt = mysqli_prepare($this->dblink, "INSERT IGNORE INTO " . TB_PREFIX . "online (name, uid, time, sit) VALUES (?, ?, ?, 0)");
+            if (!$stmt) return false;
+            mysqli_stmt_bind_param($stmt, "sii", $name, $uid, $now);
+            $ok = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return $ok;
+        } else if($mode == "sitter") {
+            $stmt = mysqli_prepare($this->dblink, "INSERT IGNORE INTO " . TB_PREFIX . "online (name, uid, time, sit) VALUES (?, ?, ?, 1)");
+            if (!$stmt) return false;
+            mysqli_stmt_bind_param($stmt, "sii", $name, $uid, $now);
+            $ok = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return $ok;
+        } else {
+            $stmt = mysqli_prepare($this->dblink, "DELETE FROM " . TB_PREFIX . "online WHERE name = ?");
+            if (!$stmt) return false;
+            $n = $this->escape($session->username);
+            mysqli_stmt_bind_param($stmt, "s", $n);
+            $ok = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return $ok;
+        }
 	}
 
 	/**
@@ -1297,10 +1806,6 @@ public function getBestOasisCropBonus($x, $y) {
 	 * 
 	 * @param int $sector The map sector, + | -, - | + , + | +, - | - (0 and > 3, 1, 2, 3)
 	 * @param int $mode 0 if villages need be generated under certain filters, 1 if not
-	 * @param bool $respect_gametime If is false, we generate user base really anywhere
-	 * and that means we can generate farms closer to the middle of the map as well.
-	 * Otherwise we'd only generate farms at corner edges in late game, which
-	 * sucks for people in the middle who registered too soon
 	 * @param int $numberOfVillages Number of villages which need to be generated
 	 * @return array Return the generated villages 
 	 */ 
@@ -1377,9 +1882,10 @@ public function getBestOasisCropBonus($x, $y) {
             if ($count > intval(WORLD_MAX / 10)) $sector = rand(1, 4);
         }
 
+        $wids = [];
         foreach($villages as $village) $wids[] = $village['id'];
 
-        return $num_rows == 1 ? $wids[0] : $wids;
+        return $num_rows == 1 ? ($wids[0] ?? null) : $wids;
     }
 
 	function setFieldTaken($id) {
@@ -1414,7 +1920,11 @@ public function getBestOasisCropBonus($x, $y) {
 	    
 	    //Count each kid in its own array, to check how many villages must be created
 	    foreach($villageArrays as $village){
-	        if($village['wid'] == 0) $countedWids[$village['mode']][$village['kid']]++;
+	        if($village['wid'] == 0) {
+	            if (!isset($countedWids[$village['mode']])) $countedWids[$village['mode']] = [];
+	            if (!isset($countedWids[$village['mode']][$village['kid']])) $countedWids[$village['mode']][$village['kid']] = 0;
+	            $countedWids[$village['mode']][$village['kid']]++;
+	        }
 	    }
 	    
 	    //Generate the number of desired village for each kid
@@ -1422,7 +1932,7 @@ public function getBestOasisCropBonus($x, $y) {
 	    foreach($countedWids as $mode => $totalCount){
 	        foreach($totalCount as $sector => $count){
 	            $generatedWids = $this->generateBase($sector, $mode, $count);
-	            $wids[$mode] = array_merge((array)$wids[$mode], !is_array($generatedWids) ? [$generatedWids] : $generatedWids);
+	            $wids[$mode] = array_merge(($wids[$mode] ?? []), !is_array($generatedWids) ? [$generatedWids] : $generatedWids);
 	            if(empty($i[$mode])) $i[$mode] = 0;
 	        }
 	    }
@@ -1479,8 +1989,8 @@ public function getBestOasisCropBonus($x, $y) {
 	 * 
 	 * Add the buildings tables to a specified village(s), and its relative buildings
 	 * 
-	 * @param mixed $vid The village ID(s)
-	 * @param mixed $type int if there's only one village, array if there are multiple villages
+	 * @param mixed $vids The village ID(s)
+	 * @param mixed $types int if there's only one village, array if there are multiple villages
 	 * @param array $buildingsArray divided in two portion, which contains the types (unidimensional array) and the values of the
 	 *              buildings that need to be added (bidimensional array)
 	 * @return bool Return true if the query was successful, false otherwise
@@ -2685,10 +3195,10 @@ public function getBestOasisCropBonus($x, $y) {
 		return mysqli_query($this->dblink,$q);
 	}
 
-	function getVillageType2($wref) {
+    function getVillageType2($wref) {
         // retirieve form cache
-        return $this->getVillageByWorldID($wref, $use_cache)['oasistype'];
-	}
+        return $this->getVillageByWorldID($wref)['oasistype'];
+    }
 
 	// no need to cache this method
 	function checkVilExist($wref) {
@@ -3022,8 +3532,8 @@ public function getBestOasisCropBonus($x, $y) {
 			$q = "SELECT $field FROM " . TB_PREFIX . "ali_permission where username = '$ref' LIMIT 1";
 		}
 		$result = mysqli_query($this->dblink,$q);
-		//$dbarray = mysqli_fetch_array($result); - some error in here !
-		return $dbarray[$field];
+		$dbarray = mysqli_fetch_assoc($result);
+		return ($dbarray && isset($dbarray[$field])) ? $dbarray[$field] : null;
 	}
 
 	function getAlliance($id, $use_cache = true) {
@@ -3295,7 +3805,6 @@ public function getBestOasisCropBonus($x, $y) {
             self::$alliancePermissionsCache[ $uid . $aid ]['opt5'] = $opt5;
             self::$alliancePermissionsCache[ $uid . $aid ]['opt6'] = $opt6;
             self::$alliancePermissionsCache[ $uid . $aid ]['opt7'] = $opt7;
-            self::$alliancePermissionsCache[ $uid . $aid ]['opt8'] = $opt8;
         }
 
 		$q = "UPDATE " . TB_PREFIX . "ali_permission SET rank = '$rank', opt1 = '$opt1', opt2 = '$opt2', opt3 = '$opt3', opt4 = '$opt4', opt5 = '$opt5', opt6 = '$opt6', opt7 = '$opt7' where uid = $uid && alliance =$aid";
@@ -3715,7 +4224,7 @@ public function getBestOasisCropBonus($x, $y) {
          'LIMIT 1');
         $row = mysqli_fetch_array($result, MYSQLI_ASSOC);
 
-        self::$fieldLevelsInVillageSearchCache[$vid.$fieldType] = $row['level'];
+        self::$fieldLevelsInVillageSearchCache[$vid.$fieldType] = (int) ($row['level'] ?? 0);
         return self::$fieldLevelsInVillageSearchCache[$vid.$fieldType];
     }
 
@@ -4732,7 +5241,7 @@ References: User ID/Message ID, Mode
                 LEFT JOIN '.TB_PREFIX.'users u ON u.id = v.owner
             WHERE d.vref = '.$wid;
 
-	        $res = $this->mysqli_fetch_all(mysqli_query($this->dblink, $q), MYSQLI_ASSOC);
+        $res = $this->mysqli_fetch_all(mysqli_query($this->dblink, $q));
 	        foreach ($res as $key) {
 	            // if this building being demolished is an Embassy or was demolished completely
 	            // and the player is in an alliance, check and update their alliance status
@@ -4888,7 +5397,7 @@ References: User ID/Message ID, Mode
                     &&
                     // check for standing Embassies with sufficient level
                     // TODO: replace magic numbers by constants (18 = Embassy)
-                    ($this->getSingleFieldTypeCount($userData['id'], 18, '>=', $minAllianceEmbassyLevel, false, $use_cache) < $minimumExistingEmbassyRecords)
+                    ($this->getSingleFieldTypeCount($userData['id'], 18, '>=', $minAllianceEmbassyLevel, false) < $minimumExistingEmbassyRecords)
                 );
 
                 // the Embassy got damaged below a sufficient level and there are no more Embassies
@@ -5051,7 +5560,7 @@ References: User ID/Message ID, Mode
 
                                 // unset the alliance in session, if we're evicting
                                 // currently logged-in player
-                                if ($session->uid == $userData['id']) {
+                                if (isset($_SESSION['uid']) && $_SESSION['uid'] == $userData['id']) {
                                     $_SESSION['alliance_user'] = 0;
                                 }
 
@@ -5110,7 +5619,7 @@ References: User ID/Message ID, Mode
     /**
      * Modify or delete a building being constructed/in queue
      * 
-     * @param int The village ID
+     * @param int $wid The village ID
      * @param int $field The field where the building is located
      * @param array $levels The new level of the building and the old one
      * @param int $tribe The player's tribe
@@ -5372,7 +5881,7 @@ References: User ID/Message ID, Mode
 	Mode 1: Cancel
 	References: Wood/ID, Clay, Iron, Crop, Mode
 	***************************/
-	function sendResource($ref, $clay, $iron, $crop, $merchant, $mode) {
+    function sendResource($ref, $clay, $iron, $crop, $merchant, $mode) {
 	    // always prepare for multiple inserts at once
 	    if (!is_array($ref)) {
 	        $ref = [$ref];
@@ -5382,23 +5891,33 @@ References: User ID/Message ID, Mode
 	        $merchant = [$merchant];
         }
 
-        $pairs = [];
-        foreach ($ref as $index => $refValue) {
-            if(!$mode) {
-                $pairs[] = '(0, ' . (int) $refValue . ', ' . (int) $clay[$index] . ', ' . (int) $iron[$index] . ', ' . (int) $crop[$index] . ', ' . (int) $merchant[$index] . ')';
-            } else {
-                $pairs[] = (int) $refValule;
+        if(!$mode) {
+            $firstId = 0;
+            $stmt = mysqli_prepare($this->dblink, "INSERT INTO " . TB_PREFIX . "send (id, wood, clay, iron, crop, merchant) VALUES (0, ?, ?, ?, ?, ?)");
+            if (!$stmt) return false;
+            foreach ($ref as $index => $refValue) {
+                $w = (int) $ref[$index];
+                $c = (int) $clay[$index];
+                $i = (int) $iron[$index];
+                $cr = (int) $crop[$index];
+                $m = (int) $merchant[$index];
+                mysqli_stmt_bind_param($stmt, "iiiii", $w, $c, $i, $cr, $m);
+                $ok = mysqli_stmt_execute($stmt);
+                if ($ok && $firstId === 0) {
+                    $firstId = mysqli_insert_id($this->dblink);
+                }
             }
+            mysqli_stmt_close($stmt);
+            return $firstId > 0 ? $firstId : true;
+        } else {
+            $inIds = [];
+            foreach ($ref as $index => $refValue) {
+                $inIds[] = (int) $refValue;
+            }
+            if (!count($inIds)) return false;
+            $q = "DELETE FROM " . TB_PREFIX . "send WHERE id IN(" . implode(', ', $inIds) . ")";
+            return mysqli_query($this->dblink,$q);
         }
-
-		if(!$mode) {
-			$q = "INSERT INTO " . TB_PREFIX . "send VALUES ".implode(', ', $pairs);
-			mysqli_query($this->dblink,$q);
-			return mysqli_insert_id($this->dblink);
-		} else {
-			$q = "DELETE FROM " . TB_PREFIX . "send WHERE id IN(".implode(', ', $pairs).")";
-			return mysqli_query($this->dblink,$q);
-		}
 	}
 
 	/***************************
@@ -5407,27 +5926,25 @@ References: User ID/Message ID, Mode
 	Made by: Dzoki
 	***************************/
 
-	function getResourcesBack($vref, $gtype, $gamt) {
-	    list($vref, $gtype, $gamt) = $this->escape_input((int) $vref, (int) $gtype, (int) $gamt);
-
-		//Xtype (1) = wood, (2) = clay, (3) = iron, (4) = crop
-		if($gtype == 1) {
-			$q = "UPDATE " . TB_PREFIX . "vdata SET `wood` = `wood` + $gamt WHERE wref = $vref";
-			return mysqli_query($this->dblink,$q);
-		} else
-			if($gtype == 2) {
-				$q = "UPDATE " . TB_PREFIX . "vdata SET `clay` = `clay` + $gamt WHERE wref = $vref";
-				return mysqli_query($this->dblink,$q);
-			} else
-				if($gtype == 3) {
-					$q = "UPDATE " . TB_PREFIX . "vdata SET `iron` = `iron` + $gamt WHERE wref = $vref";
-					return mysqli_query($this->dblink,$q);
-				} else
-					if($gtype == 4) {
-						$q = "UPDATE " . TB_PREFIX . "vdata SET `crop` = `crop` + $gamt WHERE wref = $vref";
-						return mysqli_query($this->dblink,$q);
-					}
-	}
+    function getResourcesBack($vref, $gtype, $gamt) {
+        $vref = (int) $vref;
+        $gtype = (int) $gtype;
+        $gamt = (int) $gamt;
+        if($gtype == 1) {
+            $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "vdata SET wood = wood + ? WHERE wref = ?");
+        } elseif($gtype == 2) {
+            $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "vdata SET clay = clay + ? WHERE wref = ?");
+        } elseif($gtype == 3) {
+            $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "vdata SET iron = iron + ? WHERE wref = ?");
+        } else {
+            $stmt = mysqli_prepare($this->dblink, "UPDATE " . TB_PREFIX . "vdata SET crop = crop + ? WHERE wref = ?");
+        }
+        if (!$stmt) return false;
+        mysqli_stmt_bind_param($stmt, "ii", $gamt, $vref);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return (bool)$ok;
+    }
 
 	/***************************
 	Function to get info about offered resources
@@ -5444,9 +5961,18 @@ References: User ID/Message ID, Mode
             return $cachedValue;
         }
 
-		$q = "SELECT * FROM " . TB_PREFIX . "market WHERE id = $id AND vref = $vref";
-		$result = mysqli_query($this->dblink,$q);
-		$dbarray = mysqli_fetch_array($result);
+        $stmt = mysqli_prepare($this->dblink, "SELECT * FROM " . TB_PREFIX . "market WHERE id = ? AND vref = ? LIMIT 1");
+        if (!$stmt) {
+            self::$marketFieldCache[$vref.$field] = null;
+            return self::$marketFieldCache[$vref.$field];
+        }
+        $id = (int) $id;
+        $vref = (int) $vref;
+        mysqli_stmt_bind_param($stmt, "ii", $id, $vref);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $dbarray = $res ? mysqli_fetch_array($res) : null;
+        mysqli_stmt_close($stmt);
 
         self::$marketFieldCache[$vref.$field] = $dbarray[$field];
         return self::$marketFieldCache[$vref.$field];
@@ -5455,9 +5981,12 @@ References: User ID/Message ID, Mode
 	function removeAcceptedOffer($id) {
 	    list($id) = $this->escape_input((int) $id);
 
-		$q = "DELETE FROM " . TB_PREFIX . "market where id = $id";
-		$result = mysqli_query($this->dblink,$q);
-		return mysqli_fetch_assoc($result);
+        $stmt = mysqli_prepare($this->dblink, "DELETE FROM " . TB_PREFIX . "market WHERE id = ?");
+        if (!$stmt) return false;
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return (bool)$ok;
 	}
 
    /**
@@ -5468,49 +5997,73 @@ References: User ID/Message ID, Mode
 	* References: Village, Give, Amt, Want, Amt, Time, Alliance, Mode
 	*/
 	
-	function addMarket($vid, $gtype, $gamt, $wtype, $wamt, $time, $alliance, $merchant, $mode) {
-	    list($vid, $gtype, $gamt, $wtype, $wamt, $time, $alliance, $merchant, $mode) = $this->escape_input((int) $vid, (int) $gtype, (int) $gamt, (int) $wtype, (int) $wamt, (int) $time, (int) $alliance, (int) $merchant, $mode);
-
-		if(!$mode) {
-			$q = "INSERT INTO " . TB_PREFIX . "market values (0,$vid,$gtype,$gamt,$wtype,$wamt,0,$time,$alliance,$merchant)";
-			mysqli_query($this->dblink,$q);
-			return mysqli_insert_id($this->dblink);
-		} else {
-			$q = "DELETE FROM " . TB_PREFIX . "market where id = $gtype and vref = $vid";
-			return mysqli_query($this->dblink,$q);
-		}
-	}
+    function addMarket($vid, $gtype, $gamt, $wtype, $wamt, $time, $alliance, $merchant, $mode) {
+        $vid = (int) $vid;
+        $gtype = (int) $gtype;
+        $gamt = (int) $gamt;
+        $wtype = (int) $wtype;
+        $wamt = (int) $wamt;
+        $time = (int) $time;
+        $alliance = (int) $alliance;
+        $merchant = (int) $merchant;
+        if(!$mode) {
+            $stmt = mysqli_prepare($this->dblink, "INSERT INTO " . TB_PREFIX . "market (id, vref, gtype, gamt, wtype, wamt, accept, maxtime, alliance, merchant) VALUES (0, ?, ?, ?, ?, ?, 0, ?, ?, ?)");
+            if (!$stmt) return false;
+            mysqli_stmt_bind_param($stmt, "iiiiiiii", $vid, $gtype, $gamt, $wtype, $wamt, $time, $alliance, $merchant);
+            $ok = mysqli_stmt_execute($stmt);
+            $id = $ok ? mysqli_insert_id($this->dblink) : 0;
+            mysqli_stmt_close($stmt);
+            return $ok ? $id : false;
+        } else {
+            $stmt = mysqli_prepare($this->dblink, "DELETE FROM " . TB_PREFIX . "market WHERE id = ? AND vref = ?");
+            if (!$stmt) return false;
+            mysqli_stmt_bind_param($stmt, "ii", $gtype, $vid);
+            $ok = mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            return (bool)$ok;
+        }
+    }
 
 	/***************************
 	Function to get market offer
 	References: Village, Mode
 	***************************/
     // no need to cache this method
-	function getMarket($vid, $mode) {
-	    list($vid, $mode) = $this->escape_input((int) $vid, $mode);
-
-	    $alliance = (int) $this->getUserField($this->getVillageField($vid, "owner"), "alliance", 0);
-		if(!$mode) {
-			$q = "SELECT * FROM " . TB_PREFIX . "market where vref = $vid and accept = 0";
-		} else {
-			$q = "SELECT * FROM " . TB_PREFIX . "market where vref != $vid and alliance = $alliance or vref != $vid and alliance = 0 and accept = 0";
-		}
-		$result = mysqli_query($this->dblink,$q);
-		return $this->mysqli_fetch_all($result);
-	}
+    function getMarket($vid, $mode) {
+        $vid = (int) $vid;
+        $alliance = (int) $this->getUserField($this->getVillageField($vid, "owner"), "alliance", 0);
+        if(!$mode) {
+            $stmt = mysqli_prepare($this->dblink, "SELECT * FROM " . TB_PREFIX . "market WHERE vref = ? AND accept = 0");
+            if (!$stmt) return [];
+            mysqli_stmt_bind_param($stmt, "i", $vid);
+        } else {
+            $stmt = mysqli_prepare($this->dblink, "SELECT * FROM " . TB_PREFIX . "market WHERE vref != ? AND accept = 0 AND (alliance = ? OR alliance = 0)");
+            if (!$stmt) return [];
+            mysqli_stmt_bind_param($stmt, "ii", $vid, $alliance);
+        }
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $rows = $this->mysqli_fetch_all($res);
+        mysqli_stmt_close($stmt);
+        return $rows;
+    }
 
 	/***************************
 	Function to get market offer
 	References: ID
 	***************************/
     // no need to cache this method
-	function getMarketInfo($id) {
-	    list($id) = $this->escape_input((int) $id);
-
-		$q = "SELECT * FROM " . TB_PREFIX . "market where id = $id";
-		$result = mysqli_query($this->dblink,$q);
-		return mysqli_fetch_assoc($result);
-	}
+    function getMarketInfo($id) {
+        $id = (int) $id;
+        $stmt = mysqli_prepare($this->dblink, "SELECT * FROM " . TB_PREFIX . "market WHERE id = ? LIMIT 1");
+        if (!$stmt) return [];
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $row = $res ? mysqli_fetch_assoc($res) : [];
+        mysqli_stmt_close($stmt);
+        return $row;
+    }
 
 	function setMovementProc($moveid) {
         if (!Math::isInt($moveid)) {
@@ -5633,7 +6186,7 @@ References: User ID/Message ID, Mode
 				return [];
 		}
 
-		$result = $this->mysqli_fetch_all(mysqli_query($this->dblink,$q));
+		$result = $this->query_return($q);
 
         // return a single value
         if (!$array_passed) {
@@ -5874,11 +6427,12 @@ References: User ID/Message ID, Mode
 	 */
 	
 	function addUnits($vid, $troopsArray = null) {
-	    list($vid, $type, $values) = $this->escape_input($vid, $type, $values);
+	    list($vid, $troopsArray) = $this->escape_input($vid, $troopsArray);
 	    
-        if(empty($vid)) return;
+        if(empty($vid)) return false;
 	    if (!is_array($vid)) $vid = [$vid];
-	    $types = $values = "";
+	    $types = "";
+	    $values = "";
 	    
 	    if($troopsArray != null){
 	        $types = $troopsArray[0];
@@ -6351,7 +6905,7 @@ References: User ID/Message ID, Mode
         }
 
 		$q = "SELECT * FROM " . TB_PREFIX . "enforcement WHERE ".implode(' OR ', $pairs);
-		$result = $this->mysqli_fetch_all(mysqli_query($this->dblink,$q));
+		$result = $this->query_return($q);
 
         // return a single value
         if (!$array_passed) {
@@ -6425,7 +6979,7 @@ References: User ID/Message ID, Mode
         } else if ($mode == 3) {
             $q = "SELECT e.*,o.conqured,o.wref,o.high, o.owner as ownero, v.owner as ownerv FROM ".TB_PREFIX."enforcement as e LEFT JOIN ".TB_PREFIX."odata as o ON e.vref=o.wref LEFT JOIN ".TB_PREFIX."vdata as v ON e.from=v.wref where o.conqured IN(".implode(', ', $ref).") AND o.owner=v.owner";
         }
-        $result = $this->mysqli_fetch_all(mysqli_query($this->dblink,$q));
+        $result = $this->query_return($q);
 
         // return a single value
         if (!$array_passed) {
@@ -6904,7 +7458,7 @@ References: User ID/Message ID, Mode
 
 	function Getowner($vid) {
         // return from cache
-        return $this->getVillage($vid, 0, $use_cache)['owner'];
+        return $this->getVillage($vid, 0)['owner'];
 	}
 
 	/**
@@ -7034,10 +7588,10 @@ References: User ID/Message ID, Mode
 			}
 
 			// Session-level speed knobs (local to this connection)
-			@mysqli_query($this->dblink, "SET innodb_flush_log_at_trx_commit=2");
-			@mysqli_query($this->dblink, "SET sync_binlog=0");
-			@mysqli_query($this->dblink, "SET unique_checks=0");
-			@mysqli_query($this->dblink, "SET foreign_key_checks=0");
+			try { mysqli_query($this->dblink, "SET innodb_flush_log_at_trx_commit=2"); } catch (\mysqli_sql_exception $e) {}
+			try { mysqli_query($this->dblink, "SET sync_binlog=0"); } catch (\mysqli_sql_exception $e) {}
+			try { mysqli_query($this->dblink, "SET unique_checks=0"); } catch (\mysqli_sql_exception $e) {}
+			try { mysqli_query($this->dblink, "SET foreign_key_checks=0"); } catch (\mysqli_sql_exception $e) {}
 
 			// Read big windows; write in safe slices to avoid max_allowed_packet
 			if ($batch < 1000)   $batch = 1000;
@@ -7493,18 +8047,20 @@ References: User ID/Message ID, Mode
 		$time = time();
 		$q = "UPDATE " . TB_PREFIX . "artefacts SET vref = $vref, owner = $id, conquered = $time, active = 0 WHERE vref = $ovref";
 		
-		if(mysqli_query($this->dblink, $q))
-		{ 
-		    $artifactID = reset($this->getOwnArtefactInfo($vref, false))['id'];
-		    return $this->addArtifactsChronology($artifactID, $id, $vref, $time);
-		}
+        if(mysqli_query($this->dblink, $q))
+        { 
+            $artefactsInfo = $this->getOwnArtefactInfo($vref, false);
+            $firstRecord   = reset($artefactsInfo);
+            $artifactID    = $firstRecord['id'];
+            return $this->addArtifactsChronology($artifactID, $id, $vref, $time);
+        }
 		else return false;
 	}
 	
 	/**
 	 * Retrieves the chronology of one specific artifact
 	 * 
-	 * @param int $artefactid The id of the artifact
+	 * @param int $artifactID The id of the artifact
 	 * @return array Returns the chronology for the passed artifact
 	 */
 	
@@ -7519,8 +8075,10 @@ References: User ID/Message ID, Mode
 	/**
 	 * Stores when an artifact was conquered and who had conquered it
 	 * 
-	 * @param int $artefactid The id of the artifact
+	 * @param int $artifactID The id of the artifact
+	 * @param int $uid The id of the user who conquered the artifact
 	 * @param int $vref The vref of the village that has conquered the artifact
+	 * @param int $conqueredTime The game time when it was conquered
 	 * @return bool Return true if the query was successful, false otherwise
 	 */
 	
@@ -7532,8 +8090,8 @@ References: User ID/Message ID, Mode
 	}
 	
 	/**
-	 * @param mixed $size The integer/array which contains the artifacts size(s)
-	 * @return int Returns if there are at least one not deleted artifact
+     * @param mixed $size The integer/array which contains the artifacts size(s)
+     * @return array Returns the list of not deleted artifacts
 	 */
 	
 	function getArtifactsBysize($size){
@@ -7547,8 +8105,8 @@ References: User ID/Message ID, Mode
 	}
 	
 	/**
-	 * @param bool $mode true: check if WW Building plans are already out, false: check if artifacts are already out
-	 * @return int Returns if artifacts are already out or not
+     * @param bool $mode true: check if WW Building plans are already out, false: check if artifacts are already out
+     * @return array|null Returns an array if artifacts are already out, null otherwise
 	 */
 	
 	function areArtifactsSpawned($mode = false){
@@ -7563,7 +8121,7 @@ References: User ID/Message ID, Mode
 	/**
 	 * Check if WW villages are already out or not
 	 *
-	 * @return int Returns if artifacts are already out or not
+     * @return array|null Returns an array if WW villages are already out, null otherwise
 	 */
 	
 	function areWWVillagesSpawned(){
@@ -7573,9 +8131,9 @@ References: User ID/Message ID, Mode
 	}
 	
 	/**
-	 * Get all inactive artifacts which can be activated
-	 * 
-	 * @return bool Returns all inactive artifacts
+     * Get all inactive artifacts which can be activated
+     * 
+     * @return array Returns all inactive artifacts
 	 */
 	
 	function getInactiveArtifacts($time){
@@ -7836,22 +8394,46 @@ References: User ID/Message ID, Mode
 	}
 
 	function addPassword($uid, $npw, $cpw) {
-	    list($uid, $npw, $cpw) = $this->escape_input((int) $uid, $npw, $cpw);
-		$q = "REPLACE INTO `" . TB_PREFIX . "password`(uid, npw, cpw) VALUES ($uid, '$npw', '$cpw')";
-		mysqli_query($this->dblink,$q);
+	    $stmt = mysqli_prepare(
+            $this->dblink,
+            "REPLACE INTO `" . TB_PREFIX . "password`(uid, npw, cpw) VALUES (?, ?, ?)"
+        );
+        if ($stmt) {
+            $uid = (int) $uid;
+            mysqli_stmt_bind_param($stmt, "iss", $uid, $npw, $cpw);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+        }
 	}
 
 	function resetPassword($uid, $cpw) {
-	    list($uid, $cpw) = $this->escape_input((int) $uid, $cpw);
-		$q = "SELECT npw FROM `" . TB_PREFIX . "password` WHERE uid = $uid AND cpw = '$cpw' AND used = 0 LIMIT 1";
-		$result = mysqli_query($this->dblink,$q);
-		$dbarray = mysqli_fetch_array($result);
+	    $uid = (int) $uid;
+	    $npw = null;
+	    $stmt = mysqli_prepare(
+            $this->dblink,
+            "SELECT npw FROM `" . TB_PREFIX . "password` WHERE uid = ? AND cpw = ? AND used = 0 LIMIT 1"
+        );
+        if (!$stmt) {
+            return false;
+        }
+        mysqli_stmt_bind_param($stmt, "is", $uid, $cpw);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $npw);
+        $found = mysqli_stmt_fetch($stmt);
+        mysqli_stmt_close($stmt);
 
-		if(!empty($dbarray)) {
-		    if(!$this->updateUserField($uid, 'password', password_hash($dbarray['npw'], PASSWORD_BCRYPT,['cost' => 12]), 1)) return false;
-			$q = "UPDATE `" . TB_PREFIX . "password` SET used = 1 WHERE uid = $uid AND cpw = '$cpw' AND used = 0";
-			mysqli_query($this->dblink,$q);
-			return true;
+		if($found && is_string($npw) && $npw !== '') {
+		    if(!$this->updateUserField($uid, 'password', trz_password_hash($npw), 1)) return false;
+		    $u = mysqli_prepare(
+                $this->dblink,
+                "UPDATE `" . TB_PREFIX . "password` SET used = 1 WHERE uid = ? AND cpw = ? AND used = 0"
+            );
+            if ($u) {
+                mysqli_stmt_bind_param($u, "is", $uid, $cpw);
+                mysqli_stmt_execute($u);
+                mysqli_stmt_close($u);
+            }
+            return true;
 		}
 
 		return false;
@@ -7974,7 +8556,7 @@ References: User ID/Message ID, Mode
 
     // no need to cache this method
 	function getAttackCasualties($time) {
-        list($time) = $this->escape_input($time);
+        list($time) = $this->escape_input((int) $time);
 
 		$q = "SELECT time, casualties FROM " . TB_PREFIX . "general where shown = 1";
 		$result = $this->query_return($q);
@@ -8063,8 +8645,8 @@ References: User ID/Message ID, Mode
      * Used to modify prisoners through the inserted id
      * 
      * @param int $id The prisoner id where prisoners are in the database
-     * @param int $unit The type of the unit
-     * @param int $amount The amount of the unit you want to sum/subtract
+     * @param int|array $units The unit type(s) to sum/subtract (e.g. 1..11)
+     * @param int|array $amount The amount(s) of units to sum/subtract
      * @param int $mode 0 for subtracting the inserted amount, 1 for adding it
      * @return bool Returns false on failure and true on success 
      */
@@ -8145,11 +8727,10 @@ References: User ID/Message ID, Mode
             self::$prisonersCache[$wid[0].$mode] = (count($result) ? [$result] : []);
         } else {
             if ($result && count($result)) {
-                if (!isset(self::$prisonersCache[$record[($mode ? 'from' : 'wref')].$mode])) {
-                    self::$prisonersCache[$record[($mode ? 'from' : 'wref' )].$mode] = [];
-                }
-
                 foreach ($result as $record) {
+                    if (!isset(self::$prisonersCache[$record[($mode ? 'from' : 'wref')].$mode])) {
+                        self::$prisonersCache[$record[($mode ? 'from' : 'wref')].$mode] = [];
+                    }
                     self::$prisonersCache[$record[($mode ? 'from' : 'wref')].$mode][] = $record;
                 }
             }
@@ -8210,8 +8791,8 @@ References: User ID/Message ID, Mode
 	    $q = "SELECT * FROM " . TB_PREFIX . "prisoners where " . TB_PREFIX . "prisoners.from = $from";
 	    $result = mysqli_query($this->dblink,$q);
 	    
-	    self::$prisonersCacheByVillageAndFromIDs[$wid.$from] = $this->mysqli_fetch_all($result);
-	    return self::$prisonersCacheByVillageAndFromIDs[$from];
+        self::$prisonersCacheByVillageAndFromIDs[$from] = $this->mysqli_fetch_all($result);
+        return self::$prisonersCacheByVillageAndFromIDs[$from];
 	}
 
 	function deletePrisoners($id) {
@@ -8426,17 +9007,48 @@ References: User ID/Message ID, Mode
 
 // database is not needed if we're displaying static pages
 $req_file = basename($_SERVER['PHP_SELF']);
-if (!in_array($req_file, ['tutorial.php', 'anleitung.php'])) {
+$skipDbConnect = false;
+if (defined('TRAVIANZ_SKIP_DB_CONNECT') && constant('TRAVIANZ_SKIP_DB_CONNECT')) {
+    $skipDbConnect = true;
+} else {
+    $envSkip = getenv('TRAVIANZ_SKIP_DB_CONNECT');
+    if (is_string($envSkip)) {
+        $envSkip = strtolower(trim($envSkip));
+        $skipDbConnect = in_array($envSkip, ['1', 'true', 'yes', 'on'], true);
+    }
+}
+
+if (!$skipDbConnect && !in_array($req_file, ['tutorial.php', 'anleitung.php'])) {
     $database = new MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, (defined('SQL_PORT') ? SQL_PORT : 3306));
-    $link = $database->return_link();
     $GLOBALS['db'] = $database;
-    $GLOBALS['link'] = $database->return_link();
+
+    if (!function_exists('db_query')) {
+        function db_query($query) {
+            global $database;
+            return $database->query($query);
+        }
+    }
+
+    if (!function_exists('db_query_return')) {
+        function db_query_return($query) {
+            global $database;
+            return $database->query_return($query);
+        }
+    }
+
+    if (!function_exists('db_query_new')) {
+        function db_query_new($statement, ...$params) {
+            global $database;
+            return $database->query_new($statement, ...$params);
+        }
+    }
 
     // register all functions to be executed when the script is over,
     // so we can flush any SQL caches we may still have pending
     register_shutdown_function(function() {
         global $database;
         $database->sendPendingMessages();
+        $database->flushQueryProfile();
     });
 }
 ?>

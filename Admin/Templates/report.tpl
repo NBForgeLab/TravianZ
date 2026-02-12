@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       report.tpl                                                     ##
-##  Developed by:  Armando                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 include_once("../GameEngine/Generator.php");
 include_once("../GameEngine/Technology.php");
 include_once("../GameEngine/Message.php");
@@ -15,9 +6,8 @@ include_once("../GameEngine/Message.php");
 if ($_GET['bid']) $rep = $database->getNotice2($_GET['bid']);
 else
 {
-	$sql = "SELECT * FROM " . TB_PREFIX . "ndata ORDER BY time DESC ";
-	$result = mysqli_query($GLOBALS["link"], $sql);
-	$rep1 = $database->mysqli_fetch_all($result);
+	$sql = "SELECT * FROM " . TB_PREFIX . "ndata ORDER BY time DESC";
+	$rep1 = $database->query_return($sql);
 }
 
 if($rep1)

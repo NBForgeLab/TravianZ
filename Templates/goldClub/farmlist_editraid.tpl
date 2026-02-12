@@ -85,10 +85,10 @@ $lid2 = $getlid['lid'];
 				<tbody><tr>
 					<th>List name:</th><?php echo $_GET["lid"]; ?>
 					<td>
-						<select onchange="getTargetsByLid();" id="lid" name="lid">
+						<select id="lid" name="lid">
 <?php
-$sql = mysqli_query($database->dblink,"SELECT id, name, owner, wref FROM ".TB_PREFIX."farmlist WHERE owner = ".(int) $session->uid." ORDER BY name ASC");
-while($row = mysqli_fetch_array($sql)){ 
+$rows = $database->query_return("SELECT id, name, owner, wref FROM ".TB_PREFIX."farmlist WHERE owner = ".(int)$session->uid." ORDER BY name ASC");
+foreach ($rows as $row){ 
 $lid = $row["id"];
 $lname = $row["name"];
 $lvname = $database->getVillageField($row["wref"], 'name');
@@ -124,7 +124,7 @@ $lvname = $database->getVillageField($row["wref"], 'name');
 $getwref = "SELECT movement.to, movement.ref, attacks.* FROM ".TB_PREFIX."movement as movement INNER JOIN ".TB_PREFIX."attacks as attacks ON attacks.id = movement.ref WHERE attacks.attack_type = 4 AND movement.proc = 1 AND movement.from = ".$village->wid;
 $arraywref = $database->query_return($getwref);
 echo '<option value="">Select village</option>';
-if(mysqli_num_rows(mysqli_query($database->dblink, $getwref)) != 0){
+if(is_array($arraywref) && count($arraywref) != 0){
 	foreach($arraywref as $row){
 		$towref = $row["to"];
 		$vilInfo = $database->getVillageByWorldID($towref);
@@ -153,6 +153,6 @@ if(mysqli_num_rows(mysqli_query($database->dblink, $getwref)) != 0){
 
 <br />		
 <button type="submit" value="save" name="save" id="save" class="trav_buttons">Save</button>&nbsp;
-<button type="button" value="delete" name="delete" id="delete" class="trav_buttons" onclick="window.location.href = '?gid=16&t=99&action=deleteSlot&eid=<?php echo $_GET["eid"]; ?>&lid=<?php echo $eiddata['lid']; ?>';">Delete</button>
+<button type="button" value="delete" name="delete" id="delete" class="trav_buttons" data-navigate="?gid=16&t=99&action=deleteSlot&eid=<?php echo $_GET["eid"]; ?>&lid=<?php echo $eiddata['lid']; ?>">Delete</button>
 </form>
 </div>

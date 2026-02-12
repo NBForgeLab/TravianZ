@@ -1,0 +1,28 @@
+includes:
+  - phpstan-legacy-baseline.neon
+
+parameters:
+  level: 3
+  paths:
+    - GameEngine/Database.php
+    - GameEngine/config.php
+    - GameEngine/Form.php
+    - GameEngine/functions.php
+    - GameEngine/Generator.php
+    - GameEngine/Logging.php
+    - GameEngine/Multisort.php
+    - GameEngine/Security.php
+    - GameEngine/Data/resdata.php
+    - GameEngine/Data/unitdata.php
+    - GameEngine/Data/buidata.php
+    - GameEngine/Data/cp.php
+    - GameEngine/Data/cel.php
+    - GameEngine/Data/hero_full.php
+    - GameEngine/Lang/en.php
+    - GameEngine/Lang/it.php
+    - GameEngine/Lang/zh_tw.php
+  scanFiles:
+    - GameEngine/Automation.php
+  bootstrapFiles:
+    - tools/phpstan-bootstrap.php
+  reportUnmatchedIgnoredErrors: true

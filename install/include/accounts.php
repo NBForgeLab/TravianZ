@@ -1,13 +1,18 @@
 <?php
+		$t = isset($_GET['t']) ? (int) $_GET['t'] : 1;
+		$t = max(1, min(12, $t));
+		$rtl = isset($_GET['rtl']) && $_GET['rtl'] === '1';
+		$rtlParam = $rtl ? '&rtl=1' : '';
+
         // verify form
         if (empty($_POST['mhpw']) || empty($_POST['spw'])) {
-            header("Location: ../index.php?s=4&err=1");
+            header("Location: ../index.php?s=4&t=" . $t . $rtlParam . "&err=1");
             exit;
         }
 
         // don't allow creating Natars user
         if (!empty($_POST['aname']) && strtolower($_POST['aname']) == 'natars') {
-            header("Location: ../index.php?s=4&err=2");
+            header("Location: ../index.php?s=4&t=" . $t . $rtlParam . "&err=2");
             exit;
         }
 
@@ -16,11 +21,11 @@
 
 		$gameinstall = 1;
 
-		$configFile = "../../GameEngine/config.php";
+		$configFile = __DIR__ . "/../../GameEngine/config.php";
 		include_once($configFile);
-		include_once("../../GameEngine/Database.php");
-		include_once("../../GameEngine/Admin/database.php");
-		include_once("../../GameEngine/Lang/" . LANG . ".php");
+		include_once(__DIR__ . "/../../GameEngine/Database.php");
+		include_once(__DIR__ . "/../../GameEngine/Admin/database.php");
+		include_once(__DIR__ . "/../../GameEngine/Lang/" . LANG . ".php");
 
 		// update Admin details first
 		$gameConfig = file_get_contents($configFile);
@@ -40,7 +45,7 @@
 		$gameConfig = preg_replace(array_keys($regexFindReplace), array_values($regexFindReplace), $gameConfig);
 		file_put_contents($configFile, $gameConfig);
 
-		// create Admin user, if details were provided and was not created yet
+        // create Admin user, if details were provided and was not created yet
 		if (
 		    !empty($_POST['aname']) &&
 		    !empty($_POST['aemail']) &&
@@ -49,8 +54,13 @@
 		    strtolower($_POST['aname']) != 'multihunter' &&
 		    strtolower($_POST['aname']) != 'support'
 		) {
-		    mysqli_query($database->dblink, "INSERT INTO " . TB_PREFIX . "users SET username = '".$database->escape($_POST['aname'])."', password = '" . password_hash($_POST['apass'], PASSWORD_BCRYPT, ['cost' => 12]) . "', email = '".$database->escape($_POST['aemail'])."', tribe = ".(int) $_POST['atribe'].", access = 9, is_bcrypt = 1") OR DIE (mysqli_error($database->dblink));
-		    $uid = mysqli_insert_id($database->dblink);
+            $aname = $database->escape($_POST['aname']);
+            $aemail = $database->escape($_POST['aemail']);
+            $apassHash = trz_password_hash($_POST['apass']);
+            $atribe = (int) $_POST['atribe'];
+            $database->query("INSERT INTO " . TB_PREFIX . "users SET username = '".$aname."', password = '" . $database->escape($apassHash) . "', email = '".$aemail."', tribe = ".$atribe.", access = 9, is_bcrypt = 1");
+            $uidRows = $database->query_return("SELECT id FROM " . TB_PREFIX . "users WHERE username = '".$aname."' ORDER BY id DESC LIMIT 1");
+            $uid = isset($uidRows[0]['id']) ? (int)$uidRows[0]['id'] : 0;
 		    $admin_village_created = false;
 		    $xcoor = round(WORLD_MAX / 2);
             $addUnitsWrefs = [];
@@ -76,9 +86,9 @@
             $database->addABTech($addABTechWrefs);
 		}
 
-		// set up MultiHunter
+        // set up MultiHunter
 		$password = $_POST['mhpw'];
-		mysqli_query($database->dblink, "UPDATE " . TB_PREFIX . "users SET password = '" . password_hash($password, PASSWORD_BCRYPT,['cost' => 12]) . "' WHERE username = 'Multihunter'");
+        $database->query("UPDATE " . TB_PREFIX . "users SET password = '" . $database->escape(trz_password_hash($password)) . "' WHERE username = 'Multihunter'");
 		$wid = $admin->getWref(0, 0);
 		$uid = 5;
 		$status = $database->getVillageState($wid);
@@ -91,11 +101,11 @@
 			$database->addABTech($wid);
 		}
 
-		// set up Support
+        // set up Support
 	    $password = $_POST['spw'];
-	    mysqli_query($database->dblink, "UPDATE " . TB_PREFIX . "users SET password = '" . password_hash($password, PASSWORD_BCRYPT,['cost' => 12]) . "' WHERE username = 'Support'");
+        $database->query("UPDATE " . TB_PREFIX . "users SET password = '" . $database->escape(trz_password_hash($password)) . "' WHERE username = 'Support'");
 
         $gameinstall = 0;
-		header("Location: ../index.php?s=5");
+		header("Location: ../index.php?s=5&t=" . $t . $rtlParam);
 
 ?>

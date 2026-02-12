@@ -16,9 +16,9 @@ if(isset($id))
 		</thead>
 		<tbody>
 			<?php
-				$sql = "SELECT * FROM ".TB_PREFIX."illegal_log WHERE user = $id";
-				$result = mysqli_query($GLOBALS["link"], $sql);
-				while($row = mysqli_fetch_assoc($result))
+				$sql = "SELECT * FROM ".TB_PREFIX."illegal_log WHERE user = ".(int)$id;
+				$result = $database->query_return($sql);
+				foreach ($result as $row)
 				{
 					$i++;
 					echo '

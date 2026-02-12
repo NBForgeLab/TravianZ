@@ -50,19 +50,19 @@ if(!empty($forumData['display_to_users'])) $users = explode(',', $forumData['dis
 			newTD1.className = 'ally';
 			newTD2.className = 'tag';
 			newTD3.className = 'ad';
-			newTD1.innerHTML = html_input_1 + 'id="allys_by_id_'+num_fields+'" class="text" maxlength="8" name="allys_by_id['+num_fields+']" onkeyup="checkInputs('+num_fields+',\'allys\')">';
-			newTD2.innerHTML = html_input_1 + 'id="allys_by_name_'+num_fields+'" class="text" maxlength="8" name="allys_by_name['+num_fields+']" onkeyup="checkInputs('+num_fields+',\'allys\')">';
+			newTD1.innerHTML = html_input_1 + 'id="allys_by_id_'+num_fields+'" class="text" maxlength="8" name="allys_by_id['+num_fields+']">';
+			newTD2.innerHTML = html_input_1 + 'id="allys_by_name_'+num_fields+'" class="text" maxlength="8" name="allys_by_name['+num_fields+']">';
 		}
 
 		if(element_id == 'user_list') {
 			newTD1.className = 'id';
 			newTD2.className = 'pla';
 			newTD3.className = 'ad';
-			newTD1.innerHTML = html_input_1 + 'id="users_by_id_'+num_fields+'" class="text" maxlength="8" name="users_by_id['+num_fields+']" onkeyup="checkInputs('+num_fields+',\'users\')">';
-			newTD2.innerHTML = html_input_1 + 'id="users_by_name_'+num_fields+'" class="text" maxlength="15" name="users_by_name['+num_fields+']" onkeyup="checkInputs('+num_fields+',\'users\')">';
+			newTD1.innerHTML = html_input_1 + 'id="users_by_id_'+num_fields+'" class="text" maxlength="8" name="users_by_id['+num_fields+']">';
+			newTD2.innerHTML = html_input_1 + 'id="users_by_name_'+num_fields+'" class="text" maxlength="15" name="users_by_name['+num_fields+']">';
 		}
 
-		newTD3.innerHTML = '<img class="add" src="img/x.gif" title="add" alt="add" onclick="addRow(\''+element_id+'\')">';
+		newTD3.innerHTML = '<img class="add" src="img/x.gif" title="add" alt="add">';
     }
 
 </script>
@@ -131,23 +131,23 @@ if(!empty($forumData['display_to_users'])) $users = explode(',', $forumData['dis
 	<?php for($i = 0; $i < count($alliances); $i++){?>
 	<tr>
 		<td class="ally">
-			<input class="text" type="text" id="allys_by_id_<?php echo $i; ?>" disabled="disabled" maxlength="15" name="allys_by_id[<?php echo $i; ?>]" onkeyup="checkInputs(<?php echo $i; ?>,'allys');" />
+			<input class="text" type="text" id="allys_by_id_<?php echo $i; ?>" disabled="disabled" maxlength="15" name="allys_by_id[<?php echo $i; ?>]" />
 		</td>
 		<td class="tag">
-			<input class="text" type="text" id="allys_by_name_<?php echo $i; ?>" value="<?php echo $database->getAlliance($alliances[$i])['tag']; ?>" maxlength="15" name="allys_by_name[<?php echo $i; ?>]" onkeyup="checkInputs(<?php echo $i; ?>,'allys');" />
+			<input class="text" type="text" id="allys_by_name_<?php echo $i; ?>" value="<?php echo $database->getAlliance($alliances[$i])['tag']; ?>" maxlength="15" name="allys_by_name[<?php echo $i; ?>]" />
 		</td>
 		<td class="ad"></td>
 	</tr>
 	<?php } ?>
 	<tr>
 		<td class="ally">
-			<input class="text" type="text" id="allys_by_id_<?php echo $i; ?>" name="allys_by_id[<?php echo $i; ?>]" maxlength="15" onkeyup="checkInputs(<?php echo $i; ?>,'allys');" />
+			<input class="text" type="text" id="allys_by_id_<?php echo $i; ?>" name="allys_by_id[<?php echo $i; ?>]" maxlength="15" />
 		</td>
 		<td class="tag">
-			<input class="text" type="text" id="allys_by_name_<?php echo $i; ?>" name="allys_by_name[<?php echo $i; ?>]" maxlength="15" onkeyup="checkInputs(<?php echo $i; ?>,'allys');" />
+			<input class="text" type="text" id="allys_by_name_<?php echo $i; ?>" name="allys_by_name[<?php echo $i; ?>]" maxlength="15" />
 		</td>
 		<td class="ad">
-			<img class="add" src="img/x.gif" title="add" alt="add" onclick="addRow('ally_list')" />
+			<img class="add" src="img/x.gif" title="add" alt="add" />
 		</td>
 	</tr>
 </table><table cellpadding="1" cellspacing="1" id="user_list"><thead>
@@ -163,25 +163,25 @@ if(!empty($forumData['display_to_users'])) $users = explode(',', $forumData['dis
 	<?php for($i = 0; $i < count($users); $i++){?>
 	<tr>
 		<td class="id">
-			<input class="text" type="text" id="users_by_id_<?php echo $i; ?>" disabled="disabled" name="users_by_id[<?php echo $i; ?>]" maxlength="15" onkeyup="checkInputs(<?php echo $i; ?>,'users');" />
+			<input class="text" type="text" id="users_by_id_<?php echo $i; ?>" disabled="disabled" name="users_by_id[<?php echo $i; ?>]" maxlength="15" />
 		</td>
 
 		<td class="pla">
-			<input class="text" type="text" id="users_by_name_<?php echo $i; ?>" value="<?php echo $database->getUserField($users[$i], 'username', 0); ?>" name="users_by_name[<?php echo $i; ?>]" maxlength="50" onkeyup="checkInputs(<?php echo $i; ?>,'users');" />
+			<input class="text" type="text" id="users_by_name_<?php echo $i; ?>" value="<?php echo $database->getUserField($users[$i], 'username', 0); ?>" name="users_by_name[<?php echo $i; ?>]" maxlength="50" />
 		</td>
 		<td class="ad"></td>
 	</tr>
 	<?php } ?>
 	<tr>
 		<td class="id">
-			<input class="text" type="text" id="users_by_id_<?php echo $i; ?>" maxlength="15" name="users_by_id[<?php echo $i; ?>]" onkeyup="checkInputs(<?php echo $i; ?>,'users');" />
+			<input class="text" type="text" id="users_by_id_<?php echo $i; ?>" maxlength="15" name="users_by_id[<?php echo $i; ?>]" />
 		</td>
 
 		<td class="pla">
-			<input class="text" type="text" id="users_by_name_<?php echo $i; ?>" maxlength="50" name="users_by_name[<?php echo $i; ?>]" onkeyup="checkInputs(<?php echo $i; ?>,'users');" />
+			<input class="text" type="text" id="users_by_name_<?php echo $i; ?>" maxlength="50" name="users_by_name[<?php echo $i; ?>]" />
 		</td>
 		<td class="ad">
-			<img class="add" src="img/x.gif" title="add" alt="add" onclick="addRow('user_list')" />
+			<img class="add" src="img/x.gif" title="add" alt="add" />
 		</td>
 	</tr>
 </tbody></table>

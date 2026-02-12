@@ -1,15 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       resutls_email.tpl                                           ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
-<?php
 $result = $admin->search_email($_POST['s']);
 ?>
 <table id="member">

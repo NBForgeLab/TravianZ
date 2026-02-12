@@ -2,15 +2,7 @@
 include_once ("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-// ################################################################################
-// # -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =- ##
-// # --------------------------------------------------------------------------- ##
-// # Filename a2b.php ##
-// # Developed by: Dzoki ##
-// # License: TravianX Project ##
-// # Copyright: TravianX (c) 2010-2011. All rights reserved. ##
-// # ##
-// ################################################################################
+
 
 use App\Utils\AccessLogger;
 
@@ -83,7 +75,6 @@ echo SERVER_NAME.' - Send Troops'?>
 <meta http-equiv="expires" content="0" />
 <meta http-equiv="imagetoolbar" content="no" />
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-<script src="mt-full.js?0faab" type="text/javascript"></script>
 <script src="unx.js?f4b7h" type="text/javascript"></script>
 <script src="new.js?0faab" type="text/javascript"></script>
 <link href="<?php
@@ -111,9 +102,6 @@ echo GP_LOCATE;
 	}
 	
 	?>
-	<script type="text/javascript">
-		window.addEvent('domready', start);
-	</script>
 </head>
 
 

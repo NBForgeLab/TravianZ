@@ -1,14 +1,5 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editBuildings.php                                           ##
-##  Developed by:  aggenkeech                                                  ##
-##  Fix by:        ronix                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2011-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
+
 
 if(!isset($_SESSION)) session_start();
 if($_SESSION['access'] < 9) die("<h1><font color=\"red\">Access Denied: You are not Admin!</font></h1>");
@@ -33,7 +24,7 @@ foreach ($_POST as $key => $value) {
 
 $id = (int) $_POST['id'];
 
-mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."fdata SET 
+$database->query("UPDATE ".TB_PREFIX."fdata SET 
 	f1  = '".$_POST['id1level']."', 
 	f1t = '".$_POST['id1gid']."', 
 	f2  = '".$_POST['id2level']."', 
@@ -116,7 +107,7 @@ mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."fdata SET
 	f40t = '".$_POST['id40gid']."',
     f99 = '".$_POST['id99level']."',
     f99t = '".$_POST['id99gid']."' 
-	WHERE vref = $id") or die(mysqli_error($database->dblink));
+	WHERE vref = ".(int)$id);
 
 header("Location: ../../../Admin/admin.php?p=village&did=".$id."");
 ?>

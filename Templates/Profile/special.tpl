@@ -1,16 +1,3 @@
-<?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       special.tpl                                                 ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
-
-
 <table cellpadding="1" cellspacing="1" id="support_mh">
 	<thead>
 	<tr>

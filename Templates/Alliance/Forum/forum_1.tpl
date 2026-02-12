@@ -62,19 +62,19 @@ function showCheckList() {
 			newTD1.className = 'ally';
 			newTD2.className = 'tag';
 			newTD3.className = 'ad';
-			newTD1.innerHTML = html_input_1 + 'id="allys_by_id_'+num_fields+'" class="text" maxlength="15" name="allys_by_id['+num_fields+']" onkeyup="checkInputs('+num_fields+',\'allys\')">';
-			newTD2.innerHTML = html_input_1 + 'id="allys_by_name_'+num_fields+'" class="text" maxlength="15" name="allys_by_name['+num_fields+']" onkeyup="checkInputs('+num_fields+',\'allys\')">';
+			newTD1.innerHTML = html_input_1 + 'id="allys_by_id_'+num_fields+'" class="text" maxlength="15" name="allys_by_id['+num_fields+']">';
+			newTD2.innerHTML = html_input_1 + 'id="allys_by_name_'+num_fields+'" class="text" maxlength="15" name="allys_by_name['+num_fields+']">';
 		}
 
 		if(element_id == 'user_list') {
 			newTD1.className = 'id';
 			newTD2.className = 'pla';
 			newTD3.className = 'ad';
-			newTD1.innerHTML = html_input_1 + 'id="users_by_id_'+num_fields+'" class="text" maxlength="15" name="users_by_id['+num_fields+']" onkeyup="checkInputs('+num_fields+',\'users\')">';
-			newTD2.innerHTML = html_input_1 + 'id="users_by_name_'+num_fields+'" class="text" maxlength="50" name="users_by_name['+num_fields+']" onkeyup="checkInputs('+num_fields+',\'users\')">';
+			newTD1.innerHTML = html_input_1 + 'id="users_by_id_'+num_fields+'" class="text" maxlength="15" name="users_by_id['+num_fields+']">';
+			newTD2.innerHTML = html_input_1 + 'id="users_by_name_'+num_fields+'" class="text" maxlength="50" name="users_by_name['+num_fields+']">';
 		}
 
-		newTD3.innerHTML = '<img class="add" src="img/x.gif" title="add" alt="add" onclick="addRow(\''+element_id+'\')">';
+		newTD3.innerHTML = '<img class="add" src="img/x.gif" title="add" alt="add">';
     }
 
 </script>
@@ -130,7 +130,7 @@ function showCheckList() {
 
 	<tr>
 		<th>Forum type</th>
-		<td><select class="dropdown" id="bid" name="bid" onchange="showCheckList();"><?php if($session->access == ADMIN){ ?><option value="1">Public Forum</option><?php }else{ ?><option value="2">Confederation Forum</option><option value="0" selected>Alliance Forum</option><option value="3">Closed Forum</option><?php } ?></select></td>
+		<td><select class="dropdown" id="bid" name="bid"><?php if($session->access == ADMIN){ ?><option value="1">Public Forum</option><?php }else{ ?><option value="2">Confederation Forum</option><option value="0" selected>Alliance Forum</option><option value="3">Closed Forum</option><?php } ?></select></td>
 	</tr>
 	</tbody></table>
 <?php if($session->access != ADMIN){ ?>
@@ -148,14 +148,14 @@ function showCheckList() {
 	</thead><tbody>
 	<tr>
 		<td class="ally">
-			<input class="text" type="text" id="allys_by_id_0" maxlength="15" name="allys_by_id[0]" onkeyup="checkInputs(0,'allys');" />
+			<input class="text" type="text" id="allys_by_id_0" maxlength="15" name="allys_by_id[0]" />
 		</td>
 		<td class="tag">
-			<input class="text" type="text" id="allys_by_name_0" maxlength="15" name="allys_by_name[0]" onkeyup="checkInputs(0,'allys');" />
+			<input class="text" type="text" id="allys_by_name_0" maxlength="15" name="allys_by_name[0]" />
 		</td>
 		<td class="ad">
 
-			<img class="add" src="img/x.gif" title="add" alt="add" onclick="addRow('ally_list')" />
+			<img class="add" src="img/x.gif" title="add" alt="add" />
 		</td>
 	</tr>
 </table><table cellpadding="1" cellspacing="1" id="user_list"><thead>
@@ -171,14 +171,14 @@ function showCheckList() {
 	</thead><tbody>
 	<tr>
 		<td class="id">
-			<input class="text" type="text" id="users_by_id_0" maxlength="15" name="users_by_id[0]" onkeyup="checkInputs(0,'users');" />
+			<input class="text" type="text" id="users_by_id_0" maxlength="15" name="users_by_id[0]" />
 		</td>
 
 		<td class="pla">
-			<input class="text" type="text" id="users_by_name_0" maxlength="50" name="users_by_name[0]" onkeyup="checkInputs(0,'users');" />
+			<input class="text" type="text" id="users_by_name_0" maxlength="50" name="users_by_name[0]" />
 		</td>
 		<td class="ad">
-			<img class="add" src="img/x.gif" title="add" alt="add" onclick="addRow('user_list')" />
+			<img class="add" src="img/x.gif" title="add" alt="add" />
 		</td>
 	</tr>
 </tbody></table>

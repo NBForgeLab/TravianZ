@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       givePlus.php                                                ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 if (!isset($_SESSION)) session_start();
 if($_SESSION['access'] < 9) die("Access Denied: You are not Admin!");
 include_once("../../config.php");
@@ -30,22 +21,19 @@ for ($i = 0; $i < 5; $i++) {
 
 include_once($autoprefix."GameEngine/Database.php");
 
-$sql = "SELECT id FROM ".TB_PREFIX."users ORDER BY ID DESC LIMIT 1";
-$loops = mysqli_result(mysqli_query($GLOBALS["link"], $sql), 0);
+$rows = $database->query_return("SELECT id FROM ".TB_PREFIX."users ORDER BY id DESC LIMIT 1");
+$loops = isset($rows[0]['id']) ? (int)$rows[0]['id'] : 0;
 
-$plusdur = $_POST['plus'] * 86400;
+$plusdur = (int) ($_POST['plus'] ?? 0) * 86400;
 
 for($i = 0; $i < $loops + 1; $i++)
 {
-	$query = "SELECT * FROM ".TB_PREFIX."users WHERE id = ".$i."";
-	$result = mysqli_query($GLOBALS["link"], $query);
-	while($row = mysqli_fetch_assoc($result))
-	{
-		if($row['plus'] < time()) { $plusbefore = time(); $addplus = $plusbefore + $plusdur; } elseif($row['plus'] > time()) { $plusbefore = $row['plus']; $addplus = $plusbefore + $plusdur; }
-		mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."users SET
-			plus = '".$addplus."' 
-			WHERE id = '".$row['id']."'");
-	}
+    $userRows = $database->query_return("SELECT id, plus FROM ".TB_PREFIX."users WHERE id = ".(int)$i);
+    foreach ($userRows as $row) {
+        $plusbefore = ($row['plus'] < time()) ? time() : (int)$row['plus'];
+        $addplus = $plusbefore + $plusdur;
+        $database->query("UPDATE ".TB_PREFIX."users SET plus = '".$addplus."' WHERE id = '".(int)$row['id']."'");
+    }
 }
 
 header("Location: ../../../Admin/admin.php?p=givePlus&g");

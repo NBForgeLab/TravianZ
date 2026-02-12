@@ -1,14 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       search2.tpl                                                 ##
-##  Developed by:  Dzoki                                                       ##
-##  Reworked:      aggenkeech && ronix                                         ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 $array_tribe=array('-',TRIBE1,TRIBE2,TRIBE3,TRIBE4,TRIBE5,TRIBE6);
 $tribename = $array_tribe[$user['tribe']];
 

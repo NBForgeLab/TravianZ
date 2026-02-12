@@ -1,12 +1,14 @@
-	<div id="content"  class="plus">
+<div id="content"  class="plus">
 <h1>Travian <font color="#71D000">P</font><font color="#FF6F0F">l</font><font  color="#71D000">u</font><font color="#FF6F0F">s</font></h1>
 <div id="textmenu">
    <a href="plus.php" <?php
 
-        if(!isset($_GET['id']) && @(basename($_SERVER['REQUEST_URI']) !== 'a2b2.php')) {
+        $id = $_GET['id'] ?? null;
+
+        if($id === null && @(basename($_SERVER['REQUEST_URI']) !== 'a2b2.php')) {
         	echo "class=\"selected\"";
         }
-        if(isset($_GET['id']) && ($_GET['id'] == 1) || strlen($_GET['id']) === 3) {
+        if($id !== null && (((int) $id) === 1 || strlen((string) $id) === 3)) {
         	echo "class=\"selected\"";
         }
 
@@ -14,10 +16,10 @@
 
  | <a href="plus.php?id=2" <?php
 
-        if(isset($_GET['id']) && $_GET['id'] == 2) {
+        if($id !== null && ((int) $id) === 2) {
         	echo "class=\"selected\"";
         }
-        if(isset($_GET['id']) && $_GET['id'] >= 6 && strlen($_GET['id']) < 3) {
+        if($id !== null && ((int) $id) >= 6 && strlen((string) $id) < 3) {
         	echo "class=\"selected\"";
         }
 
@@ -25,10 +27,10 @@
 
  | <a href="plus.php?id=3" <?php
 
-        if(isset($_GET['id']) && $_GET['id'] == 3) {
+        if($id !== null && ((int) $id) === 3) {
         	echo "class=\"selected\"";
         }
-        if(isset($_GET['id']) && $_GET['id'] >= 6 && strlen($_GET['id']) < 3) {
+        if($id !== null && ((int) $id) >= 6 && strlen((string) $id) < 3) {
         	echo "class=\"selected\"";
         }
 
@@ -36,7 +38,7 @@
 
  | <a href="plus.php?id=4" <?php
 
-        if(isset($_GET['id']) && $_GET['id'] == 4) {
+        if($id !== null && ((int) $id) === 4) {
         	echo "class=\"selected\"";
         }
 
@@ -44,10 +46,10 @@
 
  | <a href="plus.php?id=5" <?php
 
-        if(isset($_GET['id']) && $_GET['id'] == 5) {
+        if($id !== null && ((int) $id) === 5) {
         	echo "class=\"selected\"";
         }
-        if(isset($_GET['id']) && $_GET['id'] >= 6 && strlen($_GET['id']) < 3) {
+        if($id !== null && ((int) $id) >= 6 && strlen((string) $id) < 3) {
         	echo "class=\"selected\"";
         }
 

@@ -1,13 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Profile.php                                                 ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 
 class Profile {
@@ -81,16 +73,17 @@ class Profile {
 	private function setvactionmode($post){
 	    global $database, $session, $form;
 
-	    if(isset($post['vac']) && $post['vac'] && isset($post['vac_days']) && $post['vac_days'] >= 2 && $post['vac_days'] <= 14){        
+	    $vacDays = isset($post['vac_days']) ? (int) $post['vac_days'] : 0;
+	    if(isset($post['vac']) && $post['vac'] && $vacDays >= 2 && $vacDays <= 14){        
 	        unset($_SESSION['wid']);
-			$database->setvacmode($session->uid, $post['vac_days']);
+			$database->setvacmode($session->uid, $vacDays);
 			$database->activeModify(addslashes($session->username), 1);
 			$database->UpdateOnline("logout");
 			$session->Logout();
 			header("Location: login.php");
 			exit;
 	    }else{
-	    	$form->add("vac", VAC_MODE_WRONG_DAYS);
+	    	$form->addError("vac", VAC_MODE_WRONG_DAYS);
 	        header("Location: spieler.php?s=".$session->uid);        
 	        exit;
 	    }
@@ -107,9 +100,12 @@ class Profile {
 		global $database, $session, $form;
 
 		if(!empty($post['pw1']) && !empty($post['pw2']) && !empty($post['pw3'])){
-			if($post['pw2'] == $post['pw3']){
-				if($database->login($session->username, $post['pw1'])){
-					$database->updateUserField($session->uid, "password", password_hash($post['pw2'], PASSWORD_BCRYPT, ['cost' => 12]), 1);
+			$pw1 = (string) $post['pw1'];
+			$pw2 = (string) $post['pw2'];
+			$pw3 = (string) $post['pw3'];
+			if($pw2 === $pw3){
+				if($database->login($session->username, $pw1)){
+					$database->updateUserField($session->uid, "password", trz_password_hash($pw2), 1);
 				}
 				else $form->addError("pw", LOGIN_PW_ERROR);
 			}
@@ -117,21 +113,24 @@ class Profile {
 		}
 
 		if(!empty($post['email_alt']) && !empty($post['email_neu'])){
-			if($post['email_alt'] == $session->userinfo['email']){
-				$database->updateUserField($session->uid, "email", $post['email_neu'], 1);
+			$emailAlt = (string) $post['email_alt'];
+			$emailNew = (string) $post['email_neu'];
+			if($emailAlt === $session->userinfo['email']){
+				$database->updateUserField($session->uid, "email", $emailNew, 1);
 			}
 			else $form->addError("email", EMAIL_ERROR);
 		}
 		
-		if(!empty($post['del_pw']) && $post['del']){
-			if(password_verify($post['del_pw'], $session->userinfo['password'])){
+		if(!empty($post['del_pw']) && !empty($post['del'])){
+			$delPw = (string) $post['del_pw'];
+			if(password_verify($delPw, $session->userinfo['password'])){
 				$database->setDeleting($session->uid, 0);
 			}
 			else $form->addError("del", PASS_MISMATCH);	
 		}
 		
 		if(!empty($post['v1'])){
-			$sitid = $database->getUserField($post['v1'], "id", 1);
+			$sitid = $database->getUserField((string) $post['v1'], "id", 1);
 			if($sitid == $session->userinfo['sit1'] || $sitid == $session->userinfo['sit2']){
 				$form->addError("sit", SIT_ERROR);
 			}else if($sitid != $session->uid){
@@ -155,9 +154,13 @@ class Profile {
 	private function removeSitter($get) {
 		global $database,$session;
 
-		if($get['a'] == $session->checker) {
-			if($session->userinfo['sit'.$get['type']] == $get['id']) {
-				$database->updateUserField($session->uid,"sit".$get['type'],0,1);
+		if(isset($get['a']) && $get['a'] == $session->checker) {
+			$type = isset($get['type']) ? (int) $get['type'] : 0;
+			$id = isset($get['id']) ? (int) $get['id'] : 0;
+			if($type === 1 || $type === 2){
+				if($session->userinfo['sit'.$type] == $id) {
+					$database->updateUserField($session->uid,"sit".$type,0,1);
+				}
 			}
 			$session->changeChecker();
 		}
@@ -177,8 +180,11 @@ class Profile {
 	private function removeMeSit($get) {
 		global $database, $session;
 
-		if($get['a'] == $session->checker) {
-			$database->removeMeSit($get['id'],$session->uid);
+		if(isset($get['a']) && $get['a'] == $session->checker) {
+			$id = isset($get['id']) ? (int) $get['id'] : 0;
+			if ($id > 0) {
+				$database->removeMeSit($id,$session->uid);
+			}
 			$session->changeChecker();
 		}
 

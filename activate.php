@@ -1,14 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       activate.php                                                ##
-##  Developed by:  Dixie                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 use App\Utils\AccessLogger;
 
@@ -25,17 +16,15 @@ AccessLogger::logRequest();
 	<meta http-equiv="cache-control" content="max-age=0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-core.js?0faab" type="text/javascript"></script>
-	<script src="mt-more.js?0faab" type="text/javascript"></script>
-	<script src="unx.js?f4b7h" type="text/javascript"></script>
-	<script src="new.js?0faab" type="text/javascript"></script>
+	<script src="unx.js?f4b7h" type="text/javascript" <?php echo trz_csp_nonce_attr(); ?>></script>
+	<script src="new.js?0faab" type="text/javascript" <?php echo trz_csp_nonce_attr(); ?>></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE ?>travian.css?f4b7d" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE ?>lang/en/lang.css" rel="stylesheet" type="text/css" />
 	</head>
 
-<body class="v35 ie ie7" onload="initCounter()">
+<body class="v35 ie ie7">
 
 <div class="wrapper">
 <div id="dynamic_header">
@@ -45,10 +34,9 @@ AccessLogger::logRequest();
 <?php include("Templates/menu.tpl"); ?>
 <div id="content"  class="activate">
 <?php
-
 	if(isset($_GET['e']) && (START_DATE < date('d.m.y') || START_DATE == date('d.m.y') && START_TIME <= date('H:i')))
 	{
-		switch($_GET['e'])
+		switch((int)$_GET['e'])
 		{
 			case 1:
 				include("Templates/activate/delete.tpl");
@@ -61,8 +49,10 @@ AccessLogger::logRequest();
 				break;
 		}
 	} else if(isset($_GET['id']) && isset($_GET['c'])) {
-		$c=$database->getActivateField($_GET['id'],"email",0);
-		if($_GET['c'] == $generator->encodeStr($c,5)){
+		$id = (int) $_GET['id'];
+		$c=$database->getActivateField($id,"email",0);
+		$code = (string) $_GET['c'];
+		if($code == $generator->encodeStr($c,5)){
 			include("Templates/activate/delete.tpl");
 		} else { include("Templates/activate/activate.tpl"); }
 	} else {

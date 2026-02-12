@@ -1,14 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       build.php                                                   ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 use App\Utils\AccessLogger;
 
@@ -18,8 +9,14 @@ include_once( "GameEngine/Units.php" );
 AccessLogger::logRequest();
 
 if(isset($_GET['newdid'])){
-    $_SESSION['wid'] = $_GET['newdid'];
-    header("Location: " . $_SERVER['PHP_SELF'].(isset($_GET['id']) ? '?id='.$_GET['id'] : (isset($_GET['gid']) ? '?gid='.$_GET['gid'] : '')));
+    $_SESSION['wid'] = (int) $_GET['newdid'];
+    $params = [];
+    if (isset($_GET['id'])) {
+        $params['id'] = (int) $_GET['id'];
+    } elseif (isset($_GET['gid'])) {
+        $params['gid'] = preg_replace("/[^a-zA-Z0-9_-]/", "", $_GET['gid']);
+    }
+    header("Location: " . $_SERVER['PHP_SELF'] . ($params ? ('?' . http_build_query($params)) : ''));
     exit;
 }
 if(isset($_GET['id']) && ($_GET['id'] < 1 || $_GET['id'] > 40 && ($_GET['id'] == 99 && $village->natar == 0 || $_GET['id'] != 99))){
@@ -48,8 +45,14 @@ if ( isset( $_GET['id'] ) ) {
     }
 
     $checkBuildings = [0, 16, 17, 25, 26, 27];
+    $currentType = (int) ($village->resarray[ 'f' . $_GET['id'] . 't' ] ?? 0);
 
-    if ( $_GET['id'] < 19 || ( isset( $_GET['gid'] ) && ! in_array( $_GET['gid'], $checkBuildings ) ) ) {
+    if ($currentType > 0 && in_array($currentType, [1, 2, 3, 4], true)) {
+        $_GET['t'] = "";
+        $_GET['s'] = "";
+    }
+
+    if ( isset( $_GET['gid'] ) && ! in_array( (int) $_GET['gid'], $checkBuildings, true ) ) {
         $_GET['t'] = "";
         $_GET['s'] = "";
     }
@@ -210,7 +213,9 @@ if ($session->goldclub == 1) {
 }
 else $create = 0;
 
-if(isset($_POST['a']) == 533374 && isset($_POST['id']) == 39) $units->Settlers($_POST);
+if (isset($_POST['c']) && (int) $_POST['c'] === 5 && isset($_POST['a']) && $_POST['a'] === 'new' && isset($_POST['id']) && (int) $_POST['id'] === 39) {
+    $units->procUnits($_POST);
+}
 
 if(isset($_GET['mode']) && $_GET['mode'] == 'troops' && isset($_GET['cancel']) && $_GET['cancel'] == 1){
     $oldmovement = $database->getMovementById($_GET['moveid']);
@@ -243,7 +248,6 @@ if(isset($_GET['mode']) && $_GET['mode'] == 'troops' && isset($_GET['cancel']) &
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
-	<script src="mt-full.js?ebe79" type="text/javascript"></script>
 	<script src="unx.js?f4b7h" type="text/javascript"></script>
 	<script src="new.js?ebe79" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -259,10 +263,6 @@ if(isset($_GET['mode']) && $_GET['mode'] == 'troops' && isset($_GET['cancel']) &
 		<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-
-		window.addEvent('domready', start);
-	</script>
 </head>
 
 

@@ -1,20 +1,10 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       ww.tpl                                                      ##
-##  Developed by:  Dixie                                                       ##
-##  Edited by:     Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 	$loopsame = ($building->isCurrent($id) || $building->isLoop($id))?1:0;
 	$doublebuild = ($building->isCurrent($id) && $building->isLoop($id))?1:0;
 ?>
 
-<div id="build" class="gid40"><a href="#" onClick="return Popup(40,4);" class="build_logo">
+<div id="build" class="gid40"><a href="#" onClick="return Popup(40, 4);" class="build_logo">
 	<img class="building g40" src="img/x.gif" alt="World Wonder" title="<?php echo WORLD_WONDER;?>" />
 </a>
 <h1><?php echo WONDER;?> <br /><span class="level"><?php echo LEVEL;?> <?php echo $village->resarray['f'.$id];?></span></h1>

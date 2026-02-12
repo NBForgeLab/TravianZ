@@ -67,7 +67,7 @@ $coor['y']=$form->getValue("y");
     </tr>
 </tbody></table>
 
-       <button value="ok" name="s1" id="btn_ok" class="trav_buttons" alt="OK" onclick="this.disabled=true;this.form.submit();" /> Ok </button>
+       <button value="ok" name="s1" id="btn_ok" class="trav_buttons" alt="OK" type="submit" /> Ok </button>
     </form>
 <p class="error"><?php echo $form->getError("error"); ?></p>
 </div>

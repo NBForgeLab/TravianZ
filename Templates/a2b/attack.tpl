@@ -323,7 +323,7 @@ $end = $tribe * 10;
 ?>
         <p class="btn"><input value="ok" name="s1" id="btn_ok"
 
-class="dynamic_img " src="img/x.gif" alt="OK" type="image" onclick="if (this.disabled==false) {document.getElementsByTagName('form')[0].submit();} this.disabled=true;" onLoad="this.disabled=false;"></p>
+class="dynamic_img " src="img/x.gif" alt="OK" type="image"></p>
 
 <?php } ?>
 </form>

@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       deletion.tpl                                                ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 include_once("../GameEngine/Ranking.php");
 if($_GET['uid'])
 {
@@ -49,9 +40,8 @@ if($_GET['uid'])
 						<td>Villages:</td>
 						<td>
 							<?php
-								$result = mysqli_query($GLOBALS["link"], "SELECT Count(*) as Total FROM ".TB_PREFIX."vdata WHERE owner = ".(int) $user['id']."");
-								$num_rows = mysqli_fetch_array($result, MYSQLI_ASSOC)['Total'];
-								echo $num_rows;
+								$rows = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."vdata WHERE owner = ".(int)$user['id']);
+								echo isset($rows[0]['Total']) ? (int)$rows[0]['Total'] : 0;
 							?>
 						</td>
 						<td><b><font color='#71D000'>P</font><font color='#FF6F0F'>l</font><font color='#71D000'>u</font><font color='#FF6F0F'>s</font></b>:</td>

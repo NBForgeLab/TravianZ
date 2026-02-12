@@ -1,0 +1,91 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Array has 2 duplicate keys with value 'clay' \\('clay', 'clay'\\)\\.$#"
+			count: 1
+			path: GameEngine/Data/hero_full.php
+
+		-
+			message: "#^Method MYSQLi_DB\\:\\:checkAllianceEmbassiesStatus\\(\\) should return bool but returns int\\.$#"
+			count: 1
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Method MYSQLi_DB\\:\\:escape\\(\\) should return string but returns mixed\\.$#"
+			count: 1
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Method MYSQLi_DB\\:\\:getBuildingTime\\(\\) should return int but returns float\\.$#"
+			count: 4
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Method MYSQLi_DB\\:\\:getDistance\\(\\) should return int but returns float\\.$#"
+			count: 1
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$HeroMansionLevel might not be defined\\.$#"
+			count: 1
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$accountartifact might not be defined\\.$#"
+			count: 2
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$alliance might not be defined\\.$#"
+			count: 4
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$fLevel might not be defined\\.$#"
+			count: 1
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$member might not be defined\\.$#"
+			count: 2
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$newleader might not be defined\\.$#"
+			count: 4
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$q might not be defined\\.$#"
+			count: 6
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$queued might not be defined\\.$#"
+			count: 5
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$sliceSize might not be defined\\.$#"
+			count: 2
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$values might not be defined\\.$#"
+			count: 1
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$villageTypes might not be defined\\.$#"
+			count: 1
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$villageartifact might not be defined\\.$#"
+			count: 1
+			path: GameEngine/Database.php
+
+		-
+			message: "#^Variable \\$wids might not be defined\\.$#"
+			count: 1
+			path: GameEngine/Database.php

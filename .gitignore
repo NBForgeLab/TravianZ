@@ -40,5 +40,5 @@ GameEngine/Admin/Mods/constant_format.tpl
 Templates/text.tpl
 var/log/access.log
 
-# Docker environment file with sensitive credentials
+# Environment file with sensitive credentials
 .env

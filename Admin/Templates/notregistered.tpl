@@ -17,8 +17,8 @@
 	<tbody>
 		<?php
 			$sql = "SELECT * FROM ".TB_PREFIX."activate";
-			$result = mysqli_query($GLOBALS["link"], $sql);
-			while($row = mysqli_fetch_assoc($result))
+			$result = $database->query_return($sql);
+			foreach ($result as $row)
 			{
 				$i++;
 				if($row['tribe'] == 1) {$tribe = "Roman"; }

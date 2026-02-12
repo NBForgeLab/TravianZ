@@ -13,9 +13,9 @@ if(isset($_GET['t']) == 99 && isset($_POST['action']) == 'addList' && !empty($_P
 <form action="build.php?id=39&t=99&action=startRaid" method="post" name="msg">
 <input type="hidden" name="action" value="startRaid">
 <?php 
-$sql = mysqli_query($database->dblink,"SELECT id, name, owner, wref FROM ".TB_PREFIX."farmlist WHERE owner = ".(int) $session->uid." ORDER BY wref DESC");
-$query = mysqli_num_rows($sql);
-while($row = mysqli_fetch_array($sql)){
+$rowsLists = $database->query_return("SELECT id, name, owner, wref FROM ".TB_PREFIX."farmlist WHERE owner = ".(int)$session->uid." ORDER BY wref DESC");
+$query = is_array($rowsLists) ? count($rowsLists) : 0;
+foreach ($rowsLists as $row){
     $lid = $row["id"];
     $lname = $row["name"];
     $lowner = $row["owner"];
@@ -46,12 +46,12 @@ while($row = mysqli_fetch_array($sql)){
         <tbody>
 
 <?php
-$sql2 = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."raidlist WHERE lid = ".(int) $lid." ORDER BY distance ASC");
-$query2 = mysqli_num_rows($sql2);
+$rowsRaid = $database->query_return("SELECT * FROM ".TB_PREFIX."raidlist WHERE lid = ".(int)$lid." ORDER BY distance ASC");
+$query2 = is_array($rowsRaid) ? count($rowsRaid) : 0;
 if(!$query2) echo '<td class="noData" colspan="7">'.NO_VILLAGES.'</td>';
 else
 {
-	while($row = mysqli_fetch_array($sql2)){
+	foreach ($rowsRaid as $row){
 		$id = $row['id'];
 		$lid = $row['lid'];
 		$towref = $row['towref'];
@@ -119,9 +119,9 @@ $noticeClass = ["Scout Report", "Won as attacker without losses", "Won as attack
 						"Reinforcement arrived", "", "Wood Delivered", "Clay Delivered", "Iron Delivered", "Crop Delivered", "", "Won as defender without losses", "Won as defender with losses", "Lost as defender with losses", "Won scouting as attacker", "Lost scouting as attacker",
 						"Won scouting as defender", "Lost scouting as defender"];
 
-$getnotice = mysqli_query($database->dblink,"SELECT ntype, data, time, id FROM ".TB_PREFIX."ndata WHERE ntype < 4 AND toWref = ".(int) $towref." AND uid = ".(int) $session->uid." ORDER BY time DESC Limit 1");
-if(mysqli_num_rows($getnotice) > 0){
-while($row2 = mysqli_fetch_array($getnotice)){
+$rowsNotice = $database->query_return("SELECT ntype, data, time, id FROM ".TB_PREFIX."ndata WHERE ntype < 4 AND toWref = ".(int)$towref." AND uid = ".(int)$session->uid." ORDER BY time DESC LIMIT 1");
+if(is_array($rowsNotice) && count($rowsNotice) > 0){
+foreach ($rowsNotice as $row2){
     $dataarray = explode(",",$row2['data']);
     $type2 = $row2['ntype'];
     echo "<img src=\"img/x.gif\" class=\"iReport iReport".$row2['ntype']."\" title=\"".$noticeClass[$type2]."\"> ";
@@ -159,11 +159,11 @@ while($row2 = mysqli_fetch_array($getnotice)){
 
 <?php if($database->getVilFarmlist($session->uid)){ ?>
 <div class="markAll">
-	<input type="checkbox" id="raidListMarkAll" name="s10" class="markAll" onclick="Allmsg(this.form);">
+	<input type="checkbox" id="raidListMarkAll" name="s10" class="markAll">
 	<label for="raidListMarkAll">Select all</label>
 </div><br />
 <div class="addSlot">
-<button type="button" class="trav_buttons" onclick="window.location.href = '?gid=16&t=99&action=addraid';">Add Raid</button>
+<button type="button" class="trav_buttons" data-navigate="?gid=16&t=99&action=addraid">Add Raid</button>
 <button type="submit" class="trav_buttons" value="Start Raid">Start Raid</button>
 </div><br />
 <?php } ?>

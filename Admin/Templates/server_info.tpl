@@ -1,20 +1,10 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       server_info.tpl                                             ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##  Enhanced:      aggenkeech                                                  ##
-##  Improoved by:  Shadow                                                      ##
-#################################################################################
-
-$tribe1 = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE tribe = 1");
-$tribe2 = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE tribe = 2");
-$tribe3 = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE tribe = 3");
-$tribes = Array(mysqli_num_rows($tribe1),mysqli_num_rows($tribe2),mysqli_num_rows($tribe3));
-$users = mysqli_num_rows(mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE tribe > 0 AND tribe < 4"));
+$tribe1 = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE tribe = 1");
+$tribe2 = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE tribe = 2");
+$tribe3 = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE tribe = 3");
+$tribes = [is_array($tribe1)?count($tribe1):0, is_array($tribe2)?count($tribe2):0, is_array($tribe3)?count($tribe3):0];
+$usersRows = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE tribe > 0 AND tribe < 4");
+$users = is_array($usersRows) ? count($usersRows) : 0;
 ?>
 <br /><br /><br /><br /><br />
 	<table id="profile">
@@ -30,36 +20,34 @@ $users = mysqli_num_rows(mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREF
 			</tr>
 			<tr>
 				<td>Active players</td>
-				<td><?php $result = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."active"); $num_rows = mysqli_num_rows($result); echo $num_rows; ?></td>
+				<td><?php $rows = $database->query_return("SELECT id FROM ".TB_PREFIX."active"); echo (is_array($rows)?count($rows):0); ?></td>
 			</tr>
 			<tr>
 				<td>Players online</td>
 				<td><?php $t =time();
-				$result = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE timestamp > ".($t - 300)) or die(mysqli_error($database->dblink));
-				$num_rows = mysqli_num_rows($result);
-				echo $num_rows;?>
+				$rows = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE timestamp > ".(int)($t - 300));
+				echo (is_array($rows)?count($rows):0);?>
 				</td>
 			</tr>
 			<tr>
 				<td>Players Banned</td>
 				<td><?php
-				$result = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE access = 0");
-				$num_rows = mysqli_num_rows($result);
-				echo $num_rows; ?>
+				$rows = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE access = 0");
+				echo (is_array($rows)?count($rows):0); ?>
 				</td>
 			</tr>
 			<tr>
 				<td>Villages settled</td>
 				<td><?php
-				$result = mysqli_query($GLOBALS["link"], "SELECT Count(*) as Total FROM ".TB_PREFIX."vdata");
-				$num_rows = mysqli_fetch_array($result, MYSQLI_ASSOC)['Total'];
+				$rows = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."vdata");
+				$num_rows = isset($rows[0]['Total']) ? (int)$rows[0]['Total'] : 0;
 				echo $num_rows;
             ?>
 				</td>
 			</tr>
 			<tr>
 				<td>Total Population</td>
-			<td><?php $pop = mysqli_query($database->dblink,"SELECT SUM(pop) AS sumofpop FROM ".TB_PREFIX."vdata");  $getpop = mysqli_fetch_assoc($pop);  echo $getpop['sumofpop']; ?></td>
+			<td><?php $rows = $database->query_return("SELECT SUM(pop) AS sumofpop FROM ".TB_PREFIX."vdata"); echo (int)($rows[0]['sumofpop'] ?? 0); ?></td>
 			</tr>
 		</tbody>
 	</table>
@@ -106,8 +94,8 @@ $users = mysqli_num_rows(mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREF
 		<tbody>
 			<tr>
 				<td><img src="../<?php echo GP_LOCATE; ?>img/a/gold.gif" alt="Gold" title="Gold"> Gold</td>
-				<td><?php $gold = mysqli_query($GLOBALS["link"], "SELECT SUM(gold) AS sumofgold FROM ".TB_PREFIX."users"); $getgold=mysqli_fetch_assoc($gold); echo $getgold['sumofgold']; ?></td>
-				<td><?php $gold = mysqli_query($GLOBALS["link"], "SELECT SUM(gold) AS sumofgold FROM ".TB_PREFIX."users"); $getgold=mysqli_fetch_assoc($gold); echo round($getgold['sumofgold'] / $users);?></td>
+				<td><?php $rows = $database->query_return("SELECT SUM(gold) AS sumofgold FROM ".TB_PREFIX."users"); $sum = (int)($rows[0]['sumofgold'] ?? 0); echo $sum; ?></td>
+				<td><?php $rows = $database->query_return("SELECT SUM(gold) AS sumofgold FROM ".TB_PREFIX."users"); $sum = (int)($rows[0]['sumofgold'] ?? 0); echo ($users>0?round($sum / $users):0);?></td>
 			</tr>
 		</tbody>
 	</table>
@@ -124,8 +112,10 @@ $users = mysqli_num_rows(mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREF
 					array_push($cells, 'SUM(u'.$i.') AS u'.$i);
 				}
 
-				$units_villages = mysqli_fetch_assoc(mysqli_query($GLOBALS["link"], "SELECT ".implode(',', $cells)." FROM ".TB_PREFIX."units"));
-				$units_enforcements = mysqli_fetch_assoc(mysqli_query($GLOBALS["link"], "SELECT ".implode(',', $cells)." FROM ".TB_PREFIX."enforcement"));
+				$units_villages = $database->query_return("SELECT ".implode(',', $cells)." FROM ".TB_PREFIX."units");
+				$units_villages = (is_array($units_villages) && count($units_villages)) ? $units_villages[0] : [];
+				$units_enforcements = $database->query_return("SELECT ".implode(',', $cells)." FROM ".TB_PREFIX."enforcement");
+				$units_enforcements = (is_array($units_enforcements) && count($units_enforcements)) ? $units_enforcements[0] : [];
 
 				for($i=1; $i<11; $i++) {
 					echo '<td class="on"><img src="../'.GP_LOCATE.'img/u/'.$i.'.gif"></td>';

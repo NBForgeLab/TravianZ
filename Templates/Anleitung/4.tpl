@@ -1,4 +1,3 @@
-
 <p class="question">How can I found a new village?</p>
 
 <p class="answer">In order to found a new village you need 3 settlers, an empty spot on the map and enough culture points. You do not have to research settlers as you can directly build them with a palace level 10, 15 or 20 or a residence level 10 or 20. To build the palace you need a main building level 5 and an embassy. To build the residence you only need a level 5 main building. After training the 3 settlers you can choose an empty spot on the map and click "Found new village" (Hint: you need 750 units of each resource!) then your settlers will leave their home village and found the new village for you. </p>

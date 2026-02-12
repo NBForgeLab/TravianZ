@@ -23,8 +23,7 @@ if($_POST && count($_POST))
     $strDelimiter  = ":\t";
 
  $strMailtext = ""; 
-
- while(list($strName,$value) = each($_POST)) 
+ foreach($_POST as $strName => $value) 
  { 
   if(is_array($value)) 
   { 
@@ -37,11 +36,6 @@ if($_POST && count($_POST))
   { 
    $strMailtext .= $strName.$strDelimiter.$value."\n"; 
   } 
- } 
-
- if(get_magic_quotes_gpc()) 
- { 
-  $strMailtext = stripslashes($strMailtext); 
  } 
 
  mail($strEmpfaenger, $strSubject, $strMailtext, $strFrom) 

@@ -1,21 +1,13 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editAccess.tpl                                              ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 if($_SESSION['access'] < ADMIN) die("Access Denied: You are not Admin!");
 $id = (int) $_SESSION['id'];
 if(isset($_GET['uid']))
 {
-	$sql = mysqli_query($GLOBALS["link"], "SELECT access FROM ".TB_PREFIX."users WHERE id = ".(int) $_GET['uid']."");
-	$curaccess = mysqli_result($sql, 0);
-	$player = mysqli_fetch_assoc(mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE id = ".$id.""));
+	$rows = $database->query_return("SELECT access FROM ".TB_PREFIX."users WHERE id = ".(int) $_GET['uid']." LIMIT 1");
+	$curaccess = isset($rows[0]['access']) ? (int)$rows[0]['access'] : 2;
+	$pRows = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE id = ".(int)$id." LIMIT 1");
+	$player = isset($pRows[0]) ? $pRows[0] : [];
 	?>
 
 	<form action="../GameEngine/Admin/Mods/editAccess.php" method="POST">

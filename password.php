@@ -1,14 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       password.php                                                ##
-##  Developed by:  Dixie                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 use App\Utils\AccessLogger;
 
 if(!file_exists('var/installed') && @opendir('install')) {
@@ -26,6 +17,14 @@ if(!isset($_REQUEST['npw'])){
 	header("Location: login.php");
 	exit;
 }
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_SESSION['csrf']) || !isset($_POST['csrf']) || $_SESSION['csrf'] !== $_POST['csrf']) {
+        throw new RuntimeException('CSRF attack');
+    }
+}
+$key = trz_random_token(32);
+$_SESSION['csrf'] = $key;
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -36,17 +35,15 @@ if(!isset($_REQUEST['npw'])){
 	<meta http-equiv="cache-control" content="max-age=0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-core.js?0faab" type="text/javascript"></script>
-	<script src="mt-more.js?0faab" type="text/javascript"></script>
-	<script src="unx.js?f4b7h" type="text/javascript"></script>
-	<script src="new.js?0faab" type="text/javascript"></script>
+	<script src="unx.js?f4b7h" type="text/javascript" <?php echo trz_csp_nonce_attr(); ?>></script>
+	<script src="new.js?0faab" type="text/javascript" <?php echo trz_csp_nonce_attr(); ?>></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE ?>travian.css?f4b7d" rel="stylesheet" type="text/css" />
 		<link href="<?php echo GP_LOCATE ?>lang/en/lang.css" rel="stylesheet" type="text/css" />
 	   </head>
 
-<body class="v35 ie ie7" onload="initCounter()">
+<body class="v35 ie ie7">
 
 <div class="wrapper">
 <div id="dynamic_header">
@@ -61,34 +58,55 @@ if(!isset($_REQUEST['npw'])){
 
 <?php
 	// user input email and submit
-	if(isset($_POST['email']) && isset($_POST['npw'])){
+if(isset($_POST['email']) && isset($_POST['npw'])){
 		$uid = intval($_POST['npw']);
 		$email = $database->getUserField($uid, 'email', 0);
 		$username = $database->getUserField($uid, 'username', 0);
-		if($email != $_POST['email']){
-			echo "<p>Unfortunately the entered email address does not match the one used to register the account.</p>\n";
-		}else{
-			// generate password and cpw
-			$npw = $generator->generateRandStr(7);
-			$cpw = $generator->generateRandStr(10);
-
-			$database->addPassword($uid, $npw, $cpw);
-
-			// send password mail
-			$mailer->sendPassword($email, $uid, $username, $npw, $cpw);
-
-			echo "<p>Password was sent to: ${_POST['email']}</p>\n";
-		}
+        // Always respond generically to avoid user enumeration
+        $token = $generator->generateRandStr(32);
+        if ($email && $database->createPasswordResetToken($uid, $token, 3600)) {
+            $mailer->sendPasswordResetLink($email, $uid, $username, $token);
+        }
+        echo "<p>If an account exists for the provided email, a password reset link has been sent.</p>\n";
 
 	// user click the link in 'password forgotten' email
-	}else if(isset($_GET['cpw']) && isset($_GET['npw'])){
-		$uid = intval($_GET['npw']);
-		$cpw = preg_replace('#[^a-zA-Z0-9]#', '', $_GET['cpw']);
-
-		if(!$database->resetPassword($uid, $cpw)){
-			echo '<p>The password has not been changed. Perhaps the activation code has already been used.</p>';
+}else if(isset($_GET['action']) && $_GET['action'] === 'reset' && isset($_GET['uid']) && isset($_GET['token'])){
+		$uid = intval($_GET['uid']);
+		$token = preg_replace('#[^a-zA-Z0-9]#', '', $_GET['token']);
+		if(!$database->verifyPasswordResetToken($uid, $token)){
+			echo '<p>The reset link is invalid or has expired.</p>';
 		}else{
-			echo '<p>The password has been successfully changed.</p>';
+			?>
+			<form action="password.php" method="post">
+				<p>
+					<b>New Password</b><br />
+					<input type="hidden" name="action" value="set_new" />
+					<input type="hidden" name="uid" value="<?php echo (int)$uid; ?>" />
+					<input type="hidden" name="token" value="<?php echo htmlspecialchars($token, ENT_QUOTES, 'UTF-8'); ?>" />
+					<input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+					<input class="text" type="password" name="newpw" maxlength="64" />
+				</p>
+				<p>
+					<button value="ok" name="s1" class="trav_buttons" id="btn_ok" alt="OK" /> set </button>
+				</p>
+			</form>
+			<?php
+		}
+}else if(isset($_POST['action']) && $_POST['action'] === 'set_new' && isset($_POST['uid']) && isset($_POST['token']) && isset($_POST['newpw'])){
+		$uid = intval($_POST['uid']);
+		$token = preg_replace('#[^a-zA-Z0-9]#', '', $_POST['token']);
+		$newpw = (string) $_POST['newpw'];
+		if(strlen($newpw) < 6){
+			echo '<p>Password too short.</p>';
+		}else if(!$database->verifyPasswordResetToken($uid, $token)){
+			echo '<p>The reset link is invalid or has expired.</p>';
+		}else{
+			if(!$database->updateUserField($uid, 'password', trz_password_hash($newpw), 1)){
+				echo '<p>Could not update password.</p>';
+			}else{
+				$database->consumePasswordResetToken($uid, $token);
+				echo '<p>The password has been successfully changed.</p>';
+			}
 		}
 
 
@@ -101,8 +119,9 @@ if(!isset($_REQUEST['npw'])){
 		<form action="password.php" method="post">
 			<p>
 				<b>Email</b><br />
-				<input type="hidden" name="npw" value="<?php echo intval($_GET['npw']); ?>" />
-				<input class="text" type="text" name="email" maxlength="50" />
+				<input type="hidden" name="npw" value="<?php echo intval($_GET['npw'] ?? 0); ?>" />
+                <input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+				<input class="text" type="email" name="email" maxlength="50" />
 			</p>
 
 			<p>

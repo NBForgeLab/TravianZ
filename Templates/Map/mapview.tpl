@@ -1,20 +1,6 @@
 <?php 
 
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                        		       	       ##
-##  Version:       01.09.2013 						       ##
-##  Filename       mapview.php                                                 ##
-##  Developed by:  Advocaite , yi12345 , Shadow , MisterX		       ##
-##  Fixed by:      Shadow & MisterX - Attack image view on map		       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2013. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro 				       ##
-##  Source code:   http://github.com/Shadowss/TravianZ/	       ##
-##                                                                             ##
-#################################################################################
 
 
 
@@ -113,7 +99,7 @@ $query2 = "SELECT
 
 //$query2;
 
-$result2 = mysqli_query($database->dblink,$query2) or die(mysqli_error($database->dblink));
+$result2 = $database->query_return($query2);
 
 $targetalliance = array();
 $neutralarray = array();
@@ -131,7 +117,7 @@ $map_js ='';
 $map_gen='';
 $map_content='';
 
-while ($donnees = mysqli_fetch_assoc($result2)){
+foreach ($result2 as $donnees){
 
 $targetalliance=$donnees["aliance_id"];
 $friendarray=$database->getAllianceAlly($donnees["aliance_id"],1);
@@ -260,7 +246,7 @@ if (isset($neutralarray[0])) {
 			function init_local(){map_init();}
 		</script><?php
 		if($session->plus){
-			echo '<a id="map_makelarge" href="#" onclick="PopupMap('.$bigmid.');" ><img class="ml" src="img/x.gif" alt="large map" title="Large Map"/></a>';
+			echo '<a id="map_makelarge" href="#" data-map-popup="'.$bigmid.'"><img class="ml" src="img/x.gif" alt="large map" title="Large Map"/></a>';
 		}?>
 		<img id="map_navibox" src="img/x.gif" usemap="#map_navibox"/>
 		<map name="map_navibox">

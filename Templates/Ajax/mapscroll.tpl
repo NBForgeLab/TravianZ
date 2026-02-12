@@ -84,28 +84,31 @@ $query2 = "SELECT
 			where ".TB_PREFIX."wdata.id IN ($maparray)
 			ORDER BY FIND_IN_SET(".TB_PREFIX."wdata.id,'$maparray2')";
 
-$result2 = mysqli_query($database->dblink,$query2) or die(mysqli_error($database->dblink));
+$result2 = $database->query_return($query2);
 
 $i=0;
 //Load coor array
 $yrow = 0;
 
+$sessionUserId = (int) ($_SESSION['id_user'] ?? 0);
+$sessionAlliance = (int) ($_SESSION['alliance_user'] ?? 0);
+
 $map_js ='';
-while ($donnees = mysqli_fetch_assoc($result2)){	
+foreach ($result2 as $donnees){	
 
 $targetalliance=$donnees["aliance_id"];
 $friendarray=$database->getAllianceAlly($donnees["aliance_id"],1);
 $neutralarray=$database->getAllianceAlly($donnees["aliance_id"],2);
 $enemyarray=$database->getAllianceWar2($donnees["aliance_id"]);
 
-$friend = ((isset($friendarray[0]) && isset($friendarray[0]['alli1']) && isset($friendarray[0]['alli2']) && $friendarray[0]['alli1']>0 and $friendarray[0]['alli2']>0 and $donnees["aliance_id"]>0) and ($friendarray[0]['alli1']==$_SESSION['alliance_user'] or $friendarray[0]['alli2']==$_SESSION['alliance_user']) and ($_SESSION['alliance_user'] != $targetalliance and $_SESSION['alliance_user'] and $targetalliance)) ? '1':'0';
+$friend = ((isset($friendarray[0]) && isset($friendarray[0]['alli1']) && isset($friendarray[0]['alli2']) && $friendarray[0]['alli1']>0 and $friendarray[0]['alli2']>0 and $donnees["aliance_id"]>0) and ($friendarray[0]['alli1']==$sessionAlliance or $friendarray[0]['alli2']==$sessionAlliance) and ($sessionAlliance != $targetalliance and $sessionAlliance and $targetalliance)) ? '1':'0';
 
-$war = ((isset($enemyarray[0]) && isset($enemyarray[0]['alli1']) && isset($enemyarray[0]['alli2']) &&  $enemyarray[0]['alli1']>0 and $enemyarray[0]['alli2']>0 and $donnees["aliance_id"]>0) and ($enemyarray[0]['alli1']==$_SESSION['alliance_user'] or $enemyarray[0]['alli2']==$_SESSION['alliance_user']) and ($_SESSION['alliance_user'] != $targetalliance and $_SESSION['alliance_user'] and $targetalliance)) ? '1':'0';
+$war = ((isset($enemyarray[0]) && isset($enemyarray[0]['alli1']) && isset($enemyarray[0]['alli2']) &&  $enemyarray[0]['alli1']>0 and $enemyarray[0]['alli2']>0 and $donnees["aliance_id"]>0) and ($enemyarray[0]['alli1']==$sessionAlliance or $enemyarray[0]['alli2']==$sessionAlliance) and ($sessionAlliance != $targetalliance and $sessionAlliance and $targetalliance)) ? '1':'0';
 
-$neutral = ((isset($neutralarray[0]) && isset($neutralarray[0]['alli1']) && isset($neutralarray[0]['alli2']) && $neutralarray[0]['alli1']>0 and $neutralarray[0]['alli2']>0 and $donnees["aliance_id"]>0) and ($neutralarray[0]['alli1']==$_SESSION['alliance_user'] or $neutralarray[0]['alli2']==$_SESSION['alliance_user']) and ($_SESSION['alliance_user'] != $targetalliance and $_SESSION['alliance_user'] and $targetalliance)) ? '1':'0';
+$neutral = ((isset($neutralarray[0]) && isset($neutralarray[0]['alli1']) && isset($neutralarray[0]['alli2']) && $neutralarray[0]['alli1']>0 and $neutralarray[0]['alli2']>0 and $donnees["aliance_id"]>0) and ($neutralarray[0]['alli1']==$sessionAlliance or $neutralarray[0]['alli2']==$sessionAlliance) and ($sessionAlliance != $targetalliance and $sessionAlliance and $targetalliance)) ? '1':'0';
 
 
-$image = ($donnees['map_occupied'] == 1 && $donnees['map_fieldtype'] > 0)?(($donnees['ville_user'] == $_SESSION['id_user'])? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b30': 'b20' :'b10' : 'b00') : (($targetalliance != 0)? ($friend==1? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b31': 'b21' :'b11' : 'b01') : ($war==1? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b32': 'b22' :'b12' : 'b02') : ($neutral==1? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b35': 'b25' :'b15' : 'b05') : ($targetalliance == $_SESSION['alliance_user']? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b33': 'b23' :'b13' : 'b03') : ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b34': 'b24' :'b14' : 'b04'))))) : ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b34': 'b24' :'b14' : 'b04'))) : $donnees['map_image'];
+$image = ($donnees['map_occupied'] == 1 && $donnees['map_fieldtype'] > 0)?(($donnees['ville_user'] == $sessionUserId)? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b30': 'b20' :'b10' : 'b00') : (($targetalliance != 0)? ($friend==1? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b31': 'b21' :'b11' : 'b01') : ($war==1? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b32': 'b22' :'b12' : 'b02') : ($neutral==1? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b35': 'b25' :'b15' : 'b05') : ($targetalliance == $sessionAlliance? ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b33': 'b23' :'b13' : 'b03') : ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b34': 'b24' :'b14' : 'b04'))))) : ($donnees['ville_pop']>=100? $donnees['ville_pop']>= 250?$donnees['ville_pop']>=500? 'b34': 'b24' :'b14' : 'b04'))) : $donnees['map_image'];
 if($donnees['ville_user']==3 && $donnees['ville_name']==PLANVILLAGE){
 $image = "o99";
 }

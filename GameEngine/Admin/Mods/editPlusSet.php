@@ -1,21 +1,14 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editPlusSet.php                                             ##
-##  Developed by:  martinambrus                                                ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2017. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 if(!isset($_SESSION)) session_start();
-if($_SESSION['access'] < 9) die(ACCESS_DENIED_ADMIN);
-include_once("../../Database.php");
-include_once("../../config.php");
+if($_SESSION['access'] < 9) die('ACCESS_DENIED_ADMIN');
+$modDir = __DIR__;
+chdir($modDir);
+include_once($modDir . "/../../Database.php");
+include_once($modDir . "/../../config.php");
 $id = (int) $_POST['id'];
 
-if (!file_exists('constant_format.tpl')) {
+if (!file_exists($modDir . '/constant_format.tpl')) {
     die(
         'You seem to be running a new version of TravianZ which was installed using an old installer.<br />' .
         'Please download <strong>constant_format.tpl</strong> file and copy it into the <strong>GameEngine/Admin/Mods</strong> ' .
@@ -24,10 +17,10 @@ if (!file_exists('constant_format.tpl')) {
         '<strong>https://raw.githubusercontent.com/Shadowss/TravianZ/master/install/data/constant_format.tpl</strong>');
 }
 
-$myFile = "../../config.php";
+$myFile = $modDir . "/../../config.php";
 $fh = fopen($myFile, 'w') or die("<br/><br/><br/>Can't open file: GameEngine\config.php");
 
-		$text = file_get_contents("constant_format.tpl");
+		$text = file_get_contents($modDir . "/constant_format.tpl");
 
 		$SUPPORT_MSGS_IN_ADMIN = (ADMIN_RECEIVE_SUPPORT_MESSAGES == false ? 'false' : 'true');
 		$ADMINS_RAIDABLE = (ADMIN_ALLOW_INCOMING_RAIDS == false ? 'false' : 'true');
@@ -154,7 +147,7 @@ $fh = fopen($myFile, 'w') or die("<br/><br/><br/>Can't open file: GameEngine\con
 		fwrite($fh, $text);
 		fclose($fh);
 
-$database->query("Insert into ".TB_PREFIX."admin_log values (0,".$id.",'Changed PLUS Settings',".time().")");
+$GLOBALS['db']->query("Insert into ".TB_PREFIX."admin_log values (0,".$id.",'Changed PLUS Settings',".time().")");
 
 header("Location: ../../../Admin/admin.php?p=config");
 

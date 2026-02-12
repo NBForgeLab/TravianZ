@@ -1,14 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       anmelden.php                                                 ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 use App\Utils\AccessLogger;
 
@@ -19,6 +10,9 @@ if(!file_exists('var/installed') && @opendir('install')) {
 
 include('GameEngine/Account.php');
 AccessLogger::logRequest();
+
+$csrfKey = trz_random_token(32);
+$_SESSION['csrf_reg'] = $csrfKey;
 
 $invited=(isset($_GET['uid'])) ? filter_var($_GET['uid'], FILTER_SANITIZE_NUMBER_INT):$form->getError('invt');
 ?>
@@ -31,8 +25,6 @@ $invited=(isset($_GET['uid'])) ? filter_var($_GET['uid'], FILTER_SANITIZE_NUMBER
 	<meta http-equiv="cache-control" content="max-age=0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-core.js?0faab" type="text/javascript"></script>
-	<script src="mt-more.js?0faab" type="text/javascript"></script>
 	<script src="unx.js?f4b7h" type="text/javascript"></script>
 	<script src="new.js?0faab" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
@@ -41,7 +33,7 @@ $invited=(isset($_GET['uid'])) ? filter_var($_GET['uid'], FILTER_SANITIZE_NUMBER
 		<link href="<?php echo GP_LOCATE ?>lang/en/lang.css" rel="stylesheet" type="text/css" />
 	   </head>
 
-<body class="v35 ie ie7" onload="initCounter()">
+<body class="v35 ie ie7">
 
 <div class="wrapper">
 <div id="dynamic_header">
@@ -60,26 +52,27 @@ if(REG_OPEN == true){ ?>
 <form name="snd" method="post" action="anmelden.php">
 <input type="hidden" name="invited" value="<?php echo $invited; ?>" />
 <input type="hidden" name="ft" value="a1" />
+<input type="hidden" name="csrf" value="<?php echo htmlspecialchars($_SESSION['csrf_reg'], ENT_QUOTES, 'UTF-8'); ?>" />
 
 <table cellpadding="1" cellspacing="1" id="sign_input">
 	<tbody>
 		<tr class="top">
 			<th><?php echo NICKNAME; ?></th>
-			<td><input class="text" type="text" name="name" value="<?php echo $form->getValue('name'); ?>" maxlength="30" />
+			<td><input class="text" type="text" name="name" value="<?php echo htmlspecialchars($form->getValue('name'), ENT_QUOTES, 'UTF-8'); ?>" maxlength="30" />
 			<span class="error"><?php echo $form->getError('name'); ?></span>
 			</td>
 		</tr>
 		<tr>
 			<th><?php echo EMAIL; ?></th>
 			<td>
-				<input class="text" type="text" name="email" value="<?php echo stripslashes($form->getValue('email')); ?>" />
+				<input class="text" type="email" name="email" value="<?php echo htmlspecialchars(stripslashes($form->getValue('email')), ENT_QUOTES, 'UTF-8'); ?>" />
 				<span class="error"><?php echo $form->getError('email'); ?></span>
 				</td>
 			</tr>
 		<tr>
 			<th><?php echo PASSWORD; ?></th>
 			<td>
-				<input class="text" type="password" name="pw" value="<?php echo stripslashes($form->getValue('pw')); ?>" maxlength="100" />
+				<input class="text" type="password" name="pw" value="<?php echo htmlspecialchars(stripslashes($form->getValue('pw')), ENT_QUOTES, 'UTF-8'); ?>" maxlength="100" />
 				<span class="error"><?php echo $form->getError('pw'); ?></span>
 			</td>
 		</tr>

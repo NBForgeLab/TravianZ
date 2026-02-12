@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       karte2.php                                                  ##
-##  Developed by:  Advocaite                                                   ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 use App\Utils\AccessLogger;
 
 include_once("GameEngine/Village.php");
@@ -26,14 +17,12 @@ if($session->plus){
 	<meta http-equiv="expires" content="0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-core.js" type="text/javascript"></script>
-	<script src="unx.js?f4b7h type="text/javascript"></script>
-	<script src="mt-more.js" type="text/javascript"></script>
+	<script src="unx.js?f4b7h" type="text/javascript"></script>
+	<script src="new.js?0faab" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
-	<script type="text/javascript">window.addEvent('domready', start);</script>
 </head>
-<body onload="start()"><?php
+<body><?php
 	include("Templates/Map/mapviewlarge.tpl");?>
 	<div id="ce"></div>
 </body>

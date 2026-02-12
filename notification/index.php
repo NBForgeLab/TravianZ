@@ -32,13 +32,12 @@ if(T4_COMING==true){
 	<meta http-equiv="content-type"	content="text/html; charset=UTF-8" />
 	<meta name="content-language" content="<?php echo LANG; ?>" />
 	<link href="gpack/notification_v1_zzjhons/lang/en/lang.css" rel="stylesheet" type="text/css" />
-	<link href="gpack/notification_v1_zzjhons/lang/en/compact.css?f4b7i rel="stylesheet" type="text/css" />
-	<script type="text/javascript" src="crypt.js"></script>
-	<script type="text/javascript">
-		Travian.Translation.add({'allgemein.cancel': 'Abbrechen','allgemein.ok': 'OK','allgemein.send': 'com'});
-	</script>
+	<link href="gpack/notification_v1_zzjhons/lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
+	<script type="text/javascript" src="notification.js"></script>
+	<script src="../assets/js/app/bootstrap.js?v=<?php echo @filemtime(__DIR__ . '/../assets/js/app/bootstrap.js') ?: time(); ?>" type="text/javascript" defer></script>
+	<script src="../assets/vendor/bootstrap/5.3.8/dist/js/bootstrap.bundle.min.js?v=<?php echo @filemtime(__DIR__ . '/../assets/vendor/bootstrap/5.3.8/dist/js/bootstrap.bundle.min.js') ?: time(); ?>" type="text/javascript" defer></script>
 </head>
-<body class="webkit chrome">
+<body class="webkit chrome" data-controller="notification" data-trz-translations='{"allgemein.cancel":"Abbrechen","allgemein.ok":"OK","allgemein.send":"com"}'>
 	<div id="backgroundLeft"></div>
 	<div id="backgroundRight"></div>
 	<div id="background">
@@ -56,7 +55,7 @@ if(T4_COMING==true){
 						<form method="post" action="index.php?email=error">
 							<div>
 								<label for="emailInput" class="maillabel"><?php echo $lang['notification']['email']; ?>:</label>
-								<input type="text" class="text"  name="registerMail" id="emailInput" maxlength="50" value="" />
+								<input type="email" class="text"  name="registerMail" id="emailInput" maxlength="50" value="" />
 								<button type="submit" value="send" name="sendRegisterMail" id="sendRegisterMail" class="orange">
 									<div class="button-container">
 										<div class="button-position">
@@ -96,7 +95,7 @@ if(T4_COMING==true){
 					<div id="fb-widget">
 						<div id="fb-widget-head"></div>
 						<div id="fb-widget-content">
-							<iframe id="fb-container" src="http://www.facebook.com/plugins/likebox.php?href=<?php echo $lang['notification']['facebook_page']; ?>&amp;width=182&amp;colorscheme=light&amp;connections=9&amp;stream=false&amp;header=false&amp;height=260" scrolling="no" frameborder="0"></iframe>
+							<iframe id="fb-container" src="https://www.facebook.com/plugins/likebox.php?href=<?php echo htmlspecialchars($lang['notification']['facebook_page'], ENT_QUOTES, 'UTF-8'); ?>&amp;width=182&amp;colorscheme=light&amp;connections=9&amp;stream=false&amp;header=false&amp;height=260" scrolling="no" frameborder="0"></iframe>
 						</div>
 						<div id="fb-widget-bottom"></div>
 					</div>
@@ -123,17 +122,16 @@ if(T4_COMING==true){
 				<a target="_blank" href="#" title="post a message on Twitter" id="twitter"></a>
 				<a target="_blank" href="#" title="post a message on Facebook" id="facebook"></a>
 			</div>
-			<script type="text/javascript">
-				window.addEvent('domready', function()
-				{
-							Travian.Notification.screenTitel = new Array();
+			<script type="text/javascript"<?php echo trz_csp_nonce_attr(); ?>>
+				document.addEventListener('DOMContentLoaded', function () {
+					Travian.Notification.screenTitel = new Array();
 					Travian.Notification.screenTitel[0] = "<?php echo $lang['notification']['title1']; ?>";
 					Travian.Notification.screenTitel[1] = "<?php echo $lang['notification']['title2']; ?>";
 					Travian.Notification.screenTitel[2] = "<?php echo $lang['notification']['title3']; ?>";
 					Travian.Notification.screenTitel[3] = "<?php echo $lang['notification']['title4']; ?>";
 					Travian.Notification.screenTitel[4] = "<?php echo $lang['notification']['title5']; ?>";
 
-							Travian.Notification.screenText = new Array();
+					Travian.Notification.screenText = new Array();
 					Travian.Notification.screenText[0] = "<?php echo $lang['notification']['desc1']; ?>";
 					Travian.Notification.screenText[1] = "<?php echo $lang['notification']['desc2']; ?>";
 					Travian.Notification.screenText[2] = "<?php echo $lang['notification']['desc3']; ?>";

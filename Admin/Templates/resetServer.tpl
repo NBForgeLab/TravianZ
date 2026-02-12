@@ -1,14 +1,3 @@
-<?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       resetServer.tpl                                             ##
-##  Developed by:  Ronix                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2012-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
 <form action="" method="post">
 <table id="member">
     <thead>
@@ -26,8 +15,8 @@
     </tbody>
     <thead>
         <tr id="hideobj">
-            <td style="border-right:none; text-align:left"><input name="back" type="button" src="img/x.gif" value="<< back" alt="back" onclick="go_url('../Admin/admin.php')" /></td>
-            <td style="border-left:none; text-align:right"><input name="reset" type="button" src="img/x.gif" value="Reset" alt="Reset" onclick="go_proceed()" /></td>
+            <td style="border-right:none; text-align:left"><input name="back" type="button" src="img/x.gif" value="<< back" alt="back" data-navigate="../Admin/admin.php" /></td>
+            <td style="border-left:none; text-align:right"><input name="reset" type="button" src="img/x.gif" value="Reset" alt="Reset" data-nav-callback="go_proceed" /></td>
         </tr>
     </thead>    
 </table>

@@ -1,15 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       village.php                                                 ##
-##  Developed by:  Dzoki & Advocatie                                           ##
-##  License:       TravianX Project                                            ##
-##  Thanks to:     Dzoki & itay2277(Edit some additions)                       ##
-##  Fix by:        ronix (some additions)                                      ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##  Improved:      aggenkeech                                                  ##
-#################################################################################
 include_once("../GameEngine/Generator.php");
 
 $id = $_GET['did'];
@@ -292,7 +281,6 @@ if(isset($id)){
 			</div>
 		</div></a>
 	<?php 
-	
 	$WWLevel = $fdata['f99t'];
 	$wallLevel = $fdata['f40t'];
 	if($wallLevel == 0) $wallType = "d2_0";

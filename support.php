@@ -2,15 +2,7 @@
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       anmelden.php                                                 ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
+
 use App\Utils\AccessLogger;
 
 include_once("GameEngine/Village.php");
@@ -33,8 +25,6 @@ else $building->procBuild($_GET);
 	<meta http-equiv="cache-control" content="max-age=0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-core.js?0faab" type="text/javascript"></script>
-	<script src="mt-more.js?0faab" type="text/javascript"></script>
 	<script src="unx.js?f4b7h" type="text/javascript"></script>
 	<script src="new.js?0faab" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
@@ -86,7 +76,7 @@ function chkFormular () {
 <p>You can use the following form to submit your request to the Support.<br />Please take a bit of time to answer the form questions in as much detail as possible, so that we can answer your request quickly and in length. <br />Please note that without a valid email address, your request will not get processed.
 <br><br><b>Bug reports, login errors, general questions and feedback</b></p>
 
-<form name="Formular" class=""  method="post" action="mailme.php" onsubmit="return chkFormular()">
+<form name="Formular" class=""  method="post" action="mailme.php">
 		
 		<div id="group_support_username">
         <table class="form_table form_tablel_support" width="100%">

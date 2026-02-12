@@ -1,13 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Logging.php                                                 ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 class Logging {
 
@@ -79,6 +71,7 @@ class Logging {
 		global $database;
 		list($wid,$type,$data) = $database->escape_input((int) $wid,$type,$data);
 		if(LOG_MARKET) {
+			$log = "Market action type ".$type;
 			if($type == 1) {
 				$log = "Sent ".$data[0].",".$data[1].",".$data[2].",".$data[3]." to village ".$data[4];
 			}

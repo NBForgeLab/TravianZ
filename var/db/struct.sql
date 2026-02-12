@@ -424,7 +424,7 @@ CREATE TABLE IF NOT EXISTS `%PREFIX%bdata` (
  KEY `timestamp` (`timestamp`),
  KEY `master-timestamp` (`master`,`timestamp`) USING BTREE,
  KEY `wid` (`wid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `%PREFIX%bdata`
@@ -610,7 +610,8 @@ CREATE TABLE IF NOT EXISTS `%PREFIX%enforcement` (
  `vref` int(11) NULL DEFAULT '0',
  PRIMARY KEY (`id`),
  KEY `vref` (`vref`),
- KEY `from` (`from`,`hero`) USING BTREE
+ KEY `from` (`from`,`hero`) USING BTREE,
+ KEY `from-vref` (`from`,`vref`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -1110,8 +1111,11 @@ CREATE TABLE IF NOT EXISTS `%PREFIX%movement` (
   PRIMARY KEY (`moveid`),
   KEY `ref` (`ref`),
   KEY `from-proc-sort_type` (`from`,`proc`,`sort_type`),
-  KEY `proc-sort_type-endtime` (`proc`,`sort_type`,`endtime`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  KEY `proc-sort_type-endtime` (`proc`,`sort_type`,`endtime`),
+  KEY `proc-sort_type-ref-endtime` (`proc`,`sort_type`,`ref`,`endtime`),
+  KEY `to-proc-sort_type-ref-endtime` (`to`,`proc`,`sort_type`,`ref`,`endtime`),
+  KEY `from-proc-sort_type-ref-endtime` (`from`,`proc`,`sort_type`,`ref`,`endtime`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `%prefix%movement`
@@ -1174,6 +1178,7 @@ CREATE TABLE IF NOT EXISTS `%PREFIX%odata` (
  PRIMARY KEY (`wref`),
  KEY `lastupdated2` (`lastupdated2`) USING BTREE,
  KEY `conqured` (`conqured`),
+ KEY `conqured-type` (`conqured`, `type`) USING BTREE,
  KEY `wood` (`wood`),
  KEY `iron` (`iron`),
  KEY `clay` (`clay`),
@@ -1182,7 +1187,7 @@ CREATE TABLE IF NOT EXISTS `%PREFIX%odata` (
  KEY `maxcrop` (`maxcrop`),
  KEY `maxstore` (`maxstore`),
  KEY `owner` (`owner`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `%prefix%odata`
@@ -1700,8 +1705,9 @@ CREATE TABLE IF NOT EXISTS `%PREFIX%wdata` (
  PRIMARY KEY (`id`),
  KEY `occupied` (`occupied`),
  KEY `fieldtype` (`fieldtype`),
+ KEY `fieldtype-x-y` (`fieldtype`, `x`, `y`),
  KEY `x-y` (`x`, `y`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `%prefix%wdata`

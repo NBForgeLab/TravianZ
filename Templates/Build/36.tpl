@@ -3,7 +3,7 @@ include("next.tpl");
 ?>
 <div id="build" class="gid36"><h1><?php echo TRAPPER; ?> <span class="level"><?php echo LEVEL; ?> <?php echo $village->resarray['f'.$id]; ?></span></h1>
 <p class="build_desc">
-	<a href="#" onClick="return Popup(36,4, 'gid');"
+	<a href="#" data-action="popup" data-popup="36,4,gid"
 		class="build_logo"> <img
 		class="building g36"
 		src="img/x.gif" alt="Trapper"
@@ -56,7 +56,7 @@ include("next.tpl");
 			<div class="tit"><img class="unit u99" src="img/x.gif"
 				alt="Trap"
 				title="Trap" /> <a href="#"
-				onClick="return Popup(36,4,'gid');"><?php echo TRAP; ?></a> <span class="info">(<?php echo AVAILABLE; ?>: <?php echo $village->unitarray['u99']; ?>)</span>
+				onClick="return Popup(36, 4, 'gid');"><?php echo TRAP; ?></a> <span class="info">(<?php echo AVAILABLE; ?>: <?php echo $village->unitarray['u99']; ?>)</span>
 			</div>
 			<div class="details">
 			<span><img class="r1" src="img/x.gif"
@@ -92,11 +92,11 @@ include("next.tpl");
 			if($max < 0) $max = 0;
 			?>
 			<td class="val"><input type="text" class="text" name="t99" value="0" maxlength="4"></td>
-			<td class="max"><a href="#" onClick="document.snd.t99.value=<?php echo $max; ?>">(<?php echo $max; ?>)</a></td>
+			<td class="max"><a href="#" data-fill-target="t99" data-fill-value="<?php echo $max; ?>">(<?php echo $max; ?>)</a></td>
 		</tr>
 	</tbody>
 </table>
-	<p><input type="image" id="btn_train" class="dynamic_img" value="ok" name="s1" src="img/x.gif" alt="train" onclick="this.disabled=true;this.form.submit();"/></p></form>
+	<p><input type="image" id="btn_train" class="dynamic_img" value="ok" name="s1" src="img/x.gif" alt="train"/></p></form>
 	<?php
 	} else {
 		echo "<b>".TRAINING_COMMENCE_TRAPPER."</b><br>\n";

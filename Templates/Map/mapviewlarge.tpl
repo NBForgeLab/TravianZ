@@ -1,19 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                        		       	       ##
-##  Version:       01.09.2013 						       ##
-##  Filename       mapview.php                                                 ##
-##  Developed by:  Advocaite , yi12345 , Shadow , MisterX		       ##
-##  Fixed by:      Shadow & MisterX - Attack image view on map		       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2013. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro 				       ##
-##  Source code:   http://github.com/Shadowss/TravianZ/	       ##
-##                                                                             ##
-#################################################################################
 
 
 if(isset($_GET['z'])){
@@ -125,7 +111,7 @@ $query2 = "SELECT
 			ORDER BY FIND_IN_SET(".TB_PREFIX."wdata.id,'$maparray2')";
 
 //echo $query2;
-$result2 = mysqli_query($database->dblink,$query2) or die(mysqli_error($database->dblink));
+$result2 = $database->query_return($query2);
 
 $targetalliance = array();
 $neutralarray = array();
@@ -311,7 +297,7 @@ $coorarray = array(
 ,"924, 253, 961, 273, 924, 293, 887, 273"
 );
 
-while ($donnees = mysqli_fetch_assoc($result2)){
+foreach ($result2 as $donnees){
 
 $targetalliance=$donnees["aliance_id"];
 $friendarray=$database->getAllianceAlly($donnees["aliance_id"],1);
@@ -395,7 +381,7 @@ if (isset($neutralarray[0])) {
 <div id="map_content">
 	<div id="mbig">
 		<div id="lightframe">
-			<div id="darkframe"><a id="map_popclose" onClick="pb=document.getElementById('drag2');if(pb!=null){pb.innerHTML='';};return false;"><img src="img/x.gif" alt="Close Map" title="Close Map"></a>
+			<div id="darkframe"><a id="map_popclose"><img src="img/x.gif" alt="Close Map" title="Close Map"></a>
 				<h1>Map(<span id="x"><?php echo $x;?></span>|<span id="y"><?php echo $y;?></span>)</h1>
 				<div id="map">
 					<script type="text/javascript">

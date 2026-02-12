@@ -1,0 +1,46 @@
+:root {
+	--trz-installer-max-width: 1140px;
+}
+
+body {
+	background: var(--bs-body-bg);
+}
+
+.container {
+	max-width: var(--trz-installer-max-width);
+}
+
+#dataform input[type="text"],
+#dataform input[type="password"],
+#dataform select {
+	display: block;
+	width: 100%;
+	padding: .375rem .75rem;
+	font-size: 1rem;
+	line-height: 1.5;
+	color: var(--bs-body-color);
+	background-color: var(--bs-body-bg);
+	background-clip: padding-box;
+	border: var(--bs-border-width) solid var(--bs-border-color);
+	border-radius: var(--bs-border-radius);
+}
+
+#dataform select {
+	padding-right: 2.25rem;
+}
+
+#dataform input[disabled],
+#dataform select[disabled] {
+	background-color: var(--bs-secondary-bg);
+	opacity: 1;
+}
+
+#dataform td {
+	padding-top: .35rem;
+	padding-bottom: .35rem;
+	vertical-align: middle;
+}
+
+html[dir="rtl"] .text-end {
+	text-align: left !important;
+}

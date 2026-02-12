@@ -1,19 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Version:       22.06.2015                    			       ## 
-##  Filename       Units.php                                                   ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix   ## 
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		       ##
-##  Fixed by:      InCube - double troops				       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2015. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro                		       ##
-##  Source code:   https://github.com/Shadowss/TravianZ		               ## 
-##                                                                             ##
-#################################################################################
 
 class Units {
     public $sending, $recieving, $return = [];
@@ -97,11 +82,17 @@ class Units {
     
     public function checkErrors(&$post){
         global $database, $village, $session, $generator;
+        $selectedTroops = 0;
+        $vid = 0;
+        $coor = [];
+        $isOasis = false;
+        $disabled = "";
+        $disabledr = "";
         
         // Search by town name
         // Coordinates and look confirm name people
         if(isset($post['x']) && isset($post['y']) && $post['x'] != "" && $post['y'] != "") {
-            $vid = $database->getVilWref($post['x'], $post['y']);
+            $vid = $database->getVilWref((string) $post['x'], (string) $post['y']);
             unset($post['dname'], $post['dname']);
         }
         else if(isset($post['dname']) && !empty($post['dname'])) $vid = $database->getVillageByName(stripslashes($post['dname']));
@@ -133,12 +124,13 @@ class Units {
             else $disabled ="disabled=disabled";
         }
         
-        if(!empty($disabledr) && $post['c'] == 2) return "You can't reinforce this village/oasis";   
-        if(!empty($disabled) && $post['c'] == 3) return "You can't attack this village/oasis with normal attack";     
-        if($post['c'] < 2 || $post['c'] > 4) return "Invalid attack type.";
+        $attackType = isset($post['c']) ? (int) $post['c'] : 0;
+        if(!empty($disabledr) && $attackType == 2) return "You can't reinforce this village/oasis";   
+        if(!empty($disabled) && $attackType == 3) return "You can't attack this village/oasis with normal attack";     
+        if($attackType < 2 || $attackType > 4) return "Invalid attack type.";
             
         //check if at least one troops has been selected
-        for($i = 1; $i <= 11; $i++) $selectedTroops += empty($post['t'.$i]) ? 0 : $post['t'.$i];        
+        for($i = 1; $i <= 11; $i++) $selectedTroops += empty($post['t'.$i]) ? 0 : (int) $post['t'.$i];        
         if($selectedTroops == 0) return "You need to select min. one troop";
         
         if(!empty($post['dname']) && $post['x'] != "" && $post['y'] != "") return "Insert name or coordinates";
@@ -153,7 +145,7 @@ class Units {
         // People search by coordinates
         // We confirm and seek coordinate coordinates Village
         if(isset($post['x']) && isset($post['y']) && $post['x'] != "" && $post['y'] != "") {
-            $coor = ['x' => $post['x'], 'y' => $post['y']];
+            $coor = ['x' => (string) $post['x'], 'y' => (string) $post['y']];
             $id = $generator->getBaseID($coor['x'], $coor['y']);
             
             if (!$database->getVillageState($id)) return "Coordinates do not exist";
@@ -167,9 +159,9 @@ class Units {
                     if($i == 10) $troophave = $village->unitarray['u'.floor(intval($Gtribe) + 1) * $i];
                     if($i == 11) $troophave = $village->unitarray['hero'];
                     
-                    if(intval($post['t'.$i]) > $troophave) return "You can't send more units than you have";
-                    if(intval($post['t'.$i]) < 0) return "You can't send negative units.";
-                    if(preg_match('/[^0-9]/',$post['t'.$i])) return "Special characters can't entered";
+                    if((int) $post['t'.$i] > $troophave) return "You can't send more units than you have";
+                    if((int) $post['t'.$i] < 0) return "You can't send negative units.";
+                    if(preg_match('/[^0-9]/', (string) $post['t'.$i])) return "Special characters can't entered";
                 }
             }
         }
@@ -378,7 +370,7 @@ class Units {
             if($checkexist || $checkoexist) {
                 $database->addMovement(3, $village->wid, $data['to_vid'], $reference, time(), ($time + time()));
                 if ($database->hasBeginnerProtection($village->wid) == 1 && $checkexist) {
-                    mysqli_query($database->dblink, "UPDATE " . TB_PREFIX . "users SET protect = 0 WHERE id = ".(int) $session->uid);
+                    $database->query_new("UPDATE " . TB_PREFIX . "users SET protect = 0 WHERE id = ? LIMIT 1", (int)$session->uid);
                 }
             }
             
@@ -652,10 +644,10 @@ class Units {
             
             for($i = 1; $i <= 11; $i++) $troops += $prisoner['t'.$i];
             
-            if($prisoner['t11'] > 0){
-                $p_owner = $database->getVillageField($prisoner['from'], "owner");
-                mysqli_query($database->dblink, "UPDATE ".TB_PREFIX."hero SET `dead` = '1', `health` = '0' WHERE `uid` = '".$p_owner."' AND dead = 0");
-            }
+                if($prisoner['t11'] > 0){
+                    $p_owner = $database->getVillageField($prisoner['from'], "owner");
+                    $database->query_new("UPDATE ".TB_PREFIX."hero SET `dead` = 1, `health` = 0 WHERE `uid` = ? AND dead = 0", (int)$p_owner);
+                }
         
             //Reset traps
             $database->modifyUnit($prisoner['wref'], ["99", "99o"], [$troops, $troops], [0, 0]);   

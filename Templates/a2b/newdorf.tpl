@@ -71,7 +71,7 @@ echo '</pre>';
 <?php
 if ($wood >= 750 && $clay >= 750 && $iron >= 750 && $crop >= 750) {
 ?>
-<button value="ok" name="s1" id="btn_ok" class="trav_buttons" alt="OK" onclick="this.disabled=true;this.form.submit();" /> Ok </button>
+<button value="ok" name="s1" id="btn_ok" class="trav_buttons" alt="OK" type="submit" /> Ok </button>
 <?php
 } else {
   echo "<span class=\"c2\"><b>Not enough resource</b></span>";

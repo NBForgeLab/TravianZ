@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       ajax.php                                                    ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 // even with autoloader created, we can't use it here yet, as it's not been created
 // ... so, let's see where it is and include it
@@ -32,13 +23,19 @@ include_once($autoprefix.'GameEngine/config.php');
 use App\Utils\AccessLogger;
 AccessLogger::logRequest();
 
-switch($_GET['f']) {
+$f = $_GET['f'] ?? null;
+if($f === null) {
+    http_response_code(400);
+    exit;
+}
+
+switch($f) {
 	case 'k7':
 	    header('Content-Type: application/json');
-		$x = preg_replace("/[^a-zA-Z0-9_-]/","",$_GET['x']);
-		$y = preg_replace("/[^a-zA-Z0-9_-]/","",$_GET['y']);
-		$xx = preg_replace("/[^a-zA-Z0-9_-]/","",$_GET['xx']);
-		$yy = preg_replace("/[^a-zA-Z0-9_-]/","",$_GET['yy']);
+		$x = (int) preg_replace("/[^0-9-]/","",(string) ($_GET['x'] ?? '0'));
+		$y = (int) preg_replace("/[^0-9-]/","",(string) ($_GET['y'] ?? '0'));
+		$xx = (int) preg_replace("/[^0-9-]/","",(string) ($_GET['xx'] ?? '0'));
+		$yy = (int) preg_replace("/[^0-9-]/","",(string) ($_GET['yy'] ?? '0'));
 		$howmany = $x - $xx;
 		if($howmany == 12 || $howmany == -12) {
 			include("Templates/Ajax/mapscroll2.tpl");
@@ -48,7 +45,7 @@ switch($_GET['f']) {
 		}
 		break;
 	case 'kp':
-		$z = preg_replace("/[^a-zA-Z0-9_-]/","",$_GET['z']);
+		$z = preg_replace("/[^a-zA-Z0-9_-]/","",(string) ($_GET['z'] ?? ''));
 		//include("Templates/Ajax/plusmap.tpl");
 		break;
 	case 'qst':

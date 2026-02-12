@@ -2,21 +2,7 @@
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-#################################################################################
-## -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =- 			                   ##
-## --------------------------------------------------------------------------- ##
-## Project:     TravianZ 							                           ##
-## Version:     01.06.2018 							                           ##
-## Description: When an Admin/MH starts a maintenance                          ##
-##              this page will be showed                                       ##
-## Authors:     iopietro      		                                           ##
-## Page:        maintenance.php                                      		   ##
-## License:     TravianZ Project 						                       ##
-## Copyright:   TravianZ (c) 2010-2018. All rights reserved. 			       ##
-## URLs:        http://travian.shadowss.ro 					                   ##
-## Source code: https://github.com/Shadowss/TravianZ/	 			           ##
-## 										                                       ##
-#################################################################################
+
 
 use App\Utils\AccessLogger;
 
@@ -49,7 +35,6 @@ if($_SESSION['ok'] == 2){
 		<meta http-equiv="expires" content="0" />
 		<meta http-equiv="imagetoolbar" content="no" />
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-		<script src="mt-full.js?0faab" type="text/javascript"></script>
 		<script src="unx.js?f4b7h" type="text/javascript"></script>
 		<script src="new.js?0faab" type="text/javascript"></script>
 		<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -68,7 +53,6 @@ if($_SESSION['ok'] == 2){
 			<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 		}
 		?>
-		<script type="text/javascript">window.addEvent('domready', start);</script>
 		<style type="text/css">
 		.style1 {
 		 text-align: center;

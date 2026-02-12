@@ -1,30 +1,16 @@
 <?php
 
-##############################################################################################
-##                      -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                      ##
-## ---------------------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                                 ##
-##  Version:       22.06.2015                    			                                ##
-##  Filename       config.tpl                                                               ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix, martinambrus  ##
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		                        ##
-##  Fixed by:      InCube - double troops				                                    ##
-##  License:       TravianZ Project                                                         ##
-##  Copyright:     TravianZ (c) 2010-2015. All rights reserved.                             ##
-##  URLs:          http://travian.shadowss.ro                		                        ##
-##  Source code:   https://github.com/Shadowss/TravianZ		                                ##
-##                                                                                          ##
-##############################################################################################
+
 
 if(isset($_GET['c']) && $_GET['c'] == 1) {
-echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php check cmod.</span></div><br>";
+	echo '<div class="alert alert-danger">Error creating constant.php. Check permissions.</div>';
 }
 ?>
 
-<form action="process.php" method="post" id="dataform">
-    <p>
-        <span class="f10 c">SERVER RELATED</span>
-    <table>
+<form action="process.php?t=<?php echo isset($_GET['t']) ? (int) $_GET['t'] : 1; ?><?php echo (isset($_GET['rtl']) && $_GET['rtl'] === '1') ? '&rtl=1' : ''; ?>" method="post" id="dataform" class="vstack gap-4" onsubmit="return proceed();">
+	<div>
+		<h2 class="h5 mb-3">Server Related</h2>
+	<table class="table table-sm table-borderless align-middle mb-0">
         <tr>
             <td>
                 <span class="f9 c6">Server name:</span>
@@ -38,7 +24,7 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
                 <span class="f9 c6">Server Timezone:</span>
             </td>
             <td>
-                <select name="tzone" onChange="refresh(this.value)">
+                <select name="tzone" data-change-callback="refresh">
                     <option value="1,Africa/Dakar" <?php if ($tz==1) echo "selected";?>>Africa</option>
                     <option value="2,America/New_York" <?php if ($tz==2) echo "selected";?>>America</option>
                     <option value="3,Antarctica/Casey" <?php if ($tz==3) echo "selected";?>>Antarctica</option>
@@ -270,10 +256,11 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
             </td>
         </tr>
     </table>
-    </p>
-    <p>
-        <span class="f10 c">NEW MECHANICS AND FUNCTIONS RELATED</span>
-    <table>
+	</div>
+
+	<div>
+		<h2 class="h5 mb-3">New Mechanics and Functions</h2>
+    <table class="table table-sm table-borderless align-middle mb-0">
         <tr>
             <td><span class="f9 c6">Display oasis in profile:</span></td>
             <td>
@@ -410,10 +397,11 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
             </td>
         </tr>
     </table>
-    </p>
-    <p>
-        <span class="f10 c">SQL RELATED</span>
-    <table>
+	</div>
+
+	<div>
+		<h2 class="h5 mb-3">SQL Related</h2>
+    <table class="table table-sm table-borderless align-middle mb-0">
         <tr>
             <td><span class="f9 c6">Hostname:</span></td>
             <td><input name="sserver" type="text" id="sserver" value="localhost"></td>
@@ -447,7 +435,7 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
         </td>
         </tr>
     </table>
-    </p>
+	</div>
     <!-- <RIGHT BOX - GPACK RELATED>
         <span><center><strong>GPACK RELATED</strong></center></span><br />
 
@@ -461,9 +449,9 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
 
         -->
     <!-- </RIGHT BOX - GPACK RELATED> -->
-    <p>
-        <span class="f10 c">PLUS GOLD PACKAGES</span>
-    <table>
+	<div>
+		<h2 class="h5 mb-3">Plus Gold Packages</h2>
+    <table class="table table-sm table-borderless align-middle mb-0">
         <tr>
             <td><span class="f9 c6">Your PayPal E-Mail Address:</span>
             <br />(must be either <b>Business</b> or <b>Premier</b> account)</td>
@@ -552,10 +540,11 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
             </td>
         </tr>
     </table>
-    </p>
-    <p>
-        <span class="f10 c">NEWSBOX OPTIONS</span>
-    <table>
+	</div>
+
+	<div>
+		<h2 class="h5 mb-3">Newsbox Options</h2>
+    <table class="table table-sm table-borderless align-middle mb-0">
         <tr>
             <td><span class="f9 c6">Newsbox 1:</span></td>
             <td>
@@ -582,10 +571,11 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
         </td>
         </tr>
     </table>
-    </p>
-    <p>
-        <span class="f10 c">LOG RELATED (You should disable them)</span>
-    <table>
+	</div>
+
+	<div>
+		<h2 class="h5 mb-3">Log Related</h2>
+    <table class="table table-sm table-borderless align-middle mb-0">
         <tr>
             <td><span class="f9 c6">Log Building:</span></td>
             <td>
@@ -668,10 +658,11 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
             </td>
         </tr>
     </table>
-    </p>
-    <p>
-        <span class="f10 c">EXTRA OPTIONS</span>
-    <table>
+	</div>
+
+	<div>
+		<h2 class="h5 mb-3">Extra Options</h2>
+    <table class="table table-sm table-borderless align-middle mb-0">
         <tr>
             <td><span class="f9 c6">Quest:</span></td>
             <td>
@@ -752,10 +743,11 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
             </td>
         </tr>
     </table>
-    </p>
-    <br />
-    <span class="f10 c">Server Start Settings</span>
-    <table>
+	</div>
+
+	<div>
+		<h2 class="h5 mb-3">Server Start Settings</h2>
+    <table class="table table-sm table-borderless align-middle mb-0">
         <tr>
             <td><span class="f9 c6">Start Date:</span></td>
             <td width="140"><input type="text" name="start_date" id="start_date" value="<?php echo date('d.m.Y'); ?>"></td>
@@ -765,10 +757,10 @@ echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php
             <td width="140"><input type="text" name="start_time" id="start_time" value="<?php echo date('H:i'); ?>"></td>
         </tr>
     </table>
-    <center>
-        <input type="submit" name="Submit" id="Submit" value="Submit">
-        <input type="hidden" name="subconst" value="1">
-    </center>
-</form>
+	</div>
 
-</div>
+	<div class="d-grid d-sm-flex gap-2">
+		<input type="submit" class="btn btn-primary" name="Submit" id="Submit" value="Submit">
+		<input type="hidden" name="subconst" value="1">
+	</div>
+</form>

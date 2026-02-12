@@ -92,14 +92,11 @@ if ($searchTriggered) {
                 FROM `$CROP_TABLE` c
                 WHERE c.fieldtype IN ($fieldWhere) AND $bonusCond AND $condX AND $condY
                 LIMIT $CAP";
-        $res = mysqli_query($database->dblink, $sql);
-
         $rows = [];
-        if ($res) {
-            while ($r = mysqli_fetch_assoc($res)) {
-                $r['__dist'] = $database->getDistance($startX, $startY, (int)$r['x'], (int)$r['y']);
-                $rows[] = $r;
-            }
+        $resRows = $database->query_return($sql);
+        foreach ($resRows as $r) {
+            $r['__dist'] = $database->getDistance($startX, $startY, (int)$r['x'], (int)$r['y']);
+            $rows[] = $r;
         }
 
         if (count($rows) < $RENDER_MAX && $tries < 4) { // 40 -> 80 -> 160 -> 320
@@ -115,13 +112,11 @@ if ($searchTriggered) {
                 FROM `$CROP_TABLE` c
                 WHERE c.fieldtype IN ($fieldWhere) AND $bonusCond
                 LIMIT 5000";
-        $res = mysqli_query($database->dblink, $sql);
         $rows = [];
-        if ($res) {
-            while ($r = mysqli_fetch_assoc($res)) {
-                $r['__dist'] = $database->getDistance($startX, $startY, (int)$r['x'], (int)$r['y']);
-                $rows[] = $r;
-            }
+        $resRows = $database->query_return($sql);
+        foreach ($resRows as $r) {
+            $r['__dist'] = $database->getDistance($startX, $startY, (int)$r['x'], (int)$r['y']);
+            $rows[] = $r;
         }
     }
 
@@ -139,8 +134,8 @@ if ($wrefs) {
             FROM `$VDATA` v
             JOIN `$USERS` u ON u.id = v.owner
             WHERE v.wref IN ($in)";
-    $res = mysqli_query($database->dblink, $sql);
-    if ($res) while ($row = mysqli_fetch_assoc($res)) { $owners[(int)$row['wref']] = $row; }
+    $ownersRows = $database->query_return($sql);
+    foreach ($ownersRows as $row) { $owners[(int)$row['wref']] = $row; }
 }
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -153,7 +148,6 @@ if ($wrefs) {
 <meta http-equiv="expires" content="0" />
 <meta http-equiv="imagetoolbar" content="no" />
 <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-<script src="mt-full.js?0faab" type="text/javascript"></script>
 <script src="unx.js?f4b7h" type="text/javascript"></script>
 <script src="new.js?0faab" type="text/javascript"></script>
 <link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -165,7 +159,6 @@ if ($wrefs) {
     echo " <link href='".$session->gpack."travian.css?e21d2' rel='stylesheet' type='text/css' />";
     echo " <link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 } ?>
-<script type="text/javascript">window.addEvent('domready', start);</script>
 </head>
 <body class="v35 ie ie8">
 <div class="wrapper">

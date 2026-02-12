@@ -1,14 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       login.php                                                   ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 use App\Utils\AccessLogger;
 
@@ -33,8 +24,9 @@ if ( $_SERVER[ 'REQUEST_METHOD' ] == 'POST' ) {
     if ( !isset( $_SESSION[ 'csrf' ] ) || $_SESSION[ 'csrf' ] !== $_POST[ 'csrf' ] )
         throw new RuntimeException( 'CSRF attack' );
 }
-$key                = sha1( microtime() );
+$key                = trz_random_token(32);
 $_SESSION[ 'csrf' ] = $key;
+$useBootstrap = isset($_GET['ui']) && $_GET['ui'] === 'bootstrap';
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -46,17 +38,19 @@ $_SESSION[ 'csrf' ] = $key;
 	<meta http-equiv="cache-control" content="max-age=0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-core.js?0faab" type="text/javascript"></script>
-	<script src="mt-more.js?0faab" type="text/javascript"></script>
 	<script src="unx.js?f4b7j" type="text/javascript"></script>
 	<script src="new.js?0faab" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7h" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE ?>travian.css?f4b7d" rel="stylesheet" type="text/css" />
 		<link href="<?php echo GP_LOCATE ?>lang/en/lang.css" rel="stylesheet" type="text/css" />
+	<?php if ($useBootstrap) { ?>
+	<link href="assets/vendor/bootstrap/5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+	<link href="assets/css/login-bootstrap.css" rel="stylesheet" />
+	<?php } ?>
 	   </head>
 
-<body class="v35 ie ie7" onload="initCounter()">
+<body class="v35 ie ie7<?php echo $useBootstrap ? ' login-bs' : ''; ?>">
 
 <div class="wrapper">
 <div id="dynamic_header">
@@ -86,8 +80,12 @@ $stime = strtotime( date( 'm/d/Y H:i', strtotime(START_DATE . ' ' . START_TIME )
 // check whether the server has started or is yet to start
 if ( $stime > $time ){
 ?>
-<br/><div style="text-align: center"><big>Server will start in: </big></div>
-<script language="JavaScript">
+<?php if ($useBootstrap) { ?>
+<div class="text-center fs-5 my-3"><?php echo defined('SERVER_STARTS_IN') ? SERVER_STARTS_IN : 'Server will start in: '; ?></div>
+<?php } else { ?>
+<br/><div style="text-align: center"><big><?php echo defined('SERVER_STARTS_IN') ? SERVER_STARTS_IN : 'Server will start in: '; ?></big></div>
+<?php } ?>
+<script language="JavaScript"<?php echo trz_csp_nonce_attr(); ?>>
 TargetDate = "<?php echo date( 'm/d/Y H:i', strtotime(START_DATE . ' ' . START_TIME ) ); ?>";
 CountActive = true;
 CountStepper = -1;
@@ -158,29 +156,26 @@ CountBack(gsecs);
 }else{ ?>
 <form method="post" name="snd" action="login.php">
 <input type="hidden" name="ft" value="a4" />
-<script type="text/javascript">
-Element.implement({
-	 //imgid: if an arrow belongs to the link this can be "opened"
-	 showOrHide: function(imgid) {
-		 //insert
-		 if (this.getStyle('display') == 'none')
-		 {
-			 if (imgid != '')
-			 {
-				 $(imgid).className = 'open';
-			 }
-		 }
-		 //hide
-		 else
-		 {
-			 if (imgid != '')
-			 {
-				 $(imgid).className = 'close';
-			 }
-		 }
-		 this.toggleClass('hide');
-	}
-});
+<input type="hidden" name="csrf" value="<?php echo htmlspecialchars($key, ENT_QUOTES, 'UTF-8'); ?>" />
+<input type="hidden" name="w" value="" />
+<script type="text/javascript"<?php echo trz_csp_nonce_attr(); ?>>
+if (!Element.prototype.showOrHide) {
+	Element.prototype.showOrHide = function (imgid) {
+		var display = window.getComputedStyle ? window.getComputedStyle(this).display : this.style.display;
+		if (display === 'none') {
+			if (imgid) {
+				var imgOpen = document.getElementById(imgid);
+				if (imgOpen) imgOpen.className = 'open';
+			}
+		} else {
+			if (imgid) {
+				var imgClose = document.getElementById(imgid);
+				if (imgClose) imgClose.className = 'close';
+			}
+		}
+		this.classList.toggle('hide');
+	};
+}
 </script>
 <table cellpadding="1" cellspacing="1" id="login_form">
 	<tbody>
@@ -190,32 +185,32 @@ Element.implement({
 		</tr>
 		<tr class="btm">
 			<th><?php echo PASSWORD; ?></th>
-			<td><input class="text" type="password" name="pw" value="<?php echo $form->getValue("pw");?>" maxlength="100" autocomplete='off' /> <span class="error"><?php echo $form->getError("pw"); ?></span></td>
+			<td><input class="text" type="password" name="pw" value="<?php echo htmlspecialchars($form->getValue("pw"), ENT_QUOTES, 'UTF-8');?>" maxlength="100" autocomplete='off' /> <span class="error"><?php echo $form->getError("pw"); ?></span></td>
 		</tr>
 	</tbody>
 </table>
 
 <p class="btn">
 	<!--<input type="hidden" name="e1d9d0c" value="" />-->
-		<button value="login" name="s1"	onclick="xy();" id="btn_login" class="trav_buttons" alt="login button"	/> Login </button>
+		<button value="login" name="s1" id="btn_login" class="trav_buttons" alt="login button" type="submit" /> Login </button>
 </p>
 
 </form>
 <?php }
 }
 if ($form->getError("pw") == LOGIN_PW_ERROR) {
-echo "<p class=\"error_box\">
-	<span class=\"error\">".PW_FORGOTTEN."</span><br>
-	".PW_REQUEST."<br>
-	<a href=\"password.php?npw=".$database->getUserField($form->getValue('user'), 'id', 1)."\">".PW_GENERATE."</a>
-</p>";
+echo '<p class="error_box">
+	<span class="error">'.PW_FORGOTTEN.'</span><br>
+	'.PW_REQUEST.'<br>
+	<a href="password.php?npw='.(int)$database->getUserField($form->getValue('user'), 'id', 1).'">'.PW_GENERATE.'</a>
+</p>';
 }
 if($form->getError("activate") != "") {
-	echo "<p class=\"error_box\">
-	<span class=\"error\">".EMAIL_NOT_VERIFIED."</span><br>
-	".EMAIL_FOLLOW."<br>
-	<a href=\"activate.php?usr=".$form->getError("activate")."\">".VERIFY_EMAIL."</a>
-	</p>";
+	echo '<p class="error_box">
+	<span class="error">'.EMAIL_NOT_VERIFIED.'</span><br>
+	'.EMAIL_FOLLOW.'<br>
+	<a href="activate.php?usr='.htmlspecialchars(urlencode($form->getError("activate")), ENT_QUOTES, 'UTF-8').'">'.VERIFY_EMAIL.'</a>
+	</p>';
 }
 if($form->getError("vacation") != "") {
 echo "<p class=\"error_box\">
@@ -238,6 +233,9 @@ if(NEWSBOX3) { include("Templates/News/newsbox3.tpl"); }
 			<div class="clear"></div>
 
 <?php include("Templates/footer.tpl"); ?>
+<?php if ($useBootstrap) { ?>
+<script src="assets/vendor/bootstrap/5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<?php } ?>
 <div id="ce"></div>
 </body>
 </html>

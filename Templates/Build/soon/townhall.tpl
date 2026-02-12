@@ -1,4 +1,4 @@
- <h2><?php echo TOWNHALL ?></h2>
+<h2><?php echo TOWNHALL ?></h2>
 	<table class="new_building" cellpadding="1" cellspacing="1">
 		<tbody><tr>
 			<td class="desc"><?php echo TOWNHALL_DESC ?></td>

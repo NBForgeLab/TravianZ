@@ -23,7 +23,7 @@ $deletedArtifacts = $database->getDeletedArtifacts();
 	<tr>
 		<td class="icon"><img id="artifactImage" class="artefact_icon_1" src="../img/x.gif"></td>
 		<td>
-			<select name="selectedArtifact" id="selectedArtifact" onchange="changeArtifactImage()">
+			<select name="selectedArtifact" id="selectedArtifact">
 				<?php 
 				$artifactArrays = array_merge(Artifacts::NATARS_ARTIFACTS, Artifacts::NATARS_WW_BUILDING_PLANS);
 				foreach($artifactArrays as $desc => $artifactType){

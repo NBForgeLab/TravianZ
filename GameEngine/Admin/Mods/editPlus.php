@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editPlus.php                                                ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 if (!isset($_SESSION)) session_start();
 if($_SESSION['access'] < 9) die("Access Denied: You are not Admin!");
 include_once("../../config.php");

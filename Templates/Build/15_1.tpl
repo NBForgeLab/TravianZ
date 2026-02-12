@@ -33,7 +33,7 @@ if($village->resarray['f'.$id] >= DEMOLISH_LEVEL_REQ) {
         echo "".DEMOLITION_OF." ".$building->procResType($VillageResourceLevels['f'.$Demolition['buildnumber'].'t']).": <span id=timer1>".$generator->getTimeFormat($Demolition['timetofinish']-time())."</span>";
             if($session->gold >= 2) {
             ?> 
-            <a href="?id=15&buildingFinish=1&ty=<?php echo $ty;?>" onclick="return confirm('Finish all construction and research orders in this village immediately for 2 Gold?');" title="<?php echo FINISH_GOLD; ?>"><img class="clock" alt="Finish all construction and research orders in this village immediately for 2 Gold?" src="img/x.gif"/></a>
+            <a href="?id=15&buildingFinish=1&ty=<?php echo $ty;?>" data-confirm="Finish all construction and research orders in this village immediately for 2 Gold?" title="<?php echo FINISH_GOLD; ?>"><img class="clock" alt="Finish all construction and research orders in this village immediately for 2 Gold?" src="img/x.gif"/></a>
             <?php
 }
 echo "</b>";
@@ -66,7 +66,7 @@ if ($village->natar==1) {
                 echo "<option value=99".$select.">99. ".$building->procResType(40)." (lvl ".$VillageResourceLevels['f99'].")</option>";
             }
 }
-echo "</select><input id=\"btn_demolish\" name=\"demolish\" class=\"dynamic_img\" value=\"Demolish\" type=\"image\" src=\"img/x.gif\" alt=\"Demolish\" title=\"".DEMOLISH."\" onClick=\"javascript:return verify_demolition();\" /></form>";
+echo "</select><input id=\"btn_demolish\" name=\"demolish\" class=\"dynamic_img\" value=\"Demolish\" type=\"image\" src=\"img/x.gif\" alt=\"Demolish\" title=\"".DEMOLISH."\" data-submit-callback=\"verify_demolition\" /></form>";
 }
 }
 ?> 

@@ -1,13 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Village.php                                                 ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 include_once("Session.php");
 include_once("Building.php");
@@ -21,8 +13,9 @@ class Village {
 	public $coor = [];
 	public $awood, $aclay, $airon, $acrop, $pop, $maxstore, $maxcrop, $atotal;
 	public $wid, $vname, $capital, $natar, $master;
+	public $loyalty, $currentcel, $allcrop;
 	public $resarray = [];
-	public $unitarray, $techarray, $unitall, $researching, $abarray = [];
+	public $unitarray, $techarray, $unitall, $researching, $abarray = [], $enforcetome, $enforcetoyou, $enforceoasis;
 	private $infoarray = [];
 	private $production = [];
 	private $oasisowned, $ocounter = [];

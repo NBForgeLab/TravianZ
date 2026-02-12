@@ -22,39 +22,23 @@ TravianZ Version **v.8.3.5** - BETA 1
 
 **WARNING:** please note that ***this is in no way an upgrade*** from the old 8.3.2 version, so please ***do not try to just copy your files over***,
 since the installer logic has changed and you would just crash your old version
-
-**Docker Quick Start:**
-
-Get up and running quickly with Docker:
-
-```bash
-# Clone the repository
-git clone https://github.com/Shadowss/TravianZ.git
-cd TravianZ
-
-# Copy environment file
-cp .env.example .env
-
-# Start containers
-docker-compose up -d
-
-# Open browser to http://localhost:8080/install
-```
-
-For detailed Docker setup instructions, see [DOCKER_README.md](DOCKER_README.md)
+ 
 
 **Quick links:**
 * [Download and Updates](https://github.com/Shadowss/TravianZ) &raquo;&raquo; https://github.com/Shadowss/TravianZ
 * [Wiki](https://github.com/Shadowss/TravianZ/wiki)
 * [Game Mechanics](http://travian.wikia.com/wiki/Travian_Wiki)
 * [The Making Of](https://www.youtube.com/watch?v=1XiHhpGUmQg&list=PLzV5avt1FFHorlIeoL9YX0pdb9bj-FO84) - YouTube Videos about this project
+* [Modernization Guardrails](docs/modernization-guardrails.md)
+* [Modernization Next Phases](docs/modernization-next-phases.md)
 * [Donate to TravianZ](https://www.paypal.me/cata7007)
 
 **Minimum requirements:**
-* [PHP](http://php.net/) 7.0.0+
+* [PHP](http://php.net/) 8.4.0+
+* PHP extensions: mysqli, mbstring
 * [MySQL Community Server](https://dev.mysql.com/downloads/mysql/) 5.5+
   * or alternatively, [MariaDB](https://downloads.mariadb.org/) 5.5+
- * Runs fine on Ubuntu 20, Apache2 2.4, MySQL Server 8.0 and PHP 7.4
+ * Runs fine on Ubuntu 20, Apache2 2.4, MySQL Server 8.0 and PHP 8.4
 
 **Dedicated or shared hosting?**
 

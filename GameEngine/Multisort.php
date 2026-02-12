@@ -1,56 +1,76 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Multisort.php                                               ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 class multiSort {
 
 	function sorte($array)
 	{
-		for($i = 1; $i < func_num_args(); $i += 3)
+		$criteria = [];
+		$argsCount = func_num_args();
+		for($i = 1; $i < $argsCount; $i += 3)
 		{
 			$key = func_get_arg($i);
+			$order = ($i + 1 < $argsCount) ? func_get_arg($i + 1) : true;
+			$type = ($i + 2 < $argsCount) ? func_get_arg($i + 2) : 0;
 
-			$order = true;
-			if($i + 1 < func_num_args())
-				$order = func_get_arg($i + 1);
-
-			$type = 0;
-			if($i + 2 < func_num_args())
-				$type = func_get_arg($i + 2);
-
-			$t = function($a, $b) use ($key, $type, $order)
-			{			    
-			    switch($type)
-			    {
-			        case 1: // Case insensitive natural.
-			            $result = strcasenatcmp($a[$key], $b[$key]);
-			            break;
-			        case 2: // Numeric.
-			            $result = $a[$key] - $b[$key];			 
-			            break;
-			        case 3: // Case sensitive string.
-			            $result = strcmp($a[$key], $b[$key]);	
-			            break;
-			        case 4: // Case insensitive string.
-			            $result = strcasecmp($a[$key], $b[$key]);	
-			            break;
-			        default: // Case sensitive natural.
-			            $result = strnatcmp($a[$key], $b[ $key]);
-			            break;                      
-			    }
-			    return $result*($order ? 1 : -1);
-			};
-
-			usort($array, $t);
+			$criteria[] = [$key, (bool) $order, (int) $type];
 		}
+
+		if (class_exists(\App\Legacy\MultiSorter::class) || $this->tryRequireAutoloader()) {
+			return \App\Legacy\MultiSorter::sort($array, $criteria);
+		}
+
+		usort($array, function($a, $b) use ($criteria)
+		{
+			foreach($criteria as $criterion)
+			{
+				$key = $criterion[0];
+				$order = $criterion[1];
+				$type = $criterion[2];
+
+				$av = isset($a[$key]) ? $a[$key] : null;
+				$bv = isset($b[$key]) ? $b[$key] : null;
+
+				switch($type)
+				{
+					case 1:
+						$result = strnatcasecmp((string) $av, (string) $bv);
+						break;
+					case 2:
+						$result = ((float) $av) <=> ((float) $bv);
+						break;
+					case 3:
+						$result = strcmp((string) $av, (string) $bv);
+						break;
+					case 4:
+						$result = strcasecmp((string) $av, (string) $bv);
+						break;
+					default:
+						$result = strnatcmp((string) $av, (string) $bv);
+						break;
+				}
+
+				if ($result !== 0) {
+					return $result * ($order ? 1 : -1);
+				}
+			}
+
+			return 0;
+		});
 		return $array;
+	}
+
+	private function tryRequireAutoloader()
+	{
+		for ($i = 0; $i < 5; $i++) {
+			$prefix = str_repeat('../', $i);
+			$autoloader = $prefix . 'autoloader.php';
+			if (file_exists($autoloader)) {
+				require_once $autoloader;
+				return true;
+			}
+		}
+		return false;
 	}
 
 };

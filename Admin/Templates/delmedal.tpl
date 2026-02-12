@@ -1,20 +1,11 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       gold.php                                                    ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##  Improved:      aggenkeech                                                  ##
-#################################################################################
 
 if($_SESSION['access'] < ADMIN) die("Access Denied: You are not Admin!");
 include("../GameEngine/config.php");
 $id = $_SESSION['id'];
 
-$sql = mysqli_fetch_array(mysqli_query($GLOBALS["link"], "SELECT Count(*) as Total FROM ".TB_PREFIX."medal"), MYSQLI_ASSOC);
-$nummedals = $sql['Total'];
+$rows = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."medal");
+$nummedals = isset($rows[0]['Total']) ? (int)$rows[0]['Total'] : 0;
 ?>
 
 
@@ -37,11 +28,11 @@ $nummedals = $sql['Total'];
 	</thead>
 	<tbody>
 		<?php
-			$sql = mysqli_fetch_array(mysqli_query($GLOBALS["link"], "SELECT Count(*) as Total FROM ".TB_PREFIX."medal"), MYSQLI_ASSOC);
-			$tot = $sql['Total'];
-			$sql = mysqli_query($GLOBALS["link"], "SELECT week FROM ".TB_PREFIX."medal ORDER BY week DESC LIMIT 1");
-			if(mysqli_num_rows($sql) > 0){
-			$week = mysqli_result($sql, 0);
+			$totRows = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."medal");
+			$tot = isset($totRows[0]['Total']) ? (int)$totRows[0]['Total'] : 0;
+			$weekRows = $database->query_return("SELECT week FROM ".TB_PREFIX."medal ORDER BY week DESC LIMIT 1");
+			if(is_array($weekRows) && count($weekRows) > 0){
+			$week = (int)$weekRows[0]['week'];
 			echo "<tr><td><center>$week</center></td><td><center>$tot</center></td></tr>";
 			}else{
 			echo "<tr><td><center>0</center></td><td><center>$tot</center></td></tr>";
@@ -77,8 +68,8 @@ $nummedals = $sql['Total'];
 			{
 				$newweek = $j+1;
 
-				$sql = mysqli_fetch_array(mysqli_query($GLOBALS["link"], "SELECT Count(*) as Total FROM ".TB_PREFIX."medal WHERE week = $newweek"), MYSQLI_ASSOC);
-				$tot = $sql['Total'];
+				$rows = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."medal WHERE week = ".(int)$newweek);
+				$tot = isset($rows[0]['Total']) ? (int)$rows[0]['Total'] : 0;
 
 				echo "<tr><td>$newweek</td><td>$tot</td><td><input type=\"image\" name=\"medalweek\" value=\"".$newweek."\" style=\"background-image: url('../gpack/travian_default/img/a/del.gif'); height: 12px; width: 12px;\" src=\"../gpack/travian_default/img/a/x.gif\"></td>";
 			}
@@ -116,8 +107,8 @@ $nummedals = $sql['Total'];
 	<tbody>
 		<?php
 			$query = "SELECT * FROM ".TB_PREFIX."medal ORDER BY id DESC";
-			$result = mysqli_query($GLOBALS["link"], $query);
-			while($row = mysqli_fetch_array($result))
+			$result = $database->query_return($query);
+			foreach($result as $row)
 			{
 				$i = $i + 1;
 				$titel="Bonus";
@@ -143,9 +134,8 @@ $nummedals = $sql['Total'];
 				$bb = $row['id'];
 				$playerid = (int) $row['userid'];
 
-				$unq = "SELECT username FROM ".TB_PREFIX."users where id = $playerid";
-				$user = mysqli_result(mysqli_query($GLOBALS["link"], $unq), 0);
-				$username = $user;
+				$uRows = $database->query_return("SELECT username FROM ".TB_PREFIX."users WHERE id = ".(int)$playerid." LIMIT 1");
+				$username = isset($uRows[0]['username']) ? $uRows[0]['username'] : '';
 
 				$player = "<a href=\"admin.php?p=player&uid=".$playerid."\">$username</a>";
 				echo"

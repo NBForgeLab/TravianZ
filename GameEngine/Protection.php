@@ -1,14 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Protection.php                                              ##
-##  Developed by:  SlimShady                                                   ##
-##  Edited by:     Dzoki & Dixie                                               ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 //heef npc uitzondering omdat die met speciaal $_post werken
 if(isset($_POST)){

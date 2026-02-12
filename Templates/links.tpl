@@ -1,21 +1,8 @@
 <?php 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       links.tpl                                                   ##
-##  Developed by:  Slim, Manuel Mannhardt < manuel_mannhardt@web.de >          ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 // Fetch all links
-$query = $database->getLinks($session->uid); 
-if (mysqli_num_rows($query) > 0){
-$links = array();
-while($data = mysqli_fetch_assoc($query)) {
-    $links[] = $data;
-}
+$links = $database->getLinks($session->uid); 
+if (is_array($links) && count($links) > 0){
 
 print '<table cellpadding="1" cellspacing="1"><thead><tr><td colspan="3"><a href="spieler.php?s=2">Links:</a></td></tr></thead><tbody>';
 foreach($links as $link) {

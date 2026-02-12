@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       addABTroops.php                                             ##
-##  Developed by:  ronix                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 if(!isset($_SESSION)) session_start();
 if($_SESSION['access'] < 9) die("Access Denied: You are not Admin!");
 include_once("../../Database.php");

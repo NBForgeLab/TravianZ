@@ -21,7 +21,7 @@ include("alli_menu.tpl");
 <td><input class="name text" type="text" name="a_name" maxlength="30"><span class="error"></span></td>
 </tr>
 </tbody></table>
-<p><button value="ok" name="s1" id="btn_ok" class="trav_buttons" alt="OK" onclick="this.disabled=true;this.form.submit();" /> Ok </button></form> </p>
+<p><button value="ok" name="s1" id="btn_ok" class="trav_buttons" alt="OK" type="submit" /> Ok </button></form> </p>
 
 <p class="error"><?php echo $form->getError("name"); ?></p><br />
 <table cellpadding="1" cellspacing="1" id="invitations" class="small_option"><thead>

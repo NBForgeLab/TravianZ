@@ -1,20 +1,13 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editLogSet.php                                              ##
-##  Developed by:  ronix                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 if(!isset($_SESSION)) session_start();
-if($_SESSION['access'] < 9) die(ACCESS_DENIED_ADMIN);
-include_once("../../Database.php");
+if($_SESSION['access'] < 9) die("Access Denied: You are not Admin!");
+$modDir = __DIR__;
+chdir($modDir);
+include_once($modDir . "/../../Database.php");
 $id = (int) $_POST['id'];
 
-if (!file_exists('constant_format.tpl')) {
+if (!file_exists($modDir . '/constant_format.tpl')) {
     die(
         'You seem to be running a new version of TravianZ which was installed using an old installer.<br />' .
         'Please download <strong>constant_format.tpl</strong> file and copy it into the <strong>GameEngine/Admin/Mods</strong> ' .
@@ -23,7 +16,7 @@ if (!file_exists('constant_format.tpl')) {
         '<strong>https://raw.githubusercontent.com/Shadowss/TravianZ/master/install/data/constant_format.tpl</strong>');
 }
 
-$myFile = "../../config.php";
+$myFile = $modDir . "/../../config.php";
 $fh = fopen($myFile, 'w') or die("<br/><br/><br/>Can't open file: GameEngine\config.php");
 
 		$ERRORREPORT=ERROR_REPORT;
@@ -59,7 +52,7 @@ $fh = fopen($myFile, 'w') or die("<br/><br/><br/>Can't open file: GameEngine\con
 		$NEW_FUNCTIONS_MEDAL_5YEAR = (NEW_FUNCTIONS_MEDAL_5YEAR == false ? 'false' : 'true');
 		$NEW_FUNCTIONS_MEDAL_10YEAR = (NEW_FUNCTIONS_MEDAL_10YEAR == false ? 'false' : 'true');
 
-		$text = file_get_contents("constant_format.tpl");
+		$text = file_get_contents($modDir . "/constant_format.tpl");
 		$text = preg_replace("'%ERRORREPORT%'", $ERRORREPORT, $text);
 		$text = preg_replace("'%ERROR%'", $ERRORREPORT, $text);
 		$text = preg_replace("'%SERVERNAME%'", SERVER_NAME, $text);
@@ -170,7 +163,7 @@ $fh = fopen($myFile, 'w') or die("<br/><br/><br/>Can't open file: GameEngine\con
 		fwrite($fh, $text);
 		fclose($fh);
 
-$database->query("Insert into ".TB_PREFIX."admin_log values (0,".$id.",'Changed Log Settings',".time().")");
+$GLOBALS['db']->query("Insert into ".TB_PREFIX."admin_log values (0,".$id.",'Changed Log Settings',".time().")");
 
 header("Location: ../../../Admin/admin.php?p=config");
 

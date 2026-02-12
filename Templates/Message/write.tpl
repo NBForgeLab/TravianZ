@@ -47,7 +47,7 @@ $user = $database->getUserArray($session->uid, 1);
 	<input type="hidden" name="p" value="" />
 		<img src="img/x.gif" id="label" class="send" alt="" />
 	<div id="heading">
-		<input class="text" type="text" name="an" id="receiver" value="<?php if(isset($id)) { echo $database->getUserField($id,'username',0); } ?>" maxlength="20" onkeyup="copyElement('receiver')" tabindex=1; /><br />
+		<input class="text" type="text" name="an" id="receiver" value="<?php if(isset($id)) { echo $database->getUserField($id,'username',0); } ?>" maxlength="20" tabindex=1; /><br />
 <input class="text" type="text" name="be" id="subject" value="<?php if(isset($message->reply['topic'])) 
 { 
    if (preg_match("/re([0-9]+)/i",$message->reply['topic'],$c)) 
@@ -55,9 +55,9 @@ $user = $database->getUserArray($session->uid, 1);
        $c = $c[1]+1; 
        echo $message->reply['topic'] = strip_tags(preg_replace("/re[0-9]+/i","re".($c),$message->reply['topic'])); 
 }else{ 
-echo "re1:".strip_tags($message->reply['topic']); }} ?>" maxlength="35" onkeyup="copyElement('subject')" tabindex=2/>
+echo "re1:".strip_tags($message->reply['topic']); }} ?>" maxlength="35" tabindex=2/>
 	</div>
-<a id="adbook" href="#" onclick="toggleFriendsList(); return false;"><img src="img/x.gif" alt="Addressbook" title="Addressbook" /></a>
+<a id="adbook" href="#" data-toggle="adressbook"><img src="img/x.gif" alt="Addressbook" title="Addressbook" /></a>
 <div class="clear"></div>
 <div class="line"></div>
 
@@ -68,7 +68,7 @@ echo "re1:".strip_tags($message->reply['topic']); }} ?>" maxlength="35" onkeyup=
 					<a href="javascript:void(0);" bbType="d" bbTag="u" ><div title="underline" alt="underline" class="bbButton bbUnderscore"></div></a>
 					<a href="javascript:void(0);" bbType="d" bbTag="alliance0" ><div title="alliance" alt="alliance" class="bbButton bbAlliance"></div></a>
 					<a href="javascript:void(0);" bbType="d" bbTag="player0" ><div title="player" alt="player" class="bbButton bbPlayer"></div></a>
-					<a href="javascript:void(0);" bbType="d" bbTag="coor0" ><div title="coordinates" alt="coordinates" class="bbButton bbCoordinate" onclick="this.form.submit(); window.location.href = '?t=1&coor=<?php echo $coor+1; ?>';"></div></a>
+					<a href="javascript:void(0);" bbType="d" bbTag="coor0" ><div title="coordinates" alt="coordinates" class="bbButton bbCoordinate" data-navigate="?t=1&coor=<?php echo $coor+1; ?>"></div></a>
 					<a href="javascript:void(0);" bbType="d" bbTag="report0" ><div title="report" alt="report" class="bbButton bbReport"></div></a>
 					<a href="javascript:void(0);" bbWin="resources" id="message_resourceButton"><div title="resources" alt="resources" class="bbButton bbResource"></div></a>
 					<a href="javascript:void(0);" bbWin="smilies" id="message_smilieButton"><div title="smilies" alt="smilies" class="bbButton bbSmilie"></div></a>
@@ -85,7 +85,7 @@ echo "re1:".strip_tags($message->reply['topic']); }} ?>" maxlength="35" onkeyup=
 				</div>
 				<div class="line bbLine"></div>
 	
-				<textarea id="message" name="message" onkeyup="copyElement('body')" tabindex="3" class="textarea write message"><?php if(isset($message->reply['message'])) { echo " \n\n_________________________
+				<textarea id="message" name="message" tabindex="3" class="textarea write message"><?php if(isset($message->reply['message'])) { echo " \n\n_________________________
 Reply: ".$database->getUserField($id,'username',0)."
 \n".stripslashes($message->reply['message']); } ?></textarea>
 				<div id="message_preview" name="message_preview" class="message"></div>
@@ -96,7 +96,7 @@ Reply: ".$database->getUserField($id,'username',0)."
 			</script>
 					<p class="btn">
 		<input type="hidden" name="ft" value="m2" />
-		<button name="delmsg" value="" id="btn_save" class="trav_buttons" onclick="this.disabled=true;this.form.submit();" tabindex="4">Send</button>
+		<button name="delmsg" value="" id="btn_save" class="trav_buttons" type="submit" tabindex="4">Send</button>
 		<?php
 			if ($session->access == ADMIN && ADMIN_RECEIVE_SUPPORT_MESSAGES && !empty($_GET['mid'])) {
 		?><br />
@@ -171,7 +171,7 @@ if(!is_int($i/2)){ echo "</tr>"; }else{ echo "<td></td>";}
   <p class="btn">
   <input type="image" value="" name="s1" id="btn_save" class="dynamic_img" src="img/x.gif" alt="save" />  
   </p>
-  </form><a href="#" onclick="closeFriendsList(); return false;"><img src="img/x.gif" id="close" alt="close adressbook" title="close adressbook"/></a></div></div>
+</form><a href="#" data-close="adressbook"><img src="img/x.gif" id="close" alt="close adressbook" title="close adressbook"/></a></div></div>
 <div id="write_foot" class="msg_foot">
 </div>
 <br />

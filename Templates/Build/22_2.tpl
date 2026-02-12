@@ -71,7 +71,7 @@ echo "<td colspan=\"2\"><div class=\"none\" align=\"center\">".RESEARCH_AVAILABL
 			</tbody>
             </table>
 <?php if($fail > 0) { 
-	echo "<p class=\"switch\"><a id=\"researchFutureLink\" href=\"#\" onclick=\"return $('researchFuture').toggle();\">".SHOW_MORE."</a></p>
+	echo "<p class=\"switch\"><a id=\"researchFutureLink\" href=\"#\" onclick=\"return toggleSection('researchFuture','researchFutureLink','".SHOW_MORE."','".HIDE_MORE."');\">".SHOW_MORE."</a></p>
 		<table id=\"researchFuture\" class=\"build_details hide\" cellspacing=\"1\" cellpadding=\"1\">
 			<thead><tr><td colspan=\"2\">".PREREQUISITES."</td></tr><tbody>";
      if(!$technology->meetRRequirement(13) && !$technology->getTech(13)) {
@@ -115,22 +115,7 @@ echo "<td colspan=\"2\"><div class=\"none\" align=\"center\">".RESEARCH_AVAILABL
 			<a href=\"#\" onclick=\"return Popup(16, 4);\">".RALLYPOINT." </a><span title=\"+4\">".LEVEL." 5</span><br /><a href=\"#\" onclick=\"return Popup(22, 4);\">
             Academy </a><span title=\"+17\">".LEVEL." 20</span></td></tr>";
      }
-     echo " <script type=\"text/javascript\">
-		//<![CDATA[
-			$(\"researchFuture\").toggle = (function()
-			{
-				this.toggleClass(\"hide\");
-
-				$(\"researchFutureLink\").set(\"text\",
-					this.hasClass(\"hide\")
-					?	\"".SHOW_MORE."\"
-					:	\"".HIDE_MORE."\"
-				);
-
-				return false;
-			}).bind($(\"researchFuture\"));
-		//]]>
-		</script>";
+     
      echo "</tbody></table>";
 }
 //$acares = $technology->grabAcademyRes();

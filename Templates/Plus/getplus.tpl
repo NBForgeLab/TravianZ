@@ -32,15 +32,15 @@ echo <<<EOT
 EOT;
 }else{
 
-    $account = mysqli_real_escape_string($database->dblink,$_POST['username']);
-    $reward = mysqli_real_escape_string($database->dblink,$_POST['reward']);
+    $account = preg_replace("/[^a-zA-Z0-9_\\-]/", "", $_POST['username']);
+    $reward = preg_replace("/[^a-zA-Z0-9_\\-]/", "", $_POST['reward']);
     $valid=TRUE;
 
 
     if($reward == ""){
         echo "<b>ERROR:</b><br />";
         echo "Please select a reward.";
-        echo "<br /><br /><input type=\"button\" value=\"Back\" onclick=\"history.go(-1)\">";
+        echo "<br /><br /><input type=\"button\" value=\"Back\" data-go-back=\"1\">";
         $valid=FALSE;
     }
 
@@ -49,19 +49,19 @@ EOT;
 /////////////////////////////////////////////////////////
     $plusTime = 604800; // 7 days
     $time = time();
-    $giveplus = ($time + $plustime);
-    $accountCheck = mysqli_fetch_array(mysqli_query($database->dblink,"SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'"), MYSQLI_ASSOC) or die(mysqli_error($database->dblink));
-    if($accountCheck['Total'] <= 0){
+    $giveplus = ($time + $plusTime);
+    $rowsAcc = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid);
+    if(((int)($rowsAcc[0]['Total'] ?? 0)) <= 0){
         echo "<b>ERROR:</b><br />";
         echo "The account name you entered does not exist.";
-        echo "<br /><br /><input type=\"button\" value=\"Back\" onclick=\"history.go(-1)\">";
+        echo "<br /><br /><input type=\"button\" value=\"Back\" data-go-back=\"1\">";
         $valid=FALSE;
     }
     if(!$valid) break;
     $valid=TRUE;
 
-    $plusCheck = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-    $pluss = mysqli_fetch_array($plusCheck);
+    $rowsPlus = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+    $pluss = isset($rowsPlus[0]) ? $rowsPlus[0] : [];
 
     switch($reward){
       case 'p_plus':
@@ -100,19 +100,19 @@ echo' Please select the option you wish to activate or extend.<br>';
     
 
 
-    if(mysqli_num_rows($plusCheck) > 0){ 
-        if($time > $pluss[$key] ){
-            $editplus = mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users SET `{$key}`= `{$key}` + ('".$time."'+'".$plusTime."'),  `gold` =  `gold` - {$gldz}   WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
+    if(!empty($pluss)){ 
+        if($time > (int)$pluss[$key] ){
+            $database->query("UPDATE ".TB_PREFIX."users SET `{$key}`= `{$key}` + (".$time." + ".$plusTime."),  `gold` =  `gold` - {$gldz}   WHERE id = ".(int)$session->uid);
             echo "<META HTTP-EQUIV=Refresh CONTENT=\"2; {$url}\" ><br /><br /><div align=center><font color=green size=4><b> Your Status has been updated!</b></font></div>";
        }else
-        if($time < $pluss[$key]){
-            $editplus = mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users SET `{$key}`= `{$key}` +'".$plusTime."',  `gold` =  `gold` - {$gldz}  WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
+        if($time < (int)$pluss[$key]){
+            $database->query("UPDATE ".TB_PREFIX."users SET `{$key}`= `{$key}` + ".$plusTime.",  `gold` =  `gold` - {$gldz}  WHERE id = ".(int)$session->uid);
             echo "<META HTTP-EQUIV=Refresh CONTENT=\"2; {$url}\" ><br /><br /><div align=center><font color=green size=4><b> Your Status has been updated!</b></font></div>";
        
        }
     }
 else{
-        $insertplus = mysqli_query($database->dblink,"INSERT INTO ".TB_PREFIX."users (`username`,`{$key}`, `gold`) VALUES ('".$session->username."', ('".$time."'+'".$plusTime."'),`gold` - {$gldz})") or die(mysqli_error($database->dblink));
+        $database->query("INSERT INTO ".TB_PREFIX."users (`username`,`{$key}`, `gold`) VALUES ('".$session->username."', (".$time." + ".$plusTime."), `gold` - {$gldz})");
         echo "<META HTTP-EQUIV=Refresh CONTENT=\"3; {$url})\" ><br /><br /><div align=center><font color=green size=4><b> Your Status has been updated!</b></font></div>";
 	 }   
 }

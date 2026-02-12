@@ -1,206 +1,147 @@
 <?php
-
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Version:       28.10.2025                    			                   ## 
-##  Filename       wdata.tpl                                                   ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix   ## 
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		           ##
-##  Fixed by:      InCube - double troops				                       ##
-##  Fixed by:      lietuvis10 - crop finder				                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2015. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro                		 	       ##
-##  Source code:   https://github.com/Shadowss/TravianZ		       	           ## 
-##                                                                             ##
-#################################################################################
-
-?>
-
-<?php
 // install/wdata.tpl
 
-include_once('../GameEngine/config.php');
+include_once __DIR__ . '/../../GameEngine/config.php';
 
 if (isset($_GET['c']) && $_GET['c'] == '1') {
-    echo '<br /><hr /><br /><div class="headline"><span class="f10 c5">Error creating wdata. Check configuration or file.</span></div><br><br>';
+    echo '<div class="alert alert-danger">Error creating world data. Check configuration or file.</div>';
 }
 if (isset($_GET['err']) && $_GET['err'] == '1') {
-    echo '<br /><hr /><br /><div class="headline"><span class="f10 c5">Existing World Data found in the database! Please empty tables <i>'
-        . TB_PREFIX . 'odata, ' . TB_PREFIX . 'units, ' . TB_PREFIX . 'vdata, ' . TB_PREFIX . 'wdata</i> before continuing.</span></div><br /><br />';
+    echo '<div class="alert alert-warning">Existing World Data found in the database! Please empty tables <strong>'
+        . TB_PREFIX . 'odata</strong>, <strong>' . TB_PREFIX . 'units</strong>, <strong>' . TB_PREFIX . 'vdata</strong>, <strong>' . TB_PREFIX . 'wdata</strong> before continuing.</div>';
 }
 
 $autoStartCroppers = isset($_GET['startCroppers']) && $_GET['startCroppers'] === '1';
 ?>
 
-<form action="process.php" method="post" id="dataform">
+<form action="process.php?t=<?php echo isset($_GET['t']) ? (int) $_GET['t'] : 1; ?><?php echo (isset($_GET['rtl']) && $_GET['rtl'] === '1') ? '&rtl=1' : ''; ?>" method="post" id="dataform" onsubmit="return proceed();">
     <input type="hidden" name="subwdata" value="1" />
 
-    <p>
-        <span class="f10 c">Create World Data</span>
+	<h2 class="h5 mb-3">Create World Data</h2>
 
-        <table>
-            <tr>
-                <td>
-                    <b>Warning</b>: This can take some time. Please wait until the next page has been loaded.
-                    Click Create to proceed...
-                    <br /><br />
+	<div class="alert alert-info">
+		This can take some time. Please wait until the next page has been loaded.
+	</div>
 
-                    <!-- Submit block (hidden when autoStartCroppers=1) -->
-                    <div id="submitWrap" style="display:<?php echo $autoStartCroppers ? 'none' : 'block'; ?>;">
-                        <center>
-                            <input type="submit" name="Submit" id="Submit" value="Create..." onClick="return proceed()" />
-                            <br /><br />
-                        </center>
-                    </div>
+	<div id="submitWrap" class="<?php echo $autoStartCroppers ? 'd-none' : ''; ?>">
+		<div class="d-grid d-sm-flex gap-2">
+			<input type="submit" class="btn btn-primary" name="Submit" id="Submit" value="Create..." />
+			<a class="btn btn-outline-secondary" href="?s=2&t=<?php echo isset($_GET['t']) ? (int) $_GET['t'] : 1; ?><?php echo (isset($_GET['rtl']) && $_GET['rtl'] === '1') ? '&rtl=1' : ''; ?>">Back</a>
+		</div>
+	</div>
 
-                    <!-- Progress UI (shown when startCroppers=1) -->
-                    <div id="progressBox" style="display:<?php echo $autoStartCroppers ? 'block' : 'none'; ?>; margin-top:20px;">
-                        <div style="font-weight:bold;margin-bottom:6px;">Building croppers…</div>
+	<div id="progressBox" class="<?php echo $autoStartCroppers ? '' : 'd-none'; ?> mt-4">
+		<div class="fw-semibold mb-2">Building croppers</div>
+		<div class="progress" role="progressbar" aria-label="Croppers progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+			<div id="pbar" class="progress-bar" style="width: 0%"></div>
+		</div>
+		<div id="pinfo" class="small text-body-secondary mt-2">Starting…</div>
+		<pre id="plog" class="mt-3 p-3 bg-body-tertiary border rounded small" style="max-height: 220px; overflow: auto;"></pre>
+		<div id="autoNext" class="small text-body-secondary mt-2 d-none">
+			Proceeding to next step in <strong id="cd">3</strong>…
+		</div>
+	</div>
 
-                        <div style="background:#ddd;border-radius:8px;overflow:hidden;height:20px;max-width:500px;">
-                            <!-- Orange bar to match Travian vibes -->
-                            <div id="pbar" style="background:#f6a21a;height:100%;width:0%;transition:width .2s;"></div>
-                        </div>
+	<script>
+	(function () {
+		var NEXT_URL = 'index.php?s=4&t=<?php echo isset($_GET['t']) ? (int) $_GET['t'] : 1; ?>';
+		<?php if (isset($_GET['rtl']) && $_GET['rtl'] === '1') { echo "NEXT_URL += '&rtl=1';"; } ?>
+		var COUNTDOWN_SECS = 3;
+		var finished = false;
 
-                        <div id="pinfo" style="margin-top:6px;font-size:13px;color:#333;">Starting…</div>
+		function startCountdown() {
+			var box = document.getElementById('autoNext');
+			var cdEl = document.getElementById('cd');
+			var left = COUNTDOWN_SECS;
+			box.classList.remove('d-none');
+			cdEl.textContent = left;
+			var t = setInterval(function () {
+				left--;
+				cdEl.textContent = left;
+				if (left <= 0) {
+					clearInterval(t);
+					window.location.href = NEXT_URL;
+				}
+			}, 1000);
+		}
 
-                        <pre id="plog" style="margin-top:10px;background:#f9f9f9;border:1px solid #ddd;border-radius:8px;padding:8px;font-size:12px;max-height:200px;overflow:auto;"></pre>
+		function startCroppersBuild() {
+			var box = document.getElementById('progressBox');
+			var pbar = document.getElementById('pbar');
+			var pinfo = document.getElementById('pinfo');
+			var plog = document.getElementById('plog');
 
-                        <!-- Continue button appears on completion -->
-						<div id="autoNext" style="display:none;margin-top:10px;">
-						  Proceeding to next step in <b id="cd">3</b>…
-						</div>
-                    </div>
+			var submitWrap = document.getElementById('submitWrap');
+			if (submitWrap) submitWrap.classList.add('d-none');
+			box.classList.remove('d-none');
 
-<script>
-(function () {
-  var NEXT_URL = 'index.php?s=4'; // your next step
-  var COUNTDOWN_SECS = 3;
-  var finished = false;
+			if (!('EventSource' in window)) {
+				plog.textContent += "Your browser does not support live progress.\n";
+				return;
+			}
 
-  function startCountdown() {
-    var box = document.getElementById('autoNext');
-    var cdEl = document.getElementById('cd');
-    var left = COUNTDOWN_SECS;
-    box.style.display = 'block';
-    cdEl.textContent = left;
-    var t = setInterval(function () {
-      left--;
-      cdEl.textContent = left;
-      if (left <= 0) {
-        clearInterval(t);
-        window.location.href = NEXT_URL;
-      }
-    }, 1000);
-  }
+			var MAX_RETRIES = 3;
+			var retries = 0;
+			var es = new EventSource('ajax_croppers.php');
 
-  function startCroppersBuild() {
-    var box  = document.getElementById('progressBox');
-    var pbar = document.getElementById('pbar');
-    var pinfo= document.getElementById('pinfo');
-    var plog = document.getElementById('plog');
+			function logLine(line) {
+				plog.textContent += line + "\n";
+				plog.scrollTop = plog.scrollHeight;
+			}
 
-    var submitWrap = document.getElementById('submitWrap');
-    if (submitWrap) submitWrap.style.display = 'none';
-    box.style.display = 'block';
+			es.onmessage = function (e) {
+				if (!e.data || e.data.charCodeAt(0) !== 123) return;
 
-    if (!('EventSource' in window)) {
-      plog.textContent += "Your browser does not support live progress.\n";
-      return;
-    }
+				try {
+					var d = JSON.parse(e.data);
+					var pct = (d.pct || 0) | 0;
+					var done = (d.done || 0) | 0;
+					var total = (d.total || 0) | 0;
 
-    var MAX_RETRIES = 3;
-    var retries = 0;
+					if (finished) return;
+					retries = 0;
 
-    var es = new EventSource('ajax_croppers.php');
+					pbar.style.width = pct + '%';
+					pbar.parentElement.setAttribute('aria-valuenow', String(pct));
+					pinfo.textContent = done + ' / ' + total + ' (' + pct + '%)';
 
-    es.onopen = function () {
-      // When a connection (re)opens and we had errors before, log a small note
-      if (!finished && retries > 0) {
-        plog.textContent += "Reconnected to server.\n";
-        plog.scrollTop = plog.scrollHeight;
-      }
-    };
+					if (d.msg) logLine(String(d.msg));
 
-    es.onmessage = function (e) {
-      // Ignore non-JSON messages (pings / blanks)
-      if (!e.data || e.data.charCodeAt(0) !== 123 /* '{' */) return;
+					if (d.error) {
+						finished = true;
+						logLine(String(d.msg || 'Server reported an error.'));
+						es.close();
+						startCountdown();
+						return;
+					}
 
-      try {
-        var d = JSON.parse(e.data);
-        var pct   = (d.pct  || 0) | 0;
-        var done  = (d.done || 0) | 0;
-        var total = (d.total|| 0) | 0;
+					if (pct >= 100) {
+						finished = true;
+						logLine('Completed.');
+						es.close();
+						startCountdown();
+					}
+				} catch (_) {
+				}
+			};
 
-        // If we've already finished, ignore further events
-        if (finished) return;
+			es.onerror = function () {
+				if (finished) return;
+				retries++;
+				logLine('Connection hiccup (' + retries + '/' + MAX_RETRIES + '), retrying…');
 
-        // Valid data received -> reset retry counter
-        retries = 0;
+				if (retries >= MAX_RETRIES) {
+					finished = true;
+					logLine('Too many connection failures — skipping croppers build.');
+					es.close();
+					startCountdown();
+				}
+			};
+		}
 
-        pbar.style.width = pct + '%';
-        pinfo.textContent = done + ' / ' + total + ' (' + pct + '%)';
-
-        if (d.msg) {
-          plog.textContent += d.msg + "\n";
-          plog.scrollTop = plog.scrollHeight;
-        }
-
-        if (pct >= 100) {
-          finished = true;
-          plog.textContent += "✅ Completed!\n";
-          plog.scrollTop = plog.scrollHeight;
-          es.close();
-          startCountdown();
-        }
-
-        // Optional: handle explicit error flag from server if you ever send it
-        if (d.error) {
-          finished = true;
-          plog.textContent += "❌ " + (d.msg || "Server reported an error.") + "\n";
-          plog.scrollTop = plog.scrollHeight;
-          es.close();
-          startCountdown();
-        }
-      } catch (err) {
-        // Silently ignore parsing problems now that we guard by '{'
-        // plog.textContent += "Parse error.\n";
-      }
-    };
-
-    es.onerror = function () {
-      // Don’t spam after we’re done
-      if (finished) return;
-
-      retries++;
-      plog.textContent += "⚠ Connection hiccup (" + retries + "/" + MAX_RETRIES + "), retrying…\n";
-      plog.scrollTop = plog.scrollHeight;
-
-      // EventSource will auto-reconnect by itself; we just decide when to give up
-      if (retries >= MAX_RETRIES) {
-        finished = true;
-        plog.textContent += "❌ Too many connection failures — skipping croppers build.\n";
-        plog.scrollTop = plog.scrollHeight;
-        es.close();
-        // Reuse the same countdown UI to move on
-        startCountdown();
-      }
-    };
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    <?php if ($autoStartCroppers) { echo 'startCroppersBuild();'; } ?>
-  });
-})();
-</script>
-
-
-                </td>
-            </tr>
-        </table>
-    </p>
+		document.addEventListener('DOMContentLoaded', function () {
+			<?php if ($autoStartCroppers) { echo 'startCroppersBuild();'; } ?>
+		});
+	})();
+	</script>
 </form>
-</div>

@@ -1,14 +1,3 @@
-<?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       index.php                                                   ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
 <div style="margin-top: 50px;">
 	<div style="text-align: center">
 		<h1>404 - File not found</h1>

@@ -1,4 +1,4 @@
-    <?php
+<?php
 	$place = $place1 = $place2 = $place3 = "?";
 
 
@@ -6,8 +6,8 @@
     echo "Row ".$i;
     }
 
-    $result = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE access<".(INCLUDE_ADMIN?"10":"8")." AND id > 5 AND tribe<=3 AND tribe > 0 ORDER BY ap DESC, id DESC Limit 10");
-    $result2 = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE id = '".$session->uid."' ORDER BY ap DESC, id DESC Limit 1");
+    $rows = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE access<".(INCLUDE_ADMIN?"10":"8")." AND id > 5 AND tribe<=3 AND tribe > 0 ORDER BY ap DESC, id DESC LIMIT 10");
+    $rowSelf = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." ORDER BY ap DESC, id DESC LIMIT 1");
 	?>
 	<table cellpadding="1" cellspacing="1">
 	<thead>
@@ -19,7 +19,7 @@
 <table cellpadding="1" cellspacing="1" id="top10_offs" class="top10 row_table_data">
 	<thead>
 		<tr>
-			<th onclick="return Popup(3,5)"><img src="img/x.gif" class="help" alt="Instructions" title="Instructions">
+			<th><img src="img/x.gif" class="help" alt="Instructions" title="Instructions" data-action="popup" data-popup='[3,5]'>
 			</th>
 			<th colspan="2">Attackers of the week</th>
 		</tr>
@@ -31,7 +31,7 @@
 	</thead>
 	<tbody>
 <?php
-    while($row = mysqli_fetch_array($result))
+    foreach ($rows as $row)
       {
 	  if($row['id']==$session->uid) {
 	  if($row['id']==$session->uid) {
@@ -48,7 +48,7 @@
 			<td colspan="3" class="empty"></td>
 		</tr>
 <?php
-    while($row = mysqli_fetch_array($result2))
+    foreach ($rowSelf as $row)
       {
 		if($row['id'] == $session->uid) {
 		echo "<tr class=\"none\">"; } else { echo "<tr class=\"own hl\">"; }
@@ -67,13 +67,13 @@
     for($i=1;$i<=0;$i++) {
     echo "Row ".$i;
     }
-    $result = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE access<".(INCLUDE_ADMIN?"10":"8")." AND id > 5 AND tribe<=3 AND tribe > 0 ORDER BY dp DESC, id DESC Limit 10");
-    $result2 = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE id = '".$session->uid."' ORDER BY dp DESC Limit 1");
+    $rows = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE access<".(INCLUDE_ADMIN?"10":"8")." AND id > 5 AND tribe<=3 AND tribe > 0 ORDER BY dp DESC, id DESC LIMIT 10");
+    $rowSelf = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." ORDER BY dp DESC LIMIT 1");
 ?>
 <table cellpadding="1" cellspacing="1" id="top10_defs" class="top10 row_table_data">
 	<thead>
 		<tr>
-			<th onclick="return Popup(3,5)"><img src="img/x.gif" class="help" alt="Instructions" title="Instructions">
+			<th><img src="img/x.gif" class="help" alt="Instructions" title="Instructions" onclick="return Popup(3,5);">
 			</th>
 			<th colspan="2">Defenders of the week</th>
 		</tr>
@@ -85,7 +85,7 @@
 	</thead>
 	<tbody>
 <?php
-    while($row = mysqli_fetch_array($result))
+    foreach ($rows as $row)
       {
 	  if($row['id']==$session->uid) {
 	  $place1 = $i;
@@ -103,7 +103,7 @@
 			<td colspan="3" class="empty"></td>
 		</tr>
 <?php
-    while($row = mysqli_fetch_array($result2))
+    foreach ($rowSelf as $row)
       {
      if($row['id'] == $session->uid) {
 		echo "<tr class=\"none\">"; } else { echo "<tr class=\"own hl\">"; }
@@ -121,14 +121,14 @@
     for($i=1;$i<=0;$i++) {
     echo "Row ".$i;
     }
-    $result = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE access<".(INCLUDE_ADMIN?"10":"8")." AND id > 5 AND tribe<=3 AND tribe > 0 ORDER BY clp DESC, id DESC Limit 10");
-    $result2 = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE id = '".$session->uid."' ORDER BY clp DESC Limit 1");
+    $rows = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE access<".(INCLUDE_ADMIN?"10":"8")." AND id > 5 AND tribe<=3 AND tribe > 0 ORDER BY clp DESC, id DESC LIMIT 10");
+    $rowSelf = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." ORDER BY clp DESC LIMIT 1");
 ?>
 <div class="clear"></div>
 <table cellpadding="1" cellspacing="1" id="top10_climbers" class="top10 row_table_data">
 	<thead>
 		<tr>
-			<th onclick="return Popup(3,5)"><img src="img/x.gif" class="help" alt="Instructions" title="Instructions">
+			<th><img src="img/x.gif" class="help" alt="Instructions" title="Instructions" onclick="return Popup(3,5);">
 			</th>
 			<th colspan="2">Climbers of the week</th>
 		</tr>
@@ -140,7 +140,7 @@
 	</thead>
 	<tbody>
 <?php
-    while($row = mysqli_fetch_array($result))
+    foreach ($rows as $row)
       {
 	  if($row['id']==$session->uid) {
 	  $place2 = $i;
@@ -157,7 +157,7 @@
 			<td colspan="3" class="empty"></td>
 		</tr>
 <?php
-    while($row = mysqli_fetch_array($result2))
+    foreach ($rowSelf as $row)
       {
 		if($row['id'] == $session->uid) {
 		echo "<tr class=\"none\">"; } else { echo "<tr class=\"own hl\">"; }
@@ -173,13 +173,13 @@
     for($i=1;$i<=0;$i++) {
     echo "Row ".$i;
     }
-    $result = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE access<".(INCLUDE_ADMIN?"10":"8")." AND id > 5 AND tribe<=3 AND tribe > 0 ORDER BY RR DESC, id DESC Limit 10");
-    $result2 = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE id = '".$session->uid."' ORDER BY RR DESC Limit 1");
+    $rows = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE access<".(INCLUDE_ADMIN?"10":"8")." AND id > 5 AND tribe<=3 AND tribe > 0 ORDER BY RR DESC, id DESC LIMIT 10");
+    $rowSelf = $database->query_return("SELECT * FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." ORDER BY RR DESC LIMIT 1");
 ?>
 <table cellpadding="1" cellspacing="1" id="top10_raiders" class="top10 row_table_data">
 	<thead>
 		<tr>
-			<th onclick="return Popup(3,5)"><img src="img/x.gif" class="help" alt="Instructions" title="Instructions">
+			<th><img src="img/x.gif" class="help" alt="Instructions" title="Instructions" onclick="return Popup(3,5);">
 			</th>
 			<th colspan="2">Robbers of the week</th>
 		</tr>
@@ -191,7 +191,7 @@
 	</thead>
 	<tbody>
 <?php
-    while($row = mysqli_fetch_array($result))
+    foreach ($rows as $row)
       {
 	  if($row['RR'] >= 0) {
 	  if($row['id']==$session->uid) {
@@ -210,7 +210,7 @@
 			<td colspan="3" class="empty"></td>
 		</tr>
 <?php
-    while($row = mysqli_fetch_array($result2))
+    foreach ($rowSelf as $row)
       {
       if($row['id']==$session->uid) {
 		echo "<tr class=\"none\">"; } else { echo "<tr class=\"own hl\">"; }

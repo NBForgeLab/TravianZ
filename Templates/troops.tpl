@@ -1,14 +1,3 @@
-<?php 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       troops.tpl                                                  ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
 <table id="troops" cellpadding="1" cellspacing="1">
 <thead><tr>
 	<th colspan="3"><?php echo TROOPS; ?></th>

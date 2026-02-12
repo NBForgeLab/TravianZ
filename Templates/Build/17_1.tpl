@@ -7,14 +7,16 @@ $u=0;
 }
 ?>
 
-<div id="build" class="gid17"><a href="#" onClick="return Popup(17,4);" class="build_logo"> 
+<div id="build" class="gid17"><a href="#" onClick="return Popup(17, 4);" class="build_logo"> 
 	<img class="building g17" src="img/x.gif" alt="Marketplace" title="<?php echo MARKETPLACE;?>" /> 
 </a> 
 <h1><?php echo MARKETPLACE;?> <span class="level"><?php echo LEVEL;?> <?php echo $village->resarray['f'.$id]; ?></span></h1> 
 <p class="build_desc"><?php echo MARKETPLACE_DESC;?>
 </p> 
  
-<?php include("17_menu.tpl");
+<?php include("17_menu.tpl"); ?>
+<input type="hidden" name="a" value="<?php echo $session->mchecker; ?>" />
+<?php
 if($session->plus) {
 ?>
 <table id="search_select" class="buy_select" cellpadding="1" cellspacing="1">

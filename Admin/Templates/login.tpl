@@ -1,14 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       login.tpl                                                   ##
-##  Developed by:  Dzoki                                                       ##
-##  Reworked:      aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 ############ Check Update #############
 //copy("http://travian.gamingcrazy.net/Update/update_latest.tpl", "Templates/update_latest.tpl");

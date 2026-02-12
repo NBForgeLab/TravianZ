@@ -1,21 +1,12 @@
 <?php
  
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       general    .tpl                                             ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2011. All rights reserved.                ##
-##  Enhanced:      saulyzas                                                    ##
-#################################################################################
- 
-   $tribe1 = mysqli_fetch_array(mysqli_query($database->dblink,"SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE tribe = 1"), MYSQLI_ASSOC);
-   $tribe2 = mysqli_fetch_array(mysqli_query($database->dblink,"SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE tribe = 2"), MYSQLI_ASSOC);
-   $tribe3 = mysqli_fetch_array(mysqli_query($database->dblink,"SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE tribe = 3"), MYSQLI_ASSOC);
-   $tribes = [$tribe1['Total'], $tribe2['Total'], $tribe3['Total']];
-   $users = mysqli_fetch_array(mysqli_query($database->dblink,"SELECT Count(*) as Total FROM " . TB_PREFIX . "users WHERE tribe > 0 AND tribe < 4"), MYSQLI_ASSOC);
-   $users = $users['Total'];
+
+   $tribe1 = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE tribe = 1");
+   $tribe2 = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE tribe = 2");
+   $tribe3 = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE tribe = 3");
+   $tribes = [ (int)($tribe1[0]['Total'] ?? 0), (int)($tribe2[0]['Total'] ?? 0), (int)($tribe3[0]['Total'] ?? 0) ];
+   $usersRow = $database->query_return("SELECT Count(*) as Total FROM " . TB_PREFIX . "users WHERE tribe > 0 AND tribe < 4");
+   $users = (int)($usersRow[0]['Total'] ?? 0);
 ?>
 <table cellpadding="1" cellspacing="1" id="world_player" class="world">
         <thead>
@@ -33,15 +24,13 @@
                 
                 <td>
 <?php
-$result2 = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."vdata");
-$num_rows2 = mysqli_num_rows($result2);
-echo $num_rows2;
+$rows = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."vdata");
+echo (int)($rows[0]['Total'] ?? 0);
 ?></td>
                 <td>
 <?php
-$pop = mysqli_query($database->dblink,"SELECT SUM(pop) AS sumofpop FROM ".TB_PREFIX."vdata"); 
-$getpop = mysqli_fetch_assoc($pop); 
-echo $getpop['sumofpop'];
+$rows = $database->query_return("SELECT SUM(pop) AS sumofpop FROM ".TB_PREFIX."vdata"); 
+echo (int)($rows[0]['sumofpop'] ?? 0);
 ?></td>
 </tr>
 </tbody>
@@ -67,20 +56,16 @@ echo $getpop['sumofpop'];
                 <th>Active players</th>
  
                 <td><?php
-                   $active = mysqli_num_rows(mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE timestamp > ".(time() - (3600*24))." AND tribe!=0 AND tribe!=4 AND tribe!=5"));
-                   echo $active; ?></td>
+                   $rows = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE timestamp > ".(int)(time() - (3600*24))." AND tribe!=0 AND tribe!=4 AND tribe!=5");
+                   echo (is_array($rows) ? count($rows) : 0); ?></td>
             </tr>
  
             <tr>
                 <th>Players online</th>
  
                 <td><?php
-                    $online = mysqli_query($database->dblink,"SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE timestamp > ".(time() - (60*10))." AND tribe!=0 AND tribe!=4 AND tribe!=5");
-                    if (!empty($online)) {
-                        echo mysqli_fetch_assoc($online)['Total'];
-                    } else {
-                        echo 0;
-                    }
+                    $rows = $database->query_return("SELECT Count(*) as Total FROM ".TB_PREFIX."users WHERE timestamp > ".(int)(time() - (60*10))." AND tribe!=0 AND tribe!=4 AND tribe!=5");
+                    echo (int)($rows[0]['Total'] ?? 0);
                    ?></td>
                    
             </tr>
@@ -136,7 +121,7 @@ echo $getpop['sumofpop'];
         <tbody>
             <tr>
                 <td><img src="./<?php echo GP_LOCATE; ?>img/a/gold.gif" alt="Gold" title="Gold"> Gold</td>
-                <td><?php $gold = mysqli_query($GLOBALS["link"], "SELECT SUM(gold) AS sumofgold FROM ".TB_PREFIX."users"); $getgold=mysqli_fetch_assoc($gold); echo $getgold['sumofgold']; ?></td>
+                <td><?php $rows = $database->query_return("SELECT SUM(gold) AS sumofgold FROM ".TB_PREFIX."users"); echo (int)($rows[0]['sumofgold'] ?? 0); ?></td>
                 
             </tr>
         </tbody>
@@ -162,23 +147,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u1"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u1) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u1) AS sumofrats FROM ".TB_PREFIX."units");
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u11"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u11) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u11) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u21"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u21) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u21) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -186,23 +168,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u2"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u2) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u2) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u12"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u12) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u12) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u22"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u22) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u22) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -210,23 +189,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u3"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u3) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u3) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u13"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u13) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u13) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u23"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u23) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u23) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -234,23 +210,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u4"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u4) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u4) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u14"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u14) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u14) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u24"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u24) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u24) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -258,23 +231,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u5"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u5) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u5) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u15"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u15) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u15) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u25"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u25) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u25) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -282,23 +252,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u6"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u6) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u6) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u16"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u16) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u16) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u26"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u26) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u26) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -306,23 +273,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u7"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u7) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u7) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u17"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u17) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u17) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u27"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u27) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u27) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -330,23 +294,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u8"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u8) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u8) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u18"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u18) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u18) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u28"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u28) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u28) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -354,23 +315,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u9"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u9) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u9) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u19"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u19) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u19) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u29"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u29) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u29) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
             </tr>
  
@@ -378,23 +336,20 @@ echo $getpop['sumofpop'];
                 <td><img src="img/x.gif" class="unit u10"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u10) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u10) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                    <td><img src="img/x.gif" class="unit u20"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u20) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u20) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
                 <td><img src="img/x.gif" class="unit u30"></td>
                 <td>
                    <?php
-                   $orat = mysqli_query($database->dblink,"SELECT SUM(u30) AS sumofrats FROM ".TB_PREFIX."units"); 
-           $getorat = mysqli_fetch_assoc($orat); 
-           echo $getorat['sumofrats'];
+                   $rows = $database->query_return("SELECT SUM(u30) AS sumofrats FROM ".TB_PREFIX."units"); 
+                   echo (int)($rows[0]['sumofrats'] ?? 0);
            ?></td>
            
             </tr>
@@ -474,6 +429,4 @@ echo $getpop['sumofpop'];
             </tr>
         </tbody>
     </table>
-    <?php  ?>
-    
-<table cellpadding="1" cellspacing="1" id="search_navi"> <?php //fix the problem with footer.php, don't change or remove it ?>
+    <table cellpadding="1" cellspacing="1" id="search_navi"> <?php //fix the problem with footer.php, don't change or remove it ?>

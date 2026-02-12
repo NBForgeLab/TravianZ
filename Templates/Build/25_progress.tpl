@@ -1,4 +1,4 @@
- <?php
+<?php
     $trainlist = $technology->getTrainingList(4);
     if(count($trainlist) > 0) {
     	echo "

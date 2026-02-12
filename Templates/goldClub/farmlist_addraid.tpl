@@ -74,8 +74,8 @@ if(isset($_POST['action']) && $_POST['action'] == 'addSlot' && isset($_POST['lid
                         <select name="lid">
 <?php
 
-$sql = mysqli_query($database->dblink, "SELECT id, name, owner, wref FROM ".TB_PREFIX."farmlist WHERE owner = ".(int)$session->uid." ORDER BY name ASC");
-	while($row = mysqli_fetch_array($sql)){
+$rows = $database->query_return("SELECT id, name, owner, wref FROM ".TB_PREFIX."farmlist WHERE owner = ".(int)$session->uid." ORDER BY name ASC");
+	foreach ($rows as $row){
 		$lid = $row["id"];
 		$lname = $row["name"];
 		$lvname = $database->getVillageField($row["wref"], 'name');
@@ -109,7 +109,7 @@ $sql = mysqli_query($database->dblink, "SELECT id, name, owner, wref FROM ".TB_P
 $getwref = "SELECT movement.to, movement.ref, attacks.* FROM ".TB_PREFIX."movement as movement INNER JOIN ".TB_PREFIX."attacks as attacks ON attacks.id = movement.ref WHERE attacks.attack_type = 4 AND movement.proc = 1 AND movement.from = ".$village->wid;
 $arraywref = $database->query_return($getwref);
 echo '<option value="">Select village</option>';
-if(mysqli_num_rows(mysqli_query($database->dblink, $getwref)) != 0){
+if(is_array($arraywref) && count($arraywref) != 0){
 	foreach($arraywref as $row){
 		$towref = $row["to"];
 		$vilInfo = $database->getVillageByWorldID($towref);

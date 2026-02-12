@@ -1,14 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       massmessage.php                                             ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 use App\Utils\AccessLogger;
 
@@ -16,8 +7,8 @@ include_once("GameEngine/Account.php");
 AccessLogger::logRequest();
 
 $max_per_pass = 1000;
-
-if (mysqli_num_rows(mysqli_query($database->dblink,"SELECT id FROM ".TB_PREFIX."users WHERE access = 9 AND id = ".(int) $session->uid)) != '1') die("Hacking attemp!");
+$rows = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE access = 9 AND id = ".(int)$session->uid." LIMIT 1");
+if (!is_array($rows) || count($rows) !== 1) die("Hacking attemp!");
 
 if (@$_POST['submit'] == "Send")
 {
@@ -42,6 +33,7 @@ $max_per_pass = 1000;
 
 if (isset($_GET['send']) && isset($_GET['from']))
 {
+	$from = (int) $_GET['from'];
 	$_SESSION['m_message'] = preg_replace("/\[img\]([a-z0-9\_\.\:\/\-]*)\[\/img\]/i","<img src='$1' alt='Corrupted image'/>",  $_SESSION['m_message']);
 	$_SESSION['m_message'] = preg_replace("/\[url\]([a-z0-9\_\.\:\/\-]*)\[\/url\]/i", "<a href='$1'>$1</a>",  $_SESSION['m_message']);
 	$_SESSION['m_message'] = preg_replace("/\[url\=([a-z0-9\_\.\:\/\-]*)\]([a-z0-9\_\.\:\/\-]*)\[\/url\]/i", "<a href='$1'>$2</a>",  $_SESSION['m_message']);
@@ -52,11 +44,11 @@ if (isset($_GET['send']) && isset($_GET['from']))
 	$_SESSION['m_subject'] = $database->escape($_SESSION['m_subject']);
 	$_SESSION['m_message'] = $database->escape($_SESSION['m_message']);
 
-	$users_count = mysqli_fetch_assoc(mysqli_query($database->dblink,"SELECT count(*) as count FROM ".TB_PREFIX."users WHERE id != 0"));
-	$users_count = $users_count['count'];
-	if ($_GET['from'] + $max_per_pass <= $users_count) $plus = $max_per_pass; else $plus = $users_count - $_GET['from'];
+	$usersRows = $database->query_return("SELECT count(*) as count FROM ".TB_PREFIX."users WHERE id != 0");
+	$users_count = isset($usersRows[0]['count']) ? (int)$usersRows[0]['count'] : 0;
+	if ($from + $max_per_pass <= $users_count) $plus = $max_per_pass; else $plus = $users_count - $from;
 	$sql = "INSERT INTO ".TB_PREFIX."mdata (`target`, `owner`, `topic`, `message`, `viewed`, `archived`, `send`, `time`,`deltarget`,`delowner`,`alliance`,`player`,`coor`,`report`) VALUES ";
-	for($i = $_GET['from']; $i < ($_GET['from'] + $plus) ; $i++) {
+	for($i = $from; $i < ($from + $plus) ; $i++) {
 	if($i > 5){
 		if ($_SESSION['m_color'])
 		{
@@ -78,9 +70,9 @@ if (isset($_GET['send']) && isset($_GET['from']))
 		$sql .= "($i, 0, '{$_SESSION['m_subject']}', \"{$_SESSION['m_message']}\", 0, 0, 0, ".time().",0,0,0,0,0,0),";
 	}
 	}
-	mysqli_query($database->dblink,$sql);
-	if (($users_count - $_GET['from']) > $max_per_pass) {
-	    header("Location: massmessage.php?send=true&from=",$_GET['from'] + $max_per_pass);
+	$database->query($sql);
+	if (($users_count - $from) > $max_per_pass) {
+	    header("Location: massmessage.php?send=true&from=".($from + $max_per_pass));
 	    exit;
 	} else $done = true;
 }
@@ -98,7 +90,6 @@ if (isset($_GET['send']) && isset($_GET['from']))
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
-	<script src="mt-full.js?0ac37" type="text/javascript"></script>
 	<script src="unx.js?f4b7h" type="text/javascript"></script>
 	<script src="new.js?0ac37" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -129,10 +120,6 @@ if (isset($_GET['send']) && isset($_GET['from']))
 	}
 	</script>
 
-	<script type="text/javascript">
-
-		window.addEvent('domready', start);
-	</script>
 		<?php
 	if($session->gpack == null || GP_ENABLE == false) {
 	echo "
@@ -144,9 +131,6 @@ if (isset($_GET['send']) && isset($_GET['from']))
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-	window.addEvent('domready', start);
-	</script>
 </head>
 
 
@@ -203,32 +187,32 @@ if (isset($_GET['send']) && isset($_GET['from']))
 
 <div id="message_smilies" style="background:none repeat scroll 0 0 #EFEFEF;border:1px solid #71D000;left:20px;margin-top:5px;max-width:660px;padding:5px;position:relative;display: none;">
 <?php echo MASS_READ; ?>
-<a href="#" onclick="smilie('*u1*')"><img src="img/x.gif" class="uu1" /></a>
-<a href="#" onclick="smilie('*u2*')"><img src="img/x.gif" class="uu2" /></a>
-<a href="#" onclick="smilie('*u3*')"><img src="img/x.gif" class="uu3" /></a>
-<a href="#" onclick="smilie('*u4*')"><img src="img/x.gif" class="uu4" /></a>
-<a href="#" onclick="smilie('*u5*')"><img src="img/x.gif" class="uu5" /></a>
-<a href="#" onclick="smilie('*u6*')"><img src="img/x.gif" class="uu6" /></a>
-<a href="#" onclick="smilie('*u7*')"><img src="img/x.gif" class="uu7" /></a>
-<a href="#" onclick="smilie('*u8*')"><img src="img/x.gif" class="uu8" /></a>
-<a href="#" onclick="smilie('*u9*')"><img src="img/x.gif" class="uu9" /></a>
-<a href="#" onclick="smilie('*u10*')"><img src="img/x.gif" class="uu10" /></a>
-<a href="#" onclick="smilie('*u11*')"><img src="img/x.gif" class="uu11" /></a>
-<a href="#" onclick="smilie('*u12*')"><img src="img/x.gif" class="uu12" /></a><br />
-<a href="#" onclick="smilie('*u13*')"><img src="img/x.gif" class="uu13" /></a>
-<a href="#" onclick="smilie('*u14*')"><img src="img/x.gif" class="uu14" /></a>
-<a href="#" onclick="smilie('*u15*')"><img src="img/x.gif" class="uu15" /></a>
-<a href="#" onclick="smilie('*u16*')"><img src="img/x.gif" class="uu16" /></a>
-<a href="#" onclick="smilie('*u17*')"><img src="img/x.gif" class="uu17" /></a>
-<a href="#" onclick="smilie('*u18*')"><img src="img/x.gif" class="uu18" /></a>
-<a href="#" onclick="smilie('*u19*')"><img src="img/x.gif" class="uu19" /></a>
-<a href="#" onclick="smilie('*u21*')"><img src="img/x.gif" class="uu21" /></a>
-<a href="#" onclick="smilie('*u22*')"><img src="img/x.gif" class="uu22" /></a>
-<a href="#" onclick="smilie('*u23*')"><img src="img/x.gif" class="uu23" /></a>
-<a href="#" onclick="smilie('*u24*')"><img src="img/x.gif" class="uu24" /></a><br />
-<a href="#" onclick="smilie('*u25*')"><img src="img/x.gif" class="uu25" /></a>
-<a href="#" onclick="smilie('*u26*')"><img src="img/x.gif" class="uu26" /></a>
-<a href="#" onclick="smilie('*u29*')"><img src="img/x.gif" class="uu29" /></a>
+<a href="#"><img src="img/x.gif" class="uu1" /></a>
+<a href="#"><img src="img/x.gif" class="uu2" /></a>
+<a href="#"><img src="img/x.gif" class="uu3" /></a>
+<a href="#"><img src="img/x.gif" class="uu4" /></a>
+<a href="#"><img src="img/x.gif" class="uu5" /></a>
+<a href="#"><img src="img/x.gif" class="uu6" /></a>
+<a href="#"><img src="img/x.gif" class="uu7" /></a>
+<a href="#"><img src="img/x.gif" class="uu8" /></a>
+<a href="#"><img src="img/x.gif" class="uu9" /></a>
+<a href="#"><img src="img/x.gif" class="uu10" /></a>
+<a href="#"><img src="img/x.gif" class="uu11" /></a>
+<a href="#"><img src="img/x.gif" class="uu12" /></a><br />
+<a href="#"><img src="img/x.gif" class="uu13" /></a>
+<a href="#"><img src="img/x.gif" class="uu14" /></a>
+<a href="#"><img src="img/x.gif" class="uu15" /></a>
+<a href="#"><img src="img/x.gif" class="uu16" /></a>
+<a href="#"><img src="img/x.gif" class="uu17" /></a>
+<a href="#"><img src="img/x.gif" class="uu18" /></a>
+<a href="#"><img src="img/x.gif" class="uu19" /></a>
+<a href="#"><img src="img/x.gif" class="uu21" /></a>
+<a href="#"><img src="img/x.gif" class="uu22" /></a>
+<a href="#"><img src="img/x.gif" class="uu23" /></a>
+<a href="#"><img src="img/x.gif" class="uu24" /></a><br />
+<a href="#"><img src="img/x.gif" class="uu25" /></a>
+<a href="#"><img src="img/x.gif" class="uu26" /></a>
+<a href="#"><img src="img/x.gif" class="uu29" /></a>
 </div>
 <?php } ?>
 

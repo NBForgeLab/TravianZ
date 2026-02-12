@@ -1,30 +1,24 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ      					                           ##
-##  Version:       01.09.2013 						                           ##
-##  Filename       process.php                                                 ##
-##  Developed by:  Shadow			                                           ##
-##  Fixed by:      Shadow / Skype : cata7007 and Armando                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro 				                   ##
-##  Source code:   http://github.com/Shadowss/TravianZ/         	           ##
-##                                                                             ##
-#################################################################################
 
 // don't let SQL time out when 30-500 seconds (depending on php.ini) is not enough
 @set_time_limit(0);
 
-if (file_exists("../var/installed")) {
+if (file_exists(__DIR__ . "/../var/installed")) {
 	die("<span class='f18 c5'>ERROR!</span><br />Installation appears to have been completed.<br />If this is an error remove /var/installed file in install directory.");
 }
+
+$installT = isset($_GET['t']) ? (int) $_GET['t'] : 1;
+$installT = max(1, min(12, $installT));
+$installRtl = isset($_GET['rtl']) && $_GET['rtl'] === '1';
+$installRtlParam = $installRtl ? '&rtl=1' : '';
 
 class Process {
 
 	function __construct() {
+		global $installT;
+		global $installRtlParam;
+
 		if(isset($_POST['subconst'])) {
 			$this->constForm();
 		} else
@@ -37,13 +31,16 @@ class Process {
 					if(isset($_POST['subacc'])) {
 						$this->createAcc();
 						} else {
-							header("Location: index.php");
+							header("Location: index.php?t=" . $installT . $installRtlParam);
 						}
 	}
 
 	private function constForm() {
-	    $configFile = "../GameEngine/config.php";
-		$configTemplateFile = "../GameEngine/Admin/Mods/constant_format.tpl";
+		global $installT;
+		global $installRtlParam;
+
+	    $configFile = __DIR__ . "/../GameEngine/config.php";
+		$configTemplateFile = __DIR__ . "/../GameEngine/Admin/Mods/constant_format.tpl";
 
 		$gameConfig = @fopen($configFile, 'w') or die("<br/><br/><br/>Can't create or update file: GameEngine\config.php");
 
@@ -52,7 +49,7 @@ class Process {
 		$templateFile = @fopen($configTemplateFile, 'w') or die("<br/><br/><br/>Can't create or update file: GameEngine\Admin\Mods\constant_format.tpl");
 		fclose($templateFile);
 
-		$text = file_get_contents("data/constant_format.tpl");
+		$text = file_get_contents(__DIR__ . "/data/constant_format.tpl");
 
 		// make template copy
 		file_put_contents($configTemplateFile, $text);
@@ -172,9 +169,9 @@ class Process {
 		fwrite($gameConfig, str_replace(array_keys($findReplace), array_values($findReplace), $text));
 
 		if (file_exists($configFile) && file_exists($configTemplateFile)) {
-			header("Location: index.php?s=2");
+			header("Location: index.php?s=2&t=" . $installT . $installRtlParam);
 		} else {
-			header("Location: index.php?s=1&c=1");
+			header("Location: index.php?s=1&t=" . $installT . $installRtlParam . "&c=1");
 		}
 
 		fclose($gameConfig);
@@ -184,23 +181,25 @@ class Process {
 	 * Creates database structure for the game.
 	 */
 	function createStruc() {
+	    global $installT;
+	    global $installRtlParam;
 	    global $database;
 
-	    include ("../GameEngine/config.php");
-	    include ("../GameEngine/Database.php");
-	    include ("../GameEngine/Admin/database.php");
+	    include (__DIR__ . "/../GameEngine/config.php");
+	    include (__DIR__ . "/../GameEngine/Database.php");
+	    include (__DIR__ . "/../GameEngine/Admin/database.php");
 
 	    // create table structure
 	    $result = $database->createDbStructure();
         if ($result === false) {
-            header("Location: index.php?s=2&err=1");
+            header("Location: index.php?s=2&t=" . $installT . $installRtlParam . "&err=1");
             exit;
         } else if ($result === -1) {
-	        header("Location: index.php?s=2&c=1");
+	        header("Location: index.php?s=2&t=" . $installT . $installRtlParam . "&c=1");
 	        exit;
 	    }
 
-    	header("Location: index.php?s=3");
+    	header("Location: index.php?s=3&t=" . $installT . $installRtlParam);
     	exit;
 	}
 
@@ -208,23 +207,25 @@ class Process {
 	 * Generates map data and populates it with oasis.
 	 */
 		function createWdata() {
+			global $installT;
+			global $installRtlParam;
 			global $database;
 
-			include ("../GameEngine/config.php");
-			include ("../GameEngine/Database.php");
-			include ("../GameEngine/Admin/database.php");
+			include (__DIR__ . "/../GameEngine/config.php");
+			include (__DIR__ . "/../GameEngine/Database.php");
+			include (__DIR__ . "/../GameEngine/Admin/database.php");
 
 			// 1) Populate world data
 			$result = $database->populateWorldData();
 			if ($result === false) {
-				header("Location: index.php?s=3&err=1");
+				header("Location: index.php?s=3&t=" . $installT . $installRtlParam . "&err=1");
 				exit;
 			} else if ($result === -1) {
-				header("Location: index.php?s=3&c=1");
+				header("Location: index.php?s=3&t=" . $installT . $installRtlParam . "&c=1");
 				exit;
 			}
 
-			header("Location: index.php?s=3&startCroppers=1");
+			header("Location: index.php?s=3&t=" . $installT . $installRtlParam . "&startCroppers=1");
 			exit;
 		}
 

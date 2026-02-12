@@ -1,0 +1,24 @@
+:root {
+	--trz-login-card-bg: rgba(255, 255, 255, 0.9);
+}
+
+body.login-bs {
+	background: #f8f9fa;
+}
+
+body.login-bs .wrapper {
+	max-width: 1140px;
+	margin: 0 auto;
+	min-width: 0;
+}
+
+body.login-bs #mid {
+	padding: 1.5rem 1rem;
+}
+
+body.login-bs #content.login {
+	background: var(--trz-login-card-bg);
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	border-radius: .75rem;
+	padding: 1.25rem;
+}

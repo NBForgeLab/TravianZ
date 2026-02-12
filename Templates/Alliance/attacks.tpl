@@ -21,8 +21,8 @@ if($_GET['f'] == 31 || $_GET['f'] == 32) include "Templates/Alliance/attack-filt
 else
 {
 		
-$sql = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."ndata WHERE ally = ".(int) $session->alliance." AND (ntype < 8 OR (ntype > 17 AND ntype < 22) OR (ntype = 22 AND ally = $session->alliance) OR (ntype = 23 AND ally != $session->alliance)) ORDER BY time DESC LIMIT 20");
-$query = mysqli_num_rows($sql);
+$rows = $database->query_return("SELECT * FROM ".TB_PREFIX."ndata WHERE ally = ".(int)$session->alliance." AND (ntype < 8 OR (ntype > 17 AND ntype < 22) OR (ntype = 22 AND ally = ".$session->alliance.") OR (ntype = 23 AND ally != ".$session->alliance.")) ORDER BY time DESC LIMIT 20");
+$query = is_array($rows) ? count($rows) : 0;
 $outputList = '';
 $name = 1;
 
@@ -30,7 +30,7 @@ if(!$query) $outputList .= "<td colspan=\"4\" class=\"none\">There are no report
 else
 {
 
-while($row = mysqli_fetch_array($sql)){ 
+foreach ($rows as $row){ 
 	$dataarray = explode(",",$row['data']);
     $id = $row["id"];
     $uid = $row["uid"];

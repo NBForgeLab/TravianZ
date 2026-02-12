@@ -20,8 +20,7 @@ $free = $session->uid;
 			<td class="desc">
 							Pay by phone              <br />
                 
-            				<a href="#"
-					onclick="window.open('http://billing.micropayment.de/call2pay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix-120+Gold&amount=499','nsrpay','scrollbars=yes,status=yes,resizable=yes,toolbar=yes,width=800,height=600');return false;">
+            				<a href="#" data-open-url="http://billing.micropayment.de/call2pay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix-120+Gold&amount=499">
 				<img src="img/bezahlung/call2pay1.png" style="width:126px; height:38px;" alt="call2pay" /></a>
 						
 			<br />
@@ -47,8 +46,7 @@ $free = $session->uid;
 			<td class="desc">
 							Pay with SMS                <br />
                 
-            				<a href="#"
-					onclick="window.open('http://billing.micropayment.de/handypay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix-120+Gold&amount=499&paytext=TravianiX+120+Gold&smstext=travianix120gold','nsrpay','scrollbars=yes,status=yes,resizable=yes,toolbar=yes,width=800,height=600');return false;">
+            				<a href="#" data-open-url="http://billing.micropayment.de/handypay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix-120+Gold&amount=499&paytext=TravianiX+120+Gold&smstext=travianix120gold">
 				<img src="img/bezahlung/handy2pay2.png" style="width:126px; height:38px;" alt="handy2pay" /></a>
 						
 			<br />
@@ -74,8 +72,7 @@ $free = $session->uid;
 			<td class="desc">
 							Pay with online banktransfer                <br />
                 
-            				<a href="#"
-					onclick="window.open('http://billing.micropayment.de/ebank2pay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix+120+Gold&amount=499&currency=EUR&paytext=travianix+120+Gold','nsrpay','scrollbars=yes,status=yes,resizable=yes,toolbar=yes,width=800,height=600');return false;">
+            				<a href="#" data-open-url="http://billing.micropayment.de/ebank2pay/event/?account=56387&project=trvnx&theme=default&gfx=x-surfer&bgcolor=ffffff&title=travianix+120+Gold&amount=499&currency=EUR&paytext=travianix+120+Gold">
 				<img src="img/bezahlung/ebank2pay2.png" style="width:181px; height:38px;" alt="ebank2pay" /></a>
 						
 			<br />
@@ -132,7 +129,7 @@ $free = $session->uid;
     
                 <br />
                 More Info about PayPal can be found here: <br />
-                <a href="#" onclick="window.open('https://www.paypal.com/en/cgi-bin/webscr?cmd=xpt/cps/popup/OLCWhatIsPayPal-outside','external','scrollbars=yes,status=yes,resizable=yes,toolbar=yes,width=800,height=600');return false;">More Info</a>
+                <a href="#" data-open-url="https://www.paypal.com/en/cgi-bin/webscr?cmd=xpt/cps/popup/OLCWhatIsPayPal-outside">More Info</a>
                 <br />
             </td>
 		</tr>

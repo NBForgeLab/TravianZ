@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editPlusSet.tpl                                             ##
-##  Developed by:  martinambrus                                                ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2017. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 if (!isset($_SESSION)) {
  session_start();
 }

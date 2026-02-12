@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       playerheroinfo.tpl                                          ##
-##  Developed by:  ronix                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 include_once("../GameEngine/Data/hero_full.php"); 
 include_once("../GameEngine/Units.php");

@@ -1,4 +1,4 @@
-			<table id="profile">
+<table id="profile">
 				<thead>
 					<tr>
 						<th colspan="6">Player Medals (<?php echo sizeof($varmedal); ?>)</th>

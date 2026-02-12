@@ -1,14 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Market.php                                                  ##
-##  Developed by:  Dzoki                                                       ##
-##  Some fixes:    aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 class Market
 {
@@ -86,14 +76,14 @@ class Market
     {
         global $database, $village, $session, $generator, $logging, $form;
 
-        $wtrans = (isset($post['r1']) && !empty($post['r1']))? $post['r1'] : 0;
-        $ctrans = (isset($post['r2']) && !empty($post['r2']))? $post['r2'] : 0;
-        $itrans = (isset($post['r3']) && !empty($post['r3']))? $post['r3'] : 0;
-        $crtrans = (isset($post['r4']) && !empty($post['r4']))? $post['r4'] : 0;
-        $wtrans = str_replace("-", "", $wtrans);
-        $ctrans = str_replace("-", "", $ctrans);
-        $itrans = str_replace("-", "", $itrans);
-        $crtrans = str_replace("-", "", $crtrans);
+        $wtrans = isset($post['r1']) ? (string) $post['r1'] : '0';
+        $ctrans = isset($post['r2']) ? (string) $post['r2'] : '0';
+        $itrans = isset($post['r3']) ? (string) $post['r3'] : '0';
+        $crtrans = isset($post['r4']) ? (string) $post['r4'] : '0';
+        $wtrans = (int) str_replace("-", "", $wtrans);
+        $ctrans = (int) str_replace("-", "", $ctrans);
+        $itrans = (int) str_replace("-", "", $itrans);
+        $crtrans = (int) str_replace("-", "", $crtrans);
         
         // preload all village data, since we're retrieving some of those separately below
         $database->getVillage($village->wid);
@@ -103,20 +93,23 @@ class Market
         $availableIron = $database->getIronAvailable($village->wid);
         $availableCrop = $database->getCropAvailable($village->wid);
         
-		//check if on vacation:
-        if($database->getvacmodexy($id)) $form->addError("error", USER_ON_VACATION);
+        //check if on vacation:
+        if($database->getvacmodexy((int) ($post['getwref'] ?? 0))) $form->addError("error", USER_ON_VACATION);
 
-        if(!$database->checkVilExist($post['getwref'])) $form->addError("error", NO_COORDINATES_SELECTED);
-        elseif($post['getwref'] == $village->wid) $form->addError("error", CANNOT_SEND_RESOURCES);
-        elseif($post['send3'] < 1 || $post['send3'] > 3 || ($post['send3'] > 1 && !$session->goldclub)) $form->addError("error", INVALID_MERCHANTS_REPETITION);
-        elseif($availableWood >= $post['r1'] && $availableClay >= $post['r2'] && $availableIron >= $post['r3'] && $availableCrop >= $post['r4'])
+        $targetWref = isset($post['getwref']) ? (int) $post['getwref'] : 0;
+        $repeat = isset($post['send3']) ? (int) $post['send3'] : 1;
+
+        if(!$database->checkVilExist($targetWref)) $form->addError("error", NO_COORDINATES_SELECTED);
+        elseif($targetWref == $village->wid) $form->addError("error", CANNOT_SEND_RESOURCES);
+        elseif($repeat < 1 || $repeat > 3 || ($repeat > 1 && !$session->goldclub)) $form->addError("error", INVALID_MERCHANTS_REPETITION);
+        elseif($availableWood >= $wtrans && $availableClay >= $ctrans && $availableIron >= $itrans && $availableCrop >= $crtrans)
         {
             $resource = [$wtrans, $ctrans, $itrans, $crtrans];
 			$reqMerc = ceil((array_sum($resource) - 0.1) / $this->maxcarry);
 
             if($this->merchantAvail() > 0 && $reqMerc <= $this->merchantAvail())
             {
-                $id = $post['getwref'];
+                $id = $targetWref;
                 $coor = $database->getCoor($id);
                 if($database->getVillageState($id))
                 {
@@ -125,7 +118,7 @@ class Market
 					if($res != 0){
 						$reference = $database->sendResource($resource[0], $resource[1], $resource[2], $resource[3], $reqMerc, 0);
 						$database->modifyResource($village->wid, $resource[0], $resource[1], $resource[2], $resource[3], 0);
-						$database->addMovement(0, $village->wid, $id, $reference, time(), time() + $timetaken, $post['send3']);
+                        $database->addMovement(0, $village->wid, $id, $reference, time(), time() + $timetaken, $repeat);
 						$logging->addMarketLog($village->wid, 1, [$resource[0], $resource[1], $resource[2], $resource[3], $id]);
 					}
                 }
@@ -202,7 +195,7 @@ class Market
                     if($database->modifyResource($village->wid,$wood,$clay,$iron,$crop,0))
                     {
                         $time = 0;
-                        if(isset($_POST['d1'])) $time = $_POST['d2'] * 3600;
+                        if(isset($_POST['d1'])) $time = (int) ($_POST['d2'] ?? 0) * 3600;
                         $alliance = (isset($post['ally']) && $post['ally'] == 1)? $session->userinfo['alliance'] : 0;
                         $database->addMarket($village->wid,$post['rid1'],$post['m1'],$post['rid2'],$post['m2'],$time,$alliance,$reqMerc,0);
                     }
@@ -347,27 +340,43 @@ class Market
 
         $wwvillage = $database->getResourceLevel($village->wid);
         if($wwvillage['f99t'] != 40){
+            $m2 = $post['m2'] ?? null;
+            if (!is_array($m2)) {
+                if ($m2 === null) {
+                    header("Location: build.php?id=".$post['id']."&t=3");
+                    exit;
+                }
+                $m2 = [(int) $m2, (int) $m2, (int) $m2, (int) $m2];
+            }
+            $m2 = array_values($m2);
+            for ($i = 0; $i < 4; $i++) {
+                if (!isset($m2[$i])) {
+                    $m2[$i] = 0;
+                }
+                $m2[$i] = (int) $m2[$i];
+            }
+
             if($session->userinfo['gold'] >= 3){
                 // check that we're not trying to sell more resources that we actually have
                 if (
-                  (int) $post['m2'][0] < 0 && round($village->awood) + (int) $post['m2'][0] < 0
+                  $m2[0] < 0 && round($village->awood) + $m2[0] < 0
                   ||
-                  (int) $post['m2'][1] < 0 && round($village->aclay) + (int) $post['m2'][1] < 0
+                  $m2[1] < 0 && round($village->aclay) + $m2[1] < 0
                   ||
-                  (int) $post['m2'][2] < 0 && round($village->airon) + (int) $post['m2'][2] < 0
+                  $m2[2] < 0 && round($village->airon) + $m2[2] < 0
                   ||
-                  (int) $post['m2'][3] < 0 && round($village->acrop) + (int) $post['m2'][3] < 0
+                  $m2[3] < 0 && round($village->acrop) + $m2[3] < 0
                 ) {
                     header("Location: build.php?id=".$post['id']."&t=3");
                     exit;
                 }
 
                 //Check if there are too many resources
-                if ( ((int) $post['m2'][0] + (int) $post['m2'][1] + (int) $post['m2'][2] + (int) $post['m2'][3] ) <= ( round($village->awood) + round($village->aclay) + round($village->airon) + round($village->acrop) ) ) {
+                if ( ($m2[0] + $m2[1] + $m2[2] + $m2[3]) <= ( round($village->awood) + round($village->aclay) + round($village->airon) + round($village->acrop) ) ) {
                     $database->setVillageField(
                         $village->wid,
                         ["wood", "clay", "iron", "crop"],
-                        [$post['m2'][0], $post['m2'][1], $post['m2'][2], $post['m2'][3]]
+                        [$m2[0], $m2[1], $m2[2], $m2[3]]
                     );
                     $database->modifyGold($session->uid, 3, 0);
                     header("Location: build.php?id=".$post['id']."&t=3&c");

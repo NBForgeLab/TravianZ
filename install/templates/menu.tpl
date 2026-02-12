@@ -1,41 +1,46 @@
-<div class="menu">
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Version:       22.06.2015                    			       ## 
-##  Filename       menu.tpl                                                    ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix   ## 
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		       ##
-##  Fixed by:      InCube - double troops				       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2015. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro                		       ##
-##  Source code:   https://github.com/Shadowss/TravianZ		               ## 
-##                                                                             ##
-#################################################################################
 
-	switch($_GET['s']) {
-		case 0:
-		echo "<li class=\"c2 f9\">Intro</li><li class=\"c1 f9\">Configuration</li><li class=\"c1 f9\">Database</li><li class= \"c1 f9\">World Data</li><li class=\"c1 f9\">Accounts</li><li class=\"c1 f9\">End</li>";
-		break;
-		case 1:
-		echo "<li class=\"c3 f9\">Intro</li><li class=\"c2 f9\">Configuration</li><li class=\"c1 f9\">Database</li><li class= \"c1 f9\">World Data</li><li class=\"c1 f9\">Accounts</li><li class=\"c1 f9\">End</li>";
-		break;
-		case 2:
-		echo "<li class=\"c3 f9\">Intro</li><li class=\"c3 f9\">Configuration</li><li class=\"c2 f9\">Database</li><li class= \"c1 f9\">World Data</li><li class=\"c1 f9\">Accounts</li><li class=\"c1 f9\">End</li>";
-		break;
-		case 3:
-		echo "<li class=\"c3 f9\">Intro</li><li class=\"c3 f9\">Configuration</li><li class=\"c3 f9\">Database</li><li class= \"c2 f9\">World Data</li><li class=\"c1 f9\">Accounts</li><li class=\"c1 f9\">End</li>";
-		break;
-		case 4:
-		echo "<li class=\"c3 f9\">Intro</li><li class=\"c3 f9\">Configuration</li><li class=\"c3 f9\">Database</li><li class= \"c3 f9\">World Data</li><li class=\"c2 f9\">Accounts</li><li class=\"c1 f9\">End</li>";
-		break;
-		case 5:
-		echo "<li class=\"c3 f9\">Intro</li><li class=\"c3 f9\">Configuration</li><li class=\"c3 f9\">Database</li><li class= \"c3 f9\">World Data</li><li class=\"c3 f9\">Accounts</li><li class=\"c2 f9\">End</li>";
-		break;
+
+	$step = isset($_GET['s']) ? (int) $_GET['s'] : 0;
+	$step = max(0, min(5, $step));
+	$rtl = isset($_GET['rtl']) && $_GET['rtl'] === '1';
+	$steps = [
+		0 => 'Intro',
+		1 => 'Configuration',
+		2 => 'Database',
+		3 => 'World Data',
+		4 => 'Accounts',
+		5 => 'End',
+	];
+
+	echo '<div class="list-group list-group-flush">';
+	foreach ($steps as $i => $label) {
+		$isActive = ($i === $step);
+		$isCompleted = ($i < $step);
+		$isDisabled = ($i > $step);
+
+		$classes = 'list-group-item list-group-item-action d-flex align-items-center justify-content-between';
+		if ($isActive) {
+			$classes .= ' active';
+		}
+		if ($isDisabled) {
+			$classes .= ' disabled';
+		}
+
+		$href = $isDisabled ? '#' : ('?s=' . $i . '&t=' . (isset($_GET['t']) ? (int) $_GET['t'] : 1) . ($rtl ? '&rtl=1' : ''));
+
+		echo '<a class="' . $classes . '" href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '" aria-current="' . ($isActive ? 'step' : 'false') . '">';
+		echo '<span>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span>';
+		if ($isCompleted) {
+			echo '<span class="badge text-bg-success">Done</span>';
+		} elseif ($isActive) {
+			echo '<span class="badge text-bg-light">Current</span>';
+		} else {
+			echo '<span class="badge text-bg-secondary">Next</span>';
+		}
+		echo '</a>';
 	}
+	echo '</div>';
 
-?></div>
+?>

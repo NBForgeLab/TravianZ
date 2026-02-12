@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editServerSet.tpl                                           ##
-##  Developed by:  ronix                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 if (!isset($_SESSION)) {
  session_start();
 }
@@ -40,7 +31,7 @@ function refresh(tz) {
 					<tr>
 						<td><?php echo CONF_SERV_TIMEZONE ?> <em class="tooltip">?<span class="classic"><?php echo CONF_SERV_TIMEZONE_TOOLTIP ?></span></em></td>
 						<td>
-							<select name="tzone" onChange="refresh(this.value)">
+							<select name="tzone" data-change-callback="refresh">
 								<option value="Africa/Dakar" <?php if (TIMEZONE=="Africa/Dakar") echo "selected";?>>Africa</option>
 								<option value="America/New_York" <?php if (TIMEZONE=="America/New_York") echo "selected";?>>America</option>
 								<option value="Antarctica/Casey" <?php if (TIMEZONE=="Antarctica/Casey") echo "selected";?>>Antarctica</option>

@@ -1,16 +1,7 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Filename       Math.php                                                    ##
-##  Developed by:  martinambrus                                                ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2017. All rights reserved.                ##
-##  URLs:          https://travian.martinambrus.com                		       ##
-##  Source code:   https://github.com/Shadowss/TravianZ		                   ##
-##                                                                             ##
-#################################################################################
+declare(strict_types=1);
+
+
 
 namespace App\Utils;
 
@@ -21,13 +12,15 @@ namespace App\Utils;
  * @author martinambrus
  *
  */
-class Math {
-
-    public static function isInt($val) {
+class Math
+{
+    public static function isInt(mixed $val): bool
+    {
         return (is_numeric($val) && intval($val) === $val);
     }
 
-    public static function isFloat($val) {
+    public static function isFloat(mixed $val): bool
+    {
         return (is_numeric($val) && floatval($val) === $val);
     }
 

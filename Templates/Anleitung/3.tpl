@@ -1,4 +1,3 @@
-
 <p><img src="img/un/h/faq_vp.jpg" width="116" height="128" border="0" alt="Rally point" title="Rally point" align="right"></p>
 
 <p class="question">How can I build a rally point?</p>

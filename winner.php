@@ -2,23 +2,7 @@
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-#################################################################################
-## -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =- 			        ##
-## ---------------------------------------------------------------------------  ##
-## Project:     TravianZ 							##
-## Version:     18.02.2014 							##
-## Description: When the player builds Wonder of the World      		##
-##              to level 100 the winner details are shown.      		##
-##              tells the players the game is over              		##
-## Authors:     aggenkeech - and a little help from Eyas95      		##
-## Page:        winner.php                                      		##
-## Fixed by:    Shadow  							##
-## License:     TravianZ Project 						##
-## Copyright:   TravianZ (c) 2010-2013. All rights reserved. 			##
-## URLs:        http://travian.shadowss.ro 					##
-## Source code: https://github.com/Shadowss/TravianZ/	 			##
-## 										##
-#################################################################################
+
 
 use App\Utils\AccessLogger;
 
@@ -39,8 +23,8 @@ if(isset($_GET['newdid'])) {
 	exit;
 }
 
-	$sql = mysqli_query($database->dblink,"SELECT vref FROM ".TB_PREFIX."fdata WHERE f99 = '100' and f99t = '40'");
-	$winner = mysqli_num_rows($sql);
+	$rows = $database->query_return("SELECT vref FROM ".TB_PREFIX."fdata WHERE f99 = '100' and f99t = '40'");
+	$winner = is_array($rows) ? count($rows) : 0;
 
 	if($winner > 0){
 
@@ -65,8 +49,7 @@ if(isset($_GET['newdid'])) {
 	WHERE " . TB_PREFIX . "users.access < ".(INCLUDE_ADMIN ? "10" : "8")." AND " . TB_PREFIX . "users.tribe <= 3
 	ORDER BY totalpop DESC, totalvillages DESC, username ASC";
 
-        $result = (mysqli_query($database->dblink,$q));
-        while($row = mysqli_fetch_assoc($result)) $datas[] = $row;
+        $datas = $database->query_return($q);
 
         foreach($datas as $result){
             $value['userid'] = $result['userid'];
@@ -91,8 +74,7 @@ if(isset($_GET['newdid'])) {
 	WHERE " . TB_PREFIX . "users.apall >= 0 AND " . TB_PREFIX . "users.access < " . (INCLUDE_ADMIN ? "10" : "8") . " AND " . TB_PREFIX . "users.tribe <= 3
 	ORDER BY " . TB_PREFIX . "users.apall DESC, pop DESC, username ASC";
 
-        $result = mysqli_query($database->dblink,$q);
-        while($row = mysqli_fetch_assoc($result)) $attacker[] = $row;
+        $attacker = $database->query_return($q);
 
         foreach($attacker as $key => $row){
             $value['username'] = $row['username'];
@@ -115,8 +97,7 @@ if(isset($_GET['newdid'])) {
 	FROM ".TB_PREFIX."users
 	WHERE ". TB_PREFIX."users.dpall >= 0 AND ".TB_PREFIX."users.access < ".(INCLUDE_ADMIN ? "10" : "8")." AND ".TB_PREFIX."users.tribe <= 3
 	ORDER BY ".TB_PREFIX."users.dpall DESC, pop DESC, username ASC";
-        $result = mysqli_query($database->dblink,$q);
-        while($row = mysqli_fetch_assoc($result)) $defender[] = $row;
+        $defender = $database->query_return($q);
 
         foreach($defender as $key => $row){
             $value['username'] = $row['username'];
@@ -127,26 +108,26 @@ if(isset($_GET['newdid'])) {
         }
 
         ## Get WW Winner Details
-        $sql = mysqli_query($database->dblink,"SELECT vref FROM ".TB_PREFIX."fdata WHERE f99 = '100' and f99t = '40'");
-        $vref = mysqli_result($sql, 0);
+        $vRows = $database->query_return("SELECT vref FROM ".TB_PREFIX."fdata WHERE f99 = '100' and f99t = '40' LIMIT 1");
+        $vref = isset($vRows[0]['vref']) ? (int)$vRows[0]['vref'] : 0;
 
         $winningvillagename = $database->getVillage($vref)['name'];
         $owner = $database->getVillage($vref)['owner'];
 
-        $sql = mysqli_query($database->dblink,"SELECT username FROM ".TB_PREFIX."users WHERE id = '$owner'");
-        $username = mysqli_result($sql, 0);
+        $uRows = $database->query_return("SELECT username FROM ".TB_PREFIX."users WHERE id = ".(int)$owner." LIMIT 1");
+        $username = isset($uRows[0]['username']) ? $uRows[0]['username'] : '';
 
-        $sql = mysqli_query($database->dblink,"SELECT alliance FROM ".TB_PREFIX."users WHERE id = '$owner'");
-        $allianceid = mysqli_result($sql, 0);
+        $aRows = $database->query_return("SELECT alliance FROM ".TB_PREFIX."users WHERE id = ".(int)$owner." LIMIT 1");
+        $allianceid = isset($aRows[0]['alliance']) ? (int)$aRows[0]['alliance'] : 0;
 
-        $sql = mysqli_query($database->dblink,"SELECT name, tag FROM ".TB_PREFIX."alidata WHERE id = '$allianceid'");
-        $winningalliance = mysqli_result($sql, 0);
+        $alRows = $database->query_return("SELECT name, tag FROM ".TB_PREFIX."alidata WHERE id = ".(int)$allianceid." LIMIT 1");
+        $winningalliance = isset($alRows[0]['name']) ? $alRows[0]['name'] : '';
 
-        $sql = mysqli_query($database->dblink,"SELECT tag FROM ".TB_PREFIX."alidata WHERE id = '$allianceid'");
-        $winningalliancetag = mysqli_result($sql, 0);
+        $alTagRows = $database->query_return("SELECT tag FROM ".TB_PREFIX."alidata WHERE id = ".(int)$allianceid." LIMIT 1");
+        $winningalliancetag = isset($alTagRows[0]['tag']) ? $alTagRows[0]['tag'] : '';
 
-        $sql = mysqli_query($database->dblink,"SELECT ww_lastupdate FROM ".TB_PREFIX."fdata WHERE vref = '$vref'");
-        $finishconstruction = mysqli_result($sql, 0);
+        $fRows = $database->query_return("SELECT ww_lastupdate FROM ".TB_PREFIX."fdata WHERE vref = ".(int)$vref." LIMIT 1");
+        $finishconstruction = isset($fRows[0]['ww_lastupdate']) ? $fRows[0]['ww_lastupdate'] : '';
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -158,7 +139,6 @@ if(isset($_GET['newdid'])) {
 		<meta http-equiv="expires" content="0" />
 		<meta http-equiv="imagetoolbar" content="no" />
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-		<script src="mt-full.js?0faab" type="text/javascript"></script>
 		<script src="unx.js?f4b7h" type="text/javascript"></script>
 		<script src="new.js?0faab" type="text/javascript"></script>
 		<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -174,7 +154,6 @@ if(isset($_GET['newdid'])) {
 			<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 		}
 		?>
-		<script type="text/javascript">window.addEvent('domready', start);</script>
 		<style type="text/css">
 		.style1 {
 		 text-align: center;

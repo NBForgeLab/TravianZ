@@ -2,15 +2,7 @@
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       logout.php                                                  ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
+
 
 
 use App\Utils\AccessLogger;
@@ -27,9 +19,6 @@ AccessLogger::logRequest();
 		<meta http-equiv="cache-control" content="max-age=0" />
 		<meta http-equiv="imagetoolbar" content="no" />
 		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-		<script src="mt-core.js?2389c" type="text/javascript"></script>
-
-		<script src="mt-more.js?2389c" type="text/javascript"></script>
 		<script src="unx.js?f4b7h" type="text/javascript"></script>
 		<script src="new.js?2389c" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -45,10 +34,6 @@ AccessLogger::logRequest();
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-
-		window.addEvent('domready', start);
-	</script>
 </head>
 
 

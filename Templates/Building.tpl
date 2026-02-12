@@ -1,13 +1,4 @@
 <?php 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Building.tpl                                                ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 $building->loadBuilding();
 ?>
 <?php if($building->NewBuilding){ ?>
@@ -15,10 +6,9 @@ $building->loadBuilding();
     <thead><tr>
     <th colspan="4"><?php echo BUILDING_UPGRADING;?>
 			<?php
-            
             if($session->gold >= 2) {
             ?> 
-            	<a href="?buildingFinish=1" onclick="return confirm('Finish all construction and research orders in this village immediately for 2 Gold?');" title="Finish all construction and research orders in this village immediately for 2 Gold?"><img class="clock" alt="Finish all construction and research orders in this village immediately for 2 Gold?" src="img/x.gif"/></a>
+            	<a href="?buildingFinish=1" data-confirm="Finish all construction and research orders in this village immediately for 2 Gold?" title="Finish all construction and research orders in this village immediately for 2 Gold?"><img class="clock" alt="Finish all construction and research orders in this village immediately for 2 Gold?" src="img/x.gif"/></a>
 			<?php 
             }
             ?>

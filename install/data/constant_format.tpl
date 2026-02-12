@@ -1,15 +1,5 @@
 <?php
-###############################  S  T  A  R  T   ################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       config.php                                                  ##
-##  Version        8.0                                                         ##
-##  Developed by:  Dzoki and Dixie Edited by Advocaite                         ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2013-2025. All rights reserved.                ##
-##  Modified by:   Shadow and ronix                                            ##
-##                                                                             ##
-#################################################################################
+###############################  S  T  A  R  T   
 
 //////////////////////////////////
 // *****  ERROR REPORTING  *****//
@@ -359,15 +349,6 @@ define("SERVER", "%SERVER%");
 
 $requse = 0;
 
-###############################  E    N    D   ##################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       config.php                                                  ##
-##  Version        4.8.5                                                       ##
-##  Developed by:  Dzoki and Dixie Edited by Advocaite                         ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
+###############################  E    N    D   
 
 ?>

@@ -45,55 +45,68 @@ if(isset($gameinstall) && $gameinstall == 1){
 include_once($autoprefix."GameEngine/Database.php");
 class adm_DB {
 
-	var $connection;
 	function __construct(){
 		global $database;
 		$database = new MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, (defined('SQL_PORT') ? SQL_PORT : 3306));
-		$this->connection = $database->return_link();
 	}
 
 	function Login($username,$password){
 	    global $database;
-	    list($username,$password) = $database->escape_input($username,$password);
 
-	    $q = "SELECT id, password, is_bcrypt FROM ".TB_PREFIX."users where username = '$username' and access >= ".MULTIHUNTER;
-	    $result = mysqli_query($this->connection, $q);
+	    $id = null;
+	    $hash = null;
+	    $isBcrypt = 0;
+	    $hasIsBcrypt = true;
 
-	    // if we didn't update the database for bcrypt hashes yet...
-	    if (mysqli_error($database->dblink) != '') {
-	        $q = "SELECT id, password, 0 as is_bcrypt FROM ".TB_PREFIX."users where username = '$username' and access >= ".MULTIHUNTER;
-	        $result = mysqli_query($this->connection, $q);
-	        $bcrypt_update_done = false;
-	    } else {
-	        $bcrypt_update_done = true;
+        $rows = $database->query_new(
+            "SELECT id, password, is_bcrypt FROM ".TB_PREFIX."users WHERE username = ? AND access >= ".MULTIHUNTER." LIMIT 1",
+            $username
+        );
+        if (!is_array($rows) || count($rows) === 0) {
+            $hasIsBcrypt = false;
+            $rows = $database->query_new(
+                "SELECT id, password, 0 as is_bcrypt FROM ".TB_PREFIX."users WHERE username = ? AND access >= ".MULTIHUNTER." LIMIT 1",
+                $username
+            );
+        }
+        if (!is_array($rows) || count($rows) === 0) {
+            return false;
+        }
+        $row = $rows[0] ?? null;
+        if (!$row) {
+            return false;
+        }
+        $id = (int)($row['id'] ?? 0);
+        $hash = $row['password'] ?? null;
+        $isBcrypt = (int)($row['is_bcrypt'] ?? 0);
+
+	    if (!$found || $hash === null) {
+	        return false;
 	    }
 
-	    $dbarray = mysqli_fetch_array($result);
-
-	    // even if we didn't do a DB conversion for bcrypt passwords,
-	    // we still need to check if this password wasn't encrypted via password_hash,
-	    // since all methods were updated to use that instead of md5 and therefore
-	    // new passwords in DB will be bcrypt already even without the is_bcrypt field present
-	    $bcrypted = true;
-	    $pwOk = password_verify($password, $dbarray['password']);
-
-	    if (!$pwOk && !$dbarray['is_bcrypt']) {
-	        $pwOk = ($dbarray['password'] == md5($password));
-	        $bcrypted = false;
+	    $pwOk = password_verify($password, $hash);
+	    $legacyOk = false;
+	    if (!$pwOk && !$isBcrypt && trz_allow_legacy_md5_passwords() && is_string($hash) && preg_match('/^[a-f0-9]{32}$/i', $hash)) {
+	        $legacyOk = hash_equals(strtolower($hash), md5($password));
+	        $pwOk = $legacyOk;
 	    }
 
-		$username = htmlspecialchars($username);
+		$usernameForLog = htmlspecialchars($username);
 	    if($pwOk) {
-	        // update password to bcrypt, if correct
-	        if (!$dbarray['is_bcrypt'] && !$bcrypted) {
-	            mysqli_query($this->connection, "UPDATE " . TB_PREFIX . "users SET password = '".password_hash($password, PASSWORD_BCRYPT,['cost' => 12])."'".($bcrypt_update_done ? ', is_bcrypt = 1' : '')." where id = ".(int) $dbarray['id']);
-	        }
+            if ($legacyOk || trz_password_needs_rehash($hash) || ($hasIsBcrypt && !$isBcrypt)) {
+                $newHash = trz_password_hash($password);
+                if ($hasIsBcrypt) {
+                    $database->query_new("UPDATE " . TB_PREFIX . "users SET password = ?, is_bcrypt = 1 WHERE id = ? LIMIT 1", $newHash, $id);
+                } else {
+                    $database->query_new("UPDATE " . TB_PREFIX . "users SET password = ? WHERE id = ? LIMIT 1", $newHash, $id);
+                }
+            }
 
-	        mysqli_query($this->connection,"Insert into ".TB_PREFIX."admin_log values (0,'X','$username logged in (IP: <b>".$_SERVER['REMOTE_ADDR']."</b>)',".time().")");
+            $database->query_new("Insert into ".TB_PREFIX."admin_log values (0,'X', ?, ?)", "$usernameForLog logged in (IP: <b>".$_SERVER['REMOTE_ADDR']."</b>)", time());
 	        return true;
 	    }
 	    else {
-	        mysqli_query($this->connection,"Insert into ".TB_PREFIX."admin_log values (0,'X','<font color=\'red\'><b>IP: ".$_SERVER['REMOTE_ADDR']." tried to log in with username <u> $username</u> but access was denied!</font></b>',".time().")");
+            $database->query_new("Insert into ".TB_PREFIX."admin_log values (0,'X', ?, ?)", "<font color='red'><b>IP: ".$_SERVER['REMOTE_ADDR']." tried to log in with username <u> $usernameForLog</u> but access was denied!</font></b>", time());
 	        return false;
 	    }
 	}
@@ -121,7 +134,7 @@ class adm_DB {
     }
 
     $q = "UPDATE ".TB_PREFIX."vdata set pop = $popTot where wref = ".(int) $vid;
-    mysqli_query($this->connection, $q);
+    $database->query($q);
   }
 
     function recountCP($vid){
@@ -136,7 +149,7 @@ class adm_DB {
         }
     }
     $q = "UPDATE ".TB_PREFIX."vdata set cp = $popTot where wref = ".(int) $vid;
-    mysqli_query($this->connection,$q);
+    $database->query($q);
     }
 
   function buildingPOP($f,$lvl){
@@ -164,10 +177,10 @@ class adm_DB {
     }
 
 	function getWref($x,$y) {
-	    $q = "SELECT id FROM ".TB_PREFIX."wdata where x = ".(int) $x." and y = ".(int) $y;
-		$result = mysqli_query($this->connection,$q);
-		$r = mysqli_fetch_array($result);
-		return $r['id'];
+        global $database;
+        $rows = $database->query_new("SELECT id FROM ".TB_PREFIX."wdata WHERE x = ? AND y = ? LIMIT 1", (int)$x, (int)$y);
+        $row = (is_array($rows) && count($rows)) ? $rows[0] : null;
+        return $row ? (int)$row['id'] : 0;
 	}
 
 	function AddVillage($post){
@@ -283,48 +296,58 @@ class adm_DB {
 	}
 
   function CheckPass($password,$uid){
-    $q = "SELECT id,password, is_bcrypt FROM ".TB_PREFIX."users where id = ".(int) $uid." and access = ".ADMIN;
-	$result = mysqli_query($this->connection, $q);
+	$id = null;
+	$hash = null;
+	$isBcrypt = 0;
+	$hasIsBcrypt = true;
 
-	// if we didn't update the database for bcrypt hashes yet...
-	if (mysqli_error($this->connection) != '') {
-	    // no need to select ID here, since the DB is not updated, so there will be no password conversion later
-	    $q = "SELECT password, 0 as is_bcrypt FROM ".TB_PREFIX."users where id = ".(int) $uid." and access = ".ADMIN;
-	    $result = mysqli_query($this->connection,$q);
-	    $bcrypt_update_done = false;
-	} else {
-	    $bcrypt_update_done = true;
+	$stmt = mysqli_prepare($this->connection, "SELECT id, password, is_bcrypt FROM ".TB_PREFIX."users WHERE id = ? AND access = ".ADMIN." LIMIT 1");
+	if (!$stmt) {
+	    $hasIsBcrypt = false;
+	    $stmt = mysqli_prepare($this->connection, "SELECT id, password, 0 as is_bcrypt FROM ".TB_PREFIX."users WHERE id = ? AND access = ".ADMIN." LIMIT 1");
 	}
 
-	$dbarray = mysqli_fetch_array($result);
-		   
-		   if ( !$dbarray ) {
-		    mysqli_query($this->connection,"Insert into ".TB_PREFIX."admin_log values (0,'X','<font color=\'red\'><b>IP: ".$_SERVER['REMOTE_ADDR']." tried to log in with username <u> $username</u> but access was denied!</font></b>',".time().")");
-	    	return false;
-	    }
-
-
-	// even if we didn't do a DB conversion for bcrypt passwords,
-	// we still need to check if this password wasn't encrypted via password_hash,
-	// since all methods were updated to use that instead of md5 and therefore
-	// new passwords in DB will be bcrypt already even without the is_bcrypt field present
-	$bcrypted = true;
-	$pwOk = password_verify($password, $dbarray['password']);
-
-	if (!$pwOk && !$dbarray['is_bcrypt']) {
-	    $pwOk = ($dbarray['password'] == md5($password));
-	    $bcrypted = false;
-	}
-
-	if($pwOk) {
-	    // update password to bcrypt, if correct
-	    if ($bcrypt_update_done && !$dbarray['is_bcrypt']) {
-	        mysqli_query($this->connection, "UPDATE " . TB_PREFIX . "users SET password = '".password_hash($password, PASSWORD_BCRYPT,['cost' => 12])."', is_bcrypt = 1 where id = ".(int) $dbarray['id']);
-	    }
-	    return true;
-	} else {
+	if (!$stmt) {
 	    return false;
 	}
+
+	mysqli_stmt_bind_param($stmt, "i", $uid);
+	mysqli_stmt_execute($stmt);
+	mysqli_stmt_bind_result($stmt, $id, $hash, $isBcrypt);
+	$found = mysqli_stmt_fetch($stmt);
+	mysqli_stmt_close($stmt);
+
+	if (!$found || $hash === null) {
+	    return false;
+	}
+
+	$pwOk = password_verify($password, $hash);
+	$legacyOk = false;
+	if (!$pwOk && !$isBcrypt && trz_allow_legacy_md5_passwords() && is_string($hash) && preg_match('/^[a-f0-9]{32}$/i', $hash)) {
+	    $legacyOk = hash_equals(strtolower($hash), md5($password));
+	    $pwOk = $legacyOk;
+	}
+
+	if ($pwOk && ($legacyOk || trz_password_needs_rehash($hash) || ($hasIsBcrypt && !$isBcrypt))) {
+	    $newHash = trz_password_hash($password);
+	    if ($hasIsBcrypt) {
+	        $u = mysqli_prepare($this->connection, "UPDATE " . TB_PREFIX . "users SET password = ?, is_bcrypt = 1 WHERE id = ? LIMIT 1");
+	        if ($u) {
+	            mysqli_stmt_bind_param($u, "si", $newHash, $id);
+	            mysqli_stmt_execute($u);
+	            mysqli_stmt_close($u);
+	        }
+	    } else {
+	        $u = mysqli_prepare($this->connection, "UPDATE " . TB_PREFIX . "users SET password = ? WHERE id = ? LIMIT 1");
+	        if ($u) {
+	            mysqli_stmt_bind_param($u, "si", $newHash, $id);
+	            mysqli_stmt_execute($u);
+	            mysqli_stmt_close($u);
+	        }
+	    }
+	}
+
+	return (bool) $pwOk;
   }
 
 	function DelVillage($wref, $mode=0){
@@ -527,7 +550,7 @@ class adm_DB {
 	References: Query
 	***************************/
 	function query($query) {
-		return mysqli_query($query, $this->connection);
+		return mysqli_query($this->connection, $query);
 	}
 
 	public function getTypeLevel($tid,$vid) {

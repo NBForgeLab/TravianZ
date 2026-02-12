@@ -1,4 +1,4 @@
-<div id="build" class="gid19"><a href="#" onClick="return Popup(19,4);" class="build_logo">
+<div id="build" class="gid19"><a href="#" onClick="return Popup(19, 4);" class="build_logo">
 	<img class="building g19" src="img/x.gif" alt="Barracks" title="<?php echo BARRACKS; ?>" />
 </a>
 <h1><?php echo BARRACKS; ?> <span class="level"><?php echo LEVEL; ?> <?php echo $village->resarray['f'.$id]; ?></span></h1>
@@ -17,7 +17,7 @@
                 <?php
 	                include("19_train.tpl");
                 ?></table>
-	<p><button id="btn_train" class="trav_buttons" value="ok" name="s1" alt="train" onclick="this.disabled=true;this.form.submit();"/> Train </button></form></p>
+	<p><button id="btn_train" class="trav_buttons" value="ok" name="s1" alt="train" type="submit"/> Train </button></form></p>
     <?php
 	} else {
 		echo "<b>".TRAINING_COMMENCE_BARRACKS."</b><br>\n";

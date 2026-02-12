@@ -11,7 +11,8 @@
 
 	<link rel=stylesheet type="text/css" href="../img/../img.css">
 
-		<script src="mt-full.js?423cb"  type="text/javascript"></script>
+		<script src="../unx.js?f4b7h"  type="text/javascript"></script>
+		<script src="../new.js?423cb"  type="text/javascript"></script>
 
 	<script src="ajax.js" type="text/javascript"></script>
 
@@ -23,20 +24,10 @@
 
 </head>
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       admin_log.tpl                                               ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 if($_SESSION['access'] < ADMIN) die("Access Denied: You are not Admin!"); ?>
 
 <?php
-
 		$no = count($database->getAdminLog());
 		$log = $database->getAdminLog();
 		for($i=0;$i<$no;$i++) {

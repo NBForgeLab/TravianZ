@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       sysmsg.php                                                  ##
-##  Developed by:  Dixie                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 use App\Utils\AccessLogger;
 
@@ -15,10 +6,11 @@ include_once("GameEngine/Account.php");
 AccessLogger::logRequest();
 
 $max_per_pass = 1000;
-if (mysqli_num_rows(mysqli_query($database->dblink,"SELECT id FROM ".TB_PREFIX."users WHERE access = 9 AND id = ".$session->uid)) != '1') die("Hacking attempt!");
+$rows = $database->query_return("SELECT id FROM ".TB_PREFIX."users WHERE access = 9 AND id = ".(int)$session->uid." LIMIT 1");
+if (!is_array($rows) || count($rows) !== 1) die("Hacking attempt!");
 
 if(isset($_GET['del'])){
-    mysqli_query($database->dblink, "UPDATE ".TB_PREFIX."users SET ok = 0");
+    $database->query("UPDATE ".TB_PREFIX."users SET ok = 0");
 }
 
 if (@$_POST['submit'] == "Send")
@@ -44,7 +36,7 @@ if (@isset($_POST['confirm']))
 		// $text = utf8_encode($text);
 		fwrite($fh, $text);
 
-		mysqli_query($database->dblink, "UPDATE ".TB_PREFIX."users SET ok = 1");
+		$database->query("UPDATE ".TB_PREFIX."users SET ok = 1");
 
 		$done = true;
 		} else { die("<br/><br/><br/>wrong"); }
@@ -62,7 +54,6 @@ if (@isset($_POST['confirm']))
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
-	<script src="mt-full.js?0ac37" type="text/javascript"></script>
 	<script src="unx.js?f4b7h" type="text/javascript"></script>
 	<script src="new.js?0ac37" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -78,10 +69,6 @@ if (@isset($_POST['confirm']))
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-
-		window.addEvent('domready', start);
-	</script>
 		   <?php
 	if($session->gpack == null || GP_ENABLE == false) {
 	echo "
@@ -93,9 +80,6 @@ if (@isset($_POST['confirm']))
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-	window.addEvent('domready', start);
-	</script>
 </head>
 
 

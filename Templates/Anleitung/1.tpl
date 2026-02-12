@@ -1,4 +1,3 @@
-
 <p class=f9>
 
     At the beginning you should try to get a good economic basis. In order to do so you have to extend the 18 resource fields (village overview). There are four different types of resource fields: Woodcutter, Clay pit, Iron mine and Cropland. If you click one of them, you will get more information and the option to extend it.

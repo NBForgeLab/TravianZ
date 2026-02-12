@@ -1,18 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                        		       	       ##
-##  Version:       01.09.2013 						       ##
-##  Filename       impressum.php                                               ##
-##  Developed by:  Dzoki                                                       ##
-##  Fixed by:      Shadow / Skype : cata7007                                   ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2013. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro 				       ##
-##  Source code:   http://github.com/Shadowss/TravianZ-by-Shadow/	       ##
-##                                                                             ##
-#################################################################################
 
 use App\Utils\AccessLogger;
 
@@ -29,7 +15,6 @@ AccessLogger::logRequest();
 	<link rel="stylesheet" type="text/css" href="img/tutorial/flaggs.css"/>
 	<meta name="content-language" content="en"/>
 	<meta http-equiv="imagetoolbar" content="no"/>
-	<script src="mt-core.js" type="text/javascript"></script>
 	<script src="new.js" type="text/javascript"></script>
 	<style type="text/css" media="screen">
 

@@ -1,14 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       map.tpl                                                     ##
-##  Developed by:  ronix                                                       ##
-##  Updated by:    iopietro                                                    ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 // ----------------- PHP (logic unchanged, except $pixelDiv = 255) -----------------
 $check1 = $check2 = $check3 = "";

@@ -1,12 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       renameVillage.php                                           ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-#################################################################################
 
 include_once("../../Account.php");
 

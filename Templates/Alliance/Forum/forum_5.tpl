@@ -92,7 +92,7 @@ if($forumData['forum_area'] == 3 && !$opt['opt5']) $alliance->redirect($_GET);
 		//-->
 		</script>
 			<input class="text" type="text" name="umfrage_thema" maxlength="60" disabled="disabled" /></td>
-			<td class="sel"><input class="check" type="checkbox" name="umfrage" value="1" onclick="vote();" />
+			<td class="sel"><input class="check" type="checkbox" name="umfrage" value="1" />
 		</td>
 	</tr>
 	<tr id="options" class="hide">

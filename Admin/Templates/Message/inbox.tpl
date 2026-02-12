@@ -1,4 +1,3 @@
-
 <table cellpadding="1" cellspacing="1" id="overview">
 	<thead>
 		<tr>

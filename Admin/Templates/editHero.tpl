@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editHero.tpl                                                ##
-##  Developed by:  ronix                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2014. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 if(isset($_GET['uid'])){
 	$id = (int) $_GET['uid'];
 	$hid = (int) $_GET['hid'];
@@ -120,7 +111,7 @@ function check_unit(el) {
 		<td>Hero Unit</td> 
 		<td colspan="2"><?php echo "<img class=\"unit u".$hero['unit']."\" src=\"img/x.gif\" alt=\"".$technology->getUnitName($hero['unit'])."\" title=\"".$technology->getUnitName($hero['unit'])."\" /> (".$technology->getUnitName($hero['unit']); ?>)</td>
 		<td width="10%" align="center" style="border-right:none"><div id="unt"><?php echo "<img class=\"unit u".$hero['unit']."\" src=\"img/x.gif\" alt=\"".$technology->getUnitName($hero['unit'])."\" title=\"".$technology->getUnitName($hero['unit'])."\" />";?></div></td>
-		<td width="25%" colspan="2" style="border-left:none" align="left"><select name="hunit" class="dropdown" onchange="check_unit(this)">
+		<td width="25%" colspan="2" style="border-left:none" align="left"><select name="hunit" class="dropdown">
 						<?php
 						for ($i=1;$i<7;$i++) {
 							if (($i==3 && $user['tribe']==4) || ($i==4 && $user['tribe']!=3)) {

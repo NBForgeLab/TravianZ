@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editBuildings.php                                           ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 if (!isset($_SESSION)) session_start();
 if($_SESSION['access'] < 9) die("Access Denied: You are not Admin!");
 include_once("../../config.php");
@@ -30,14 +21,12 @@ include_once($autoprefix."GameEngine/Database.php");
 
 $session = (int) $_POST['admid'];
 $id = (int) $_POST['id'];
-
-$sql = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE id = ".$session."");
-$access = mysqli_fetch_array($sql);
-$sessionaccess = $access['access'];
+$rows = $database->query_return("SELECT access FROM ".TB_PREFIX."users WHERE id = ".(int)$session." LIMIT 1");
+$sessionaccess = isset($rows[0]['access']) ? (int)$rows[0]['access'] : 0;
 
 if($sessionaccess != 9) die("<h1><font color=\"red\">Access Denied: You are not Admin!</font></h1>");
 
-mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."fdata SET
+$database->query("UPDATE ".TB_PREFIX."fdata SET
 	f1  = '".$_POST['id1level']."',
 	f1t = '".$_POST['id1gid']."',
 	f2  = '".$_POST['id2level']."',
@@ -118,7 +107,7 @@ mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."fdata SET
 	f39t = '".$_POST['id39gid']."',
 	f40  = '".$_POST['id40level']."',
 	f40t = '".$_POST['id40gid']."'
-	WHERE vref = $id") or die(mysqli_error($database->dblink));
+	WHERE vref = ".(int)$id);
 
 header("Location: ../../../Admin/admin.php?action=recountPop&did=".$id."");
 ?>

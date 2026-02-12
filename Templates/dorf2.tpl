@@ -1,14 +1,3 @@
-<?php
-// ################################################################################
-// # -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =- ##
-// # --------------------------------------------------------------------------- ##
-// # Filename dorf2.tpl ##
-// # Developed by: Dzoki ##
-// # License: TravianX Project ##
-// # Copyright: TravianX (c) 2010-2011. All rights reserved. ##
-// # ##
-// ################################################################################
-?>
 <map name="map1" id="map1">
 <?php
 if($building->walling()){
@@ -146,5 +135,4 @@ if($village->resarray['f99t'] != 0){
 		class="map2" usemap="#map2" src="img/x.gif" alt="" />
 </div>
 <img src="img/x.gif" id="lswitch"
-	<?php if(isset($_COOKIE['t3l'])) { echo "class=\"on\""; } ?>
-	onclick="vil_levels_toggle()" />
+	<?php if(isset($_COOKIE['t3l'])) { echo "class=\"on\""; } ?> />

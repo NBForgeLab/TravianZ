@@ -1,5 +1,4 @@
-
-	<h2><?php echo GRANARY ?></h2>
+<h2><?php echo GRANARY ?></h2>
 
 <table class="new_building" cellpadding="1" cellspacing="1">
 	<tbody><tr>

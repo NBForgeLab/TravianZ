@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if(!$session->goldclub) include("Templates/Build/16.tpl");
 else
 {
@@ -39,7 +39,7 @@ else
 		    else $checked = '';
 		?>
             <tr>
-                <td><input type="checkbox" class="check" name="hideShow" onclick="window.location.href = '?gid=16&t=99&evasion=<?php echo $wref;?>';" <?php echo $checked; ?>></td>
+                <td><input type="checkbox" class="check" name="hideShow" data-navigate="?gid=16&t=99&evasion=<?php echo $wref;?>" <?php echo $checked; ?>></td>
                 <td><?php echo $vname; ?></td>
                 <td><div style="text-align: center"><?php echo $database->getUnitsNumber($wref); ?></div></td>
                 <td><div style="text-align: center"><?php echo count($reinf); ?></div></td>

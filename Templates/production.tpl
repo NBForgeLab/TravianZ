@@ -1,14 +1,3 @@
-<?php 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       production.tpl                                              ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
 <table id="production" cellpadding="1" cellspacing="1">
 	<thead><tr>
 			<th colspan="4"><?php echo PRODUCTION; ?>:</th>

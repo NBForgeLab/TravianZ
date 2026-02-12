@@ -1,15 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       addTroops.php                                               ##
-##  Developed by:  Dzoki & Advocatie                                           ##
-##  License:       TravianX Project                                            ##
-##  Thanks to:     Dzoki & itay2277 (edit troops)                              ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 include_once("../../Account.php");
 include_once("../../Technology.php");

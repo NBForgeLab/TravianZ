@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       anleitung.php                                               ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 use App\Utils\AccessLogger;
 
@@ -24,7 +15,6 @@ AccessLogger::logRequest();
 	<link rel="stylesheet" type="text/css" href="img/tutorial/flaggs.css"/>
 	<meta name="content-language" content="en"/>
 	<meta http-equiv="imagetoolbar" content="no"/>
-	<script src="mt-core.js" type="text/javascript"></script>
 	<script src="new.js" type="text/javascript"></script>
 	<style type="text/css" media="screen">
 

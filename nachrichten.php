@@ -2,23 +2,33 @@
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       nachrichten.php                                             ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 
+
+use App\Service\MessageService;
 use App\Utils\AccessLogger;
+use App\View\ViewRenderer;
 
 include_once( "GameEngine/Village.php" );
 AccessLogger::logRequest();
 
-$message->procMessage($_POST);
+$messageService = new MessageService($database, $session);
+if (!$messageService->tryHandlePost($_POST)) {
+	$message->procMessage($_POST);
+}
+
+$view = ViewRenderer::fromProjectRoot();
+$viewContext = [
+	'session' => $session,
+	'database' => $database,
+	'message' => $message,
+	'generator' => $generator,
+	'village' => $village ?? null,
+	'building' => $building ?? null,
+	'phpSession' => $_SESSION,
+	'gameSession' => $session,
+	'messageObj' => $message,
+];
 
 if(isset($_GET['newdid'])){
 	$_SESSION['wid'] = $_GET['newdid'];
@@ -86,9 +96,8 @@ if(isset($_GET['confirm']) && is_numeric($_GET['confirm'])){
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 	<meta name="X-UA-Compatible" content="IE=8" />
-	<script src="mt-full.js?f4b7d" type="text/javascript"></script>
-	<script src="unx.js?f4b7d" type="text/javascript"></script>
-	<script src="new.js?f4b7d" type="text/javascript"></script>
+	<script src="unx.js?f4b7d" type="text/javascript" <?php echo trz_csp_nonce_attr(); ?>></script>
+	<script src="new.js?f4b7d" type="text/javascript" <?php echo trz_csp_nonce_attr(); ?>></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
 	<?php
@@ -102,10 +111,6 @@ if(isset($_GET['confirm']) && is_numeric($_GET['confirm'])){
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-
-		window.addEvent('domready', start);
-	</script>
 </head>
 
 
@@ -114,54 +119,54 @@ if(isset($_GET['confirm']) && is_numeric($_GET['confirm'])){
 <img style="filter:chroma();" src="img/x.gif" id="msfilter" alt="" />
 <div id="dynamic_header">
 	</div>
-<?php include("Templates/header.tpl"); ?>
+<?php $view->displayPhp('Templates/header.tpl', $viewContext); ?>
 
 <div id="mid">
-<?php include("Templates/menu.tpl");
+<?php $view->displayPhp('Templates/menu.tpl', $viewContext);
 if(isset($_GET['id']) && (!isset($_GET['t']) || $_GET['t'] == '2a')) {
-	$message->loadMessage($_GET['id']);
-	include("Templates/Message/read.tpl");
+	$message->loadMessage((int) $_GET['id']);
+	$view->displayPhp('Templates/Message/read.tpl', $viewContext);
 }
 else if(isset($_GET['t'])) {
-	switch($_GET['t']) {
+		switch((string) $_GET['t']) {
 		case 1:
 		if(isset($_GET['id'])) {
 		    $id = preg_replace("/[^a-zA-Z0-9_-]/","",$_GET['id']);
 		}
-		include("Templates/Message/write.tpl");
+		$view->displayPhp('Templates/Message/write.tpl', $viewContext);
 		break;
 		case 2:
-		include("Templates/Message/sent.tpl");
+		$view->displayPhp('Templates/Message/sent.tpl', $viewContext);
 		break;
 		case 3:
 		if($session->plus) {
-			include("Templates/Message/archive.tpl");
+			$view->displayPhp('Templates/Message/archive.tpl', $viewContext);
 		}
 		break;
 		case 4:
 		if($session->plus) {
 			$message->loadNotes();
-			include("Templates/Message/notes.tpl");
+			$view->displayPhp('Templates/Message/notes.tpl', $viewContext);
 		}
 		break;
 		default:
-		include("Templates/Message/inbox.tpl");
+		$view->displayPhp('Templates/Message/inbox.tpl', $viewContext);
 		break;
 	}
 }
 else {
-	include("Templates/Message/inbox.tpl");
+	$view->displayPhp('Templates/Message/inbox.tpl', $viewContext);
 }
 			?>
 
 <br /><br /><br /><br /><div id="side_info">
 <?php
-include("Templates/multivillage.tpl");
-include("Templates/quest.tpl");
-include("Templates/news.tpl");
+$view->displayPhp('Templates/multivillage.tpl', $viewContext);
+$view->displayPhp('Templates/quest.tpl', $viewContext);
+$view->displayPhp('Templates/news.tpl', $viewContext);
 if(!NEW_FUNCTIONS_DISPLAY_LINKS) {
 	echo "<br><br><br><br>";
-	include("Templates/links.tpl");
+	$view->displayPhp('Templates/links.tpl', $viewContext);
 }
 ?>
 </div>
@@ -170,8 +175,8 @@ if(!NEW_FUNCTIONS_DISPLAY_LINKS) {
 <div class="footer-stopper"></div>
 <div class="clear"></div>
 <?php
-include("Templates/footer.tpl");
-include("Templates/res.tpl");
+$view->displayPhp('Templates/footer.tpl', $viewContext);
+$view->displayPhp('Templates/res.tpl', $viewContext);
 ?>
 <div id="stime">
 <div id="ltime">

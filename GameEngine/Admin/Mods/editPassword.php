@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editPassword.php                                            ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 if (!isset($_SESSION)) session_start();
 if($_SESSION['access'] < 9) die("Access Denied: You are not Admin!");
 include_once("../../config.php");
@@ -24,19 +15,15 @@ for ($i = 0; $i < 5; $i++) {
 
 include_once($autoprefix."GameEngine/Database.php");
 
-$session = (int) $_POST['admid'];
-$id = (int) $_POST['uid'];
-$pass = password_hash($_POST['newpw'], PASSWORD_BCRYPT, ['cost' => 12]);
-
-$sql = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."users WHERE id = ".$session."");
-$access = mysqli_fetch_array($sql);
-$sessionaccess = $access['access'];
+$session = isset($_POST['admid']) ? (int) $_POST['admid'] : 0;
+$id = isset($_POST['uid']) ? (int) $_POST['uid'] : 0;
+$newpw = isset($_POST['newpw']) ? (string) $_POST['newpw'] : '';
+$pass = trz_password_hash($newpw);
+$rows = $database->query_return("SELECT access FROM ".TB_PREFIX."users WHERE id = ".(int)$session." LIMIT 1");
+$sessionaccess = isset($rows[0]['access']) ? (int)$rows[0]['access'] : 0;
 
 if($sessionaccess != 9) die("<h1><font color=\"red\">Access Denied: You are not Admin!</font></h1>");
-
-mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."users SET 
-	password = '".$pass."'  
-	WHERE id = $id") or die(mysqli_error($database->dblink));
+$database->query("UPDATE ".TB_PREFIX."users SET password = '".$database->escape($pass)."' WHERE id = ".(int)$id." LIMIT 1");
 
 header("Location: ../../../Admin/admin.php?p=player&uid=".$id."");
 ?>

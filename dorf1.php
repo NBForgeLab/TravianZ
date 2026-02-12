@@ -2,19 +2,13 @@
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       dorf1.php                                                   ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
+
 use App\Utils\AccessLogger;
 
 include_once("GameEngine/Village.php");
 AccessLogger::logRequest();
+/** @var Village $village */
+/** @var Building $building */
 
 if(isset($_GET['ok'])){
 	$database->updateUserField($session->uid,'ok', 0, 1);
@@ -39,7 +33,6 @@ else $building->procBuild($_GET);
 	<meta http-equiv="expires" content="0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-full.js?0faab" type="text/javascript"></script>
 	<script src="unx.js?f4b7i" type="text/javascript"></script>
 	<script src="new.js?0faab" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
@@ -55,9 +48,6 @@ else $building->procBuild($_GET);
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-	window.addEvent('domready', start);
-	</script>
 </head>
 
 
@@ -66,7 +56,14 @@ else $building->procBuild($_GET);
 <img style="filter:chroma();" src="img/x.gif" id="msfilter" alt="" />
 <div id="dynamic_header">
 	</div>
-<?php include("Templates/header.tpl"); ?>
+<?php
+$viewRenderer = \App\View\ViewRenderer::fromProjectRoot();
+$viewRenderer->displayPhp('Templates/header.tpl', [
+	'phpSession' => $_SESSION,
+	'gameSession' => $session,
+	'messageObj' => $message ?? null,
+]);
+?>
 <div id="mid">
 <?php include("Templates/menu.tpl"); ?>
 <div id="content"  class="village1">

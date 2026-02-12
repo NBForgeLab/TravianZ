@@ -1,14 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       addTroops.php                                               ##
-##  Developed by:  Dzoki & Advocatie                                           ##
-##  License:       TravianZ Project                                            ##
-##  Reworks by:    ronix                                                       ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 if(!isset($_SESSION)) session_start();
 if($_SESSION['access'] < 9) die(ACCESS_DENIED_ADMIN);

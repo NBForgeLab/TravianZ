@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       editVillage.tpl                                             ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 $id = $_GET['did'];
 $coor = $database->getCoor($village['wref']);
@@ -136,7 +127,6 @@ if(isset($id))
 
 		<br /><br />
 	<?php 
-	
 	$WWLevel = $fdata['f99t'];
 	$wallLevel = $fdata['f40t'];
 	if($wallLevel == 0) $wallType = "d2_0";

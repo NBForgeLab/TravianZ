@@ -1,109 +1,132 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Version:       22.06.2015                    			       ##
-##  Filename       multihunter.tpl                                             ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix   ##
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		       ##
-##  Fixed by:      InCube - double troops				       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2015. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro                		       ##
-##  Source code:   https://github.com/Shadowss/TravianZ		               ##
-##                                                                             ##
-#################################################################################
+
 
 if(isset($_GET['err']) && $_GET['err'] == 1) {
-	echo "<br /><hr /><br /><div class=\"headline\"><span class=\"f10 c5\">At least Multihunter &amp; Support password are required in this form.</span></div><br /><br />";
+	echo '<div class="alert alert-warning">At least Multihunter &amp; Support password are required in this form.</div>';
 }
 
 if(isset($_GET['err']) && $_GET['err'] == 2) {
-    echo "<br /><hr /><br /><div class=\"headline\"><span class=\"f10 c5\">Natars is a reserved username for an in-game NPC tribe. Please choose a different admin username.</span></div><br /><br />";
+	echo '<div class="alert alert-warning">Natars is a reserved username for an in-game NPC tribe. Please choose a different admin username.</div>';
 }
 
 ?>
 
-<form action="include/accounts.php" method="post" id="dataform">
+<form action="include/accounts.php?t=<?php echo isset($_GET['t']) ? (int) $_GET['t'] : 1; ?><?php echo (isset($_GET['rtl']) && $_GET['rtl'] === '1') ? '&rtl=1' : ''; ?>" method="post" id="dataform" class="vstack gap-4" onsubmit="return proceed();">
+	<div class="card">
+		<div class="card-header">Multihunter account</div>
+		<div class="card-body">
+			<div class="row g-3 align-items-center">
+				<div class="col-sm-4">
+					<label class="col-form-label" for="mhuser">Name</label>
+				</div>
+				<div class="col-sm-8">
+					<input type="text" class="form-control" name="mhuser" id="mhuser" value="Multihunter" disabled="disabled">
+				</div>
+				<div class="col-sm-4">
+					<label class="col-form-label" for="mhpw">Password</label>
+				</div>
+				<div class="col-sm-8">
+					<input type="password" class="form-control" name="mhpw" id="mhpw" value="">
+					<div class="form-text">Remember this password. You need it for the Admin.</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-<p>
-	<span class="f10 c">Multihunter account</span>
-		<table>
-			<tr><td>Name:</td><td><input type="text" name="mhuser" id="mhuser" value="Multihunter" disabled="disabled"></td></tr>
-			<tr><td>Password:</td><td><input type="password" name="mhpw" id="mhpw" value=""></td></tr>
-			<tr><td>Note: Rember this password! You need it for the Admin</td><td></td></tr>
-		</table>
-</p>
+	<div class="card">
+		<div class="card-header">Support account</div>
+		<div class="card-body">
+			<div class="row g-3 align-items-center">
+				<div class="col-sm-4">
+					<label class="col-form-label" for="suser">Name</label>
+				</div>
+				<div class="col-sm-8">
+					<input type="text" class="form-control" name="suser" id="suser" value="Support" disabled="disabled">
+				</div>
+				<div class="col-sm-4">
+					<label class="col-form-label" for="spw">Password</label>
+				</div>
+				<div class="col-sm-8">
+					<input type="password" class="form-control" name="spw" id="spw" value="">
+					<div class="form-text">Remember this password. You need it for the Admin.</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-<p>
-	<span class="f10 c">Support account</span>
-		<table>
-			<tr><td>Name:</td><td><input type="text" name="suser" id="suser" value="Support" disabled="disabled"></td></tr>
-			<tr><td>Password:</td><td><input type="password" name="spw" id="spw" value=""></td></tr>
-			<tr><td>Note: Rember this password! You need it for the Admin</td><td></td></tr>
-		</table>
-</p>
+	<div class="card">
+		<div class="card-header">Admin account (optional)</div>
+		<div class="card-body">
+			<div class="row g-3 align-items-center">
+				<div class="col-sm-4">
+					<label class="col-form-label" for="aname">Admin name</label>
+				</div>
+				<div class="col-sm-8">
+					<input type="text" class="form-control" name="aname" id="aname" value="">
+				</div>
 
-	<p>
-        <span class="f10 c">Admin account</span>
-    <table>
-        <tr>
-            <td><span class="f9 c6">Admin name:</span></td>
-            <td><input type="text" name="aname" id="aname" value=""></td>
-        </tr>
-        <tr>
-            <td><span class="f9 c6">Admin email:</span></td>
-            <td><input type="text" name="aemail" id="aemail" value=""></td>
-        </tr>
-        <tr>
-            <td><span class="f9 c6">Admin password:</span></td>
-            <td><input type="password" name="apass" id="apass" value=""></td>
-        </tr>
-        <tr>
-            <td><span class="f9 c6">Admin tribe:</span></td>
-            <td>
-				<select name="atribe" id="atribe">
-					<option value="1" selected="selected">Romans</option>
-					<option value="2">Teutons</option>
-					<option value="3">Gauls</option>
-				</select>
-			</td>
-        </tr>
-		<tr>
-        <td><span class="f9 c6">Show admin in stats:</span></td>
-        <td>
-            <select name="admin_rank">
-                <option value="true">true</option>
-                <option value="false" selected="selected">false</option>
-            </select>
-        </td>
-        </tr>
-		<tr>
-        <td><span class="f9 c6">Include Support Messages in Admin Mailbox:</span></td>
-        <td>
-            <select name="admin_support_msgs">
-                <option value="true" selected="selected">true</option>
-                <option value="false">false</option>
-            </select>
-        </td>
-        </tr>
-        <tr>
-        <td><span class="f9 c6">Allow Administrative Accounts to be Raided and Attacked:</span></td>
-        <td>
-            <select name="admin_raidable">
-                <option value="true" selected="selected">true</option>
-                <option value="false">false</option>
-            </select>
-        </td>
-        </tr>
-        <tr><td colspan="2">Note: this will add a first user and will set them up as an Admin</td><td></td></tr>
-        <tr><td colspan="2">Note: you can leave this section empty, if you want</td><td></td></tr>
-    </table>
-    </p>
+				<div class="col-sm-4">
+					<label class="col-form-label" for="aemail">Admin email</label>
+				</div>
+				<div class="col-sm-8">
+					<input type="text" class="form-control" name="aemail" id="aemail" value="">
+				</div>
 
-	<center>
-	<input type="submit" name="Submit" id="Submit" value="Submit"></center>
+				<div class="col-sm-4">
+					<label class="col-form-label" for="apass">Admin password</label>
+				</div>
+				<div class="col-sm-8">
+					<input type="password" class="form-control" name="apass" id="apass" value="">
+				</div>
+
+				<div class="col-sm-4">
+					<label class="col-form-label" for="atribe">Admin tribe</label>
+				</div>
+				<div class="col-sm-8">
+					<select class="form-select" name="atribe" id="atribe">
+						<option value="1" selected="selected">Romans</option>
+						<option value="2">Teutons</option>
+						<option value="3">Gauls</option>
+					</select>
+				</div>
+
+				<div class="col-sm-4">
+					<label class="col-form-label" for="admin_rank">Show admin in stats</label>
+				</div>
+				<div class="col-sm-8">
+					<select class="form-select" name="admin_rank" id="admin_rank">
+						<option value="true">true</option>
+						<option value="false" selected="selected">false</option>
+					</select>
+				</div>
+
+				<div class="col-sm-4">
+					<label class="col-form-label" for="admin_support_msgs">Include support messages</label>
+				</div>
+				<div class="col-sm-8">
+					<select class="form-select" name="admin_support_msgs" id="admin_support_msgs">
+						<option value="true" selected="selected">true</option>
+						<option value="false">false</option>
+					</select>
+				</div>
+
+				<div class="col-sm-4">
+					<label class="col-form-label" for="admin_raidable">Allow admin to be raided</label>
+				</div>
+				<div class="col-sm-8">
+					<select class="form-select" name="admin_raidable" id="admin_raidable">
+						<option value="true" selected="selected">true</option>
+						<option value="false">false</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="form-text mt-3">This will add a first user and set them up as an Admin. You can leave this section empty.</div>
+		</div>
+	</div>
+
+	<div class="d-grid d-sm-flex gap-2">
+		<input type="submit" class="btn btn-primary" name="Submit" id="Submit" value="Submit">
+		<a class="btn btn-outline-secondary" href="?s=3&t=<?php echo isset($_GET['t']) ? (int) $_GET['t'] : 1; ?><?php echo (isset($_GET['rtl']) && $_GET['rtl'] === '1') ? '&rtl=1' : ''; ?>">Back</a>
+	</div>
 </form>
-
-</div>

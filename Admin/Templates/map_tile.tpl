@@ -2,72 +2,70 @@
 
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       map_tile.tpl                                                   ##
-##  Developed by:  Taras                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
-function get_map_tile_info($coord_x, $coord_y){ // todo mv to queries file
-  $q = 'SELECT map_data.`id` AS village_id, map_data.`fieldtype`, map_data.`oasistype`, map_data.`occupied`, map_data.`image`, '.
-   'oasis_data.`type`, '.
-   'CASE '.
-     'WHEN oasis_data.`owner` IS NOT NULL AND oasis_data.`owner` != 2 '.
-     'THEN oasis_data.`owner` '.
-     'ELSE village_data.`owner` '.
-   'END AS owner_id, '.
-   'u.`username` '.
-   'FROM (SELECT * FROM `s1_wdata` WHERE `x` = '.$coord_x.' AND `y` = '.$coord_y.') AS map_data '.
-   'LEFT JOIN `s1_odata` AS oasis_data ON map_data.`id` = oasis_data.`wref` '.
-   'LEFT JOIN `s1_vdata` AS village_data ON village_data.`wref` = map_data.`id` '.
-   'LEFT JOIN s1_users AS u ON u.`id` = COALESCE(oasis_data.`owner`, village_data.`owner`, 0);'; // todo check this db tables fields -- del doublings like oasistype = '2' and image = 'o2'
-  $result = mysqli_query($GLOBALS['link'], $q);
-  return mysqli_fetch_assoc($result);
+function get_map_tile_info($coord_x, $coord_y){
+  $tb = TB_PREFIX;
+  $q = "SELECT
+           map_data.id AS village_id,
+           map_data.fieldtype,
+           map_data.oasistype,
+           map_data.occupied,
+           map_data.image,
+           oasis_data.type,
+           CASE WHEN oasis_data.owner IS NOT NULL AND oasis_data.owner != 2
+                THEN oasis_data.owner
+                ELSE village_data.owner
+           END AS owner_id,
+           u.username
+        FROM `{$tb}wdata` AS map_data
+        LEFT JOIN `{$tb}odata` AS oasis_data ON map_data.id = oasis_data.wref
+        LEFT JOIN `{$tb}vdata` AS village_data ON village_data.wref = map_data.id
+        LEFT JOIN `{$tb}users` AS u ON u.id = COALESCE(oasis_data.owner, village_data.owner, 0)
+        WHERE map_data.x = ".(int)$coord_x." AND map_data.y = ".(int)$coord_y."
+        LIMIT 1";
+  global $database;
+  $rows = $database->query_return($q);
+  return (is_array($rows) && count($rows)) ? $rows[0] : [];
 }
 
 
-function upd_oasis_to_oasis($village_id, $new_oasis_type){ // $village_id aka wref
-  mysqli_begin_transaction($GLOBALS['link']);
-  $q = 'UPDATE `'.TB_PREFIX.'odata` SET `type` = '.$new_oasis_type.' WHERE `wref` = '.$village_id;
-  mysqli_query($GLOBALS['link'], $q);
-  $q2 = 'UPDATE `'.TB_PREFIX.'wdata` SET `oasistype` = '.$new_oasis_type.', `image` = "o'.$new_oasis_type.'" WHERE `id` = '.$village_id;
-  mysqli_query($GLOBALS['link'], $q2);
-  mysqli_commit($GLOBALS['link']);
+function upd_oasis_to_oasis($village_id, $new_oasis_type){
+  global $database;
+  $database->query("START TRANSACTION");
+  $q = 'UPDATE `'.TB_PREFIX.'odata` SET `type` = '.(int)$new_oasis_type.' WHERE `wref` = '.(int)$village_id;
+  $database->query($q);
+  $q2 = 'UPDATE `'.TB_PREFIX.'wdata` SET `oasistype` = '.(int)$new_oasis_type.', `image` = "o'.(int)$new_oasis_type.'" WHERE `id` = '.(int)$village_id;
+  $database->query($q2);
+  $database->query("COMMIT");
 }
 
 
-function upd_village_to_village($village_id, $new_village_type){ // $village_id aka wref
-  //mysqli_begin_transaction($GLOBALS['link']);
-  //$q = '';
-  //mysqli_query($GLOBALS['link'], $q);
-  $q2 = 'UPDATE `'.TB_PREFIX.'wdata` SET `fieldtype` = '.$new_village_type.', `image` = "t'.$new_village_type.'" WHERE `id` = '.$village_id;
-  mysqli_query($GLOBALS['link'], $q2);
-  //mysqli_commit($GLOBALS['link']);
+function upd_village_to_village($village_id, $new_village_type){
+  global $database;
+  $q2 = 'UPDATE `'.TB_PREFIX.'wdata` SET `fieldtype` = '.(int)$new_village_type.', `image` = "t'.(int)$new_village_type.'" WHERE `id` = '.(int)$village_id;
+  $database->query($q2);
 }
 
 
-function upd_village_to_oasis($village_id, $new_oasis_type){ // $village_id aka wref
-  mysqli_begin_transaction($GLOBALS['link']);
-  //$q = 'INSERT INTO `'.TB_PREFIX.'odata` (`wref`, `type`, `conqured`, `wood`, `iron`, `clay`, `maxstore`, `crop`, `maxcrop`, `lastupdated`, `lastupdated2`, `loyalty`, `owner`, `name`, `high`) VALUES ('.$village_id.', '.$new_oasis_type.', 0, 800, 800, 800, 800, 800, 800, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 100, 2, "Unoccupied Oasis", '.rand(0, 2).')'; // todo fix maxstore + maxcrop
-  $q = 'INSERT INTO `'.TB_PREFIX.'odata` (`wref`, `type`, `conqured`, `wood`, `iron`, `clay`, `maxstore`, `crop`, `maxcrop`, `loyalty`, `owner`, `name`, `high`) VALUES ('.$village_id.', '.$new_oasis_type.', 0, 800, 800, 800, 800, 800, 800, 100, 2, "Unoccupied Oasis", '.rand(0, 2).')'; // todo fix maxstore + maxcrop
-  mysqli_query($GLOBALS['link'], $q);
-  $q2 = 'UPDATE `'.TB_PREFIX.'wdata` SET `fieldtype` = 0, `oasistype` = '.$new_oasis_type.', `image` = "o'.$new_oasis_type.'" WHERE `id` = '.$village_id;
-  mysqli_query($GLOBALS['link'], $q2);
-  mysqli_commit($GLOBALS['link']);
+function upd_village_to_oasis($village_id, $new_oasis_type){
+  global $database;
+  $database->query("START TRANSACTION");
+  $q = 'INSERT INTO `'.TB_PREFIX.'odata` (`wref`, `type`, `conqured`, `wood`, `iron`, `clay`, `maxstore`, `crop`, `maxcrop`, `loyalty`, `owner`, `name`, `high`) VALUES ('.(int)$village_id.', '.(int)$new_oasis_type.', 0, 800, 800, 800, 800, 800, 800, 100, 2, "Unoccupied Oasis", '.rand(0, 2).')';
+  $database->query($q);
+  $q2 = 'UPDATE `'.TB_PREFIX.'wdata` SET `fieldtype` = 0, `oasistype` = '.(int)$new_oasis_type.', `image` = "o'.(int)$new_oasis_type.'" WHERE `id` = '.(int)$village_id;
+  $database->query($q2);
+  $database->query("COMMIT");
 }
 
 
-function upd_oasis_to_village($village_id, $new_village_type){ // $village_id aka wref
-  mysqli_begin_transaction($GLOBALS['link']);
-  $q = 'DELETE FROM `'.TB_PREFIX.'odata` WHERE `wref` = '.$village_id;
-  mysqli_query($GLOBALS['link'], $q);
-  $q2 = 'UPDATE `'.TB_PREFIX.'wdata` SET `fieldtype` = '.$new_village_type.', `oasistype` = 0, `image` = "t'.rand(0, 8).'" WHERE `id` = '.$village_id;
-  mysqli_query($GLOBALS['link'], $q2);
-  mysqli_commit($GLOBALS['link']);
+function upd_oasis_to_village($village_id, $new_village_type){
+  global $database;
+  $database->query("START TRANSACTION");
+  $q = 'DELETE FROM `'.TB_PREFIX.'odata` WHERE `wref` = '.(int)$village_id;
+  $database->query($q);
+  $q2 = 'UPDATE `'.TB_PREFIX.'wdata` SET `fieldtype` = '.(int)$new_village_type.', `oasistype` = 0, `image` = "t'.rand(0, 8).'" WHERE `id` = '.(int)$village_id;
+  $database->query($q2);
+  $database->query("COMMIT");
 }
 
 
@@ -322,13 +320,11 @@ echo $search_result;
   <!-- <input type="hidden" name="do_get"> -->
   <input type="image" id="btn_ok" class="dynamic_img" value="ok" name="btn" src="/img/x.gif" alt="OK"><br><br>
 <?php
-
 echo $msg;
 
 ?>
 </form>
 <?php
-
 echo $edit_form;
 
 ?>

@@ -1,20 +1,17 @@
 <?php
-
-
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                        		       	               ##
-##  Version:       06.03.2014 						                           ##
-##  Filename       footer.tpl                                                  ##
-##  Developed by:  Advocaite , Shadow , ronix                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2014. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro 				                   ##
-##  Source code:   http://github.com/Shadowss/TravianZ-by-Shadow/	           ##
-##                                                                             ##
-#################################################################################
-
+// Prefer Twig when available, fallback to legacy markup otherwise
+if (class_exists('\Twig\Environment')) {
+    if (!class_exists('\App\View\TwigFactory')) {
+        require_once dirname(__DIR__) . '/autoloader.php';
+    }
+    $projectRoot = dirname(__DIR__);
+    $serverName = defined('SERVER_NAME') ? SERVER_NAME : 'TravianZ';
+    \App\View\TwigFactory::get($projectRoot)->display('footer.twig', [
+        'serverName' => $serverName,
+        'year' => date('Y'),
+    ]);
+    return;
+}
 ?>
 
 <div id="footer">

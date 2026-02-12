@@ -40,7 +40,6 @@ class Security
 {
     // Instance of the security class.
     protected static $instance;
-    protected $magic_quotes_gpc = FALSE;
     
     /**
      * Gets the instance of the Security class.
@@ -51,10 +50,10 @@ class Security
     {
         if(self::$instance === NULL)
         {
-            //return new Security;
+            self::$instance = new Security();
         }
         
-        //return self::$instance;
+        return self::$instance;
     }
     
     
@@ -70,19 +69,6 @@ class Security
     {
         if(self::$instance === NULL)
         {
-            // Check for magic quotes
-            if(get_magic_quotes_runtime())
-            {
-                // Dear lord!! This is bad and deprected. Sort it out ;)
-                set_magic_quotes_runtime(0);
-            }
-            
-            if(get_magic_quotes_gpc())
-            {
-                // This is also bad and deprected. See http://php.net/magic_quotes for more information.
-                $this->magic_quotes_gpc = TRUE;
-            }
-            
             // Check for register globals and prevent security issues from arising.
             if(ini_get('register_globals'))
             {
@@ -174,7 +160,7 @@ class Security
         {
             foreach($data as $key => $value)
             {
-                $data[$key] = $this->xss_clean($data);
+                $data[$key] = $this->xss_clean($value);
             }
             
             return $data;
@@ -248,12 +234,6 @@ class Security
             }
             
             return $new_array;
-        }
-        
-        if($this->magic_quotes_gpc === TRUE)
-        {
-            // Get rid of those pesky magic quotes!
-            $data = stripslashes($data);
         }
         
         $data = $this->xss_clean($data);

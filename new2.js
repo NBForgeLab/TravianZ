@@ -1,277 +1,224 @@
-function handleMove(element, dx, leftXLimit, rightXLimit)
-{
-	var xStart = element.getStyle('left').toInt();
+(() => {
+  function pxInt(value) {
+    const n = parseInt(value, 10);
+    return Number.isFinite(n) ? n : 0;
+  }
 
-	var xDest = xStart + dx;
+  function getStyleInt(el, prop) {
+    return pxInt(getComputedStyle(el)[prop]);
+  }
 
+  function setDisplay(selector, display) {
+    const el = document.querySelector(selector);
+    if (el) el.style.display = display;
+  }
 
+  function show(el) {
+    if (el) el.style.display = 'block';
+  }
 
-	xDest = Math.min(xDest, rightXLimit);
-	xDest = Math.max(xDest, leftXLimit);
+  function hide(el) {
+    if (el) el.style.display = 'none';
+  }
 
-	var nextStyle = 'block';
-	if (xDest == leftXLimit) {
-		nextStyle  = 'none';
-	}
-	$$('#screenshots .next img').setStyle('display', nextStyle);
+  function handleMove(element, dx, leftXLimit, rightXLimit) {
+    const xStart = getStyleInt(element, 'left');
+    let xDest = xStart + dx;
+    xDest = Math.min(xDest, rightXLimit);
+    xDest = Math.max(xDest, leftXLimit);
 
-	var prevStyle = 'block';
-	if (xDest == rightXLimit) {
-		prevStyle  = 'none';
-	}
-	$$('#screenshots .prev img').setStyle('display', prevStyle);
+    setDisplay('#screenshots .next img', xDest === leftXLimit ? 'none' : 'block');
+    setDisplay('#screenshots .prev img', xDest === rightXLimit ? 'none' : 'block');
 
-	element.lastDest = xDest;
+    element.lastDest = xDest;
 
-	if(element.fx == null){
-		element.fx = new Fx.Morph(element, {duration: 'normal', transition: Fx.Transitions.Sine.easeInOut});
-	}
-	element.fx.start({
-		'left': xDest
-	});
-}
+    if (!element.dataset.trzFxInit) {
+      element.style.transition = 'left 0.4s ease-in-out';
+      element.dataset.trzFxInit = '1';
+    }
 
-window.addEvent('domready', function() {
+    element.style.left = `${xDest}px`;
+  }
 
-	//Overlay functions. Add FadeIN/OUT later.
-	$$('div.overlay').addEvents({
-		show: function() {
-			this.setStyle('display', 'block');
-		},
-		hide: function() {
-			this.setStyle('display', 'none');
-		}
-	});
+  function initOverlays() {
+    const closers = Array.from(document.querySelectorAll('div.overlay .closer'));
+    closers.forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        hide(btn.closest('div.overlay'));
+      });
+    });
 
-	//Close Buttons
-	$$('div.overlay .closer').addEvent('click', function(event) {
-		event.stop();
-		this.getParent('div.overlay').fireEvent('hide');
-	});
+    Array.from(document.querySelectorAll('.signup_link')).forEach((a) => {
+      a.addEventListener('click', (event) => {
+        if (event) event.preventDefault();
+        show(document.getElementById('signup_layer'));
+      });
+    });
 
-	//Signup Buttons
-	$$('.signup_link').addEvent('click', function(event) {
-		if (typeof(event) !== 'undefined') {
-			event.stop();
-		}
-		$('signup_layer').fireEvent('show');
-	});
+    Array.from(document.querySelectorAll('.login_link')).forEach((a) => {
+      a.addEventListener('click', (event) => {
+        if (event) event.preventDefault();
+        show(document.getElementById('login_layer'));
+      });
+    });
+  }
 
-	//Login Buttons
-	$$('.login_link').addEvent('click', function(event) {
-		if (typeof(event) !== 'undefined') {
-			event.stop();
-		}
-		$('login_layer').fireEvent('show');
-	});
+  function initScreenshotOverlay() {
+    const list = document.getElementById('screenshot_list');
+    if (!list) return;
 
-	//Login Buttons
-	$$('#screenshot_list li a').each(function(item, index){
-		item.addEvent('click', function(event) {
-			event.stop();
-			galarie.show(index);
-			$('screenshot_layer').fireEvent('show');
-		});
-	});
+    const links = Array.from(list.querySelectorAll('li a'));
+    links.forEach((a, index) => {
+      a.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (window.galarie && typeof window.galarie.show === 'function') {
+          window.galarie.show(index);
+        }
+        show(document.getElementById('screenshot_layer'));
+      });
+    });
 
+    const windowSize = 300;
 
-	if ($('screenshot_list')) {
-		$('screenshot_list').addEvents({
-			moveRight: function() {
-				var windowSize = 300;
-				var w = this.getStyle('width').toInt();
-				var leftXLimit = windowSize - w;
-				var rightXLimit = 0;
-				handleMove(this, 98, leftXLimit, rightXLimit);
-			},
-			moveLeft: function() {
-				var windowSize = 300;
-				var w = this.getStyle('width').toInt();
-				var leftXLimit = windowSize - w;
-				var rightXLimit = 0;
-				handleMove(this, -98, leftXLimit, rightXLimit);
-			}
-		});
+    const moveRight = () => {
+      const w = getStyleInt(list, 'width');
+      const leftXLimit = windowSize - w;
+      const rightXLimit = 0;
+      handleMove(list, 98, leftXLimit, rightXLimit);
+    };
 
-		$$('*.dynamic_img').addEvents({
-			'mouseenter': function() {
-				this.addClass('over');
-			},
-			'mouseleave': function() {
-				this.removeClass('over');
-			}
-		});
+    const moveLeft = () => {
+      const w = getStyleInt(list, 'width');
+      const leftXLimit = windowSize - w;
+      const rightXLimit = 0;
+      handleMove(list, -98, leftXLimit, rightXLimit);
+    };
 
-		$$('*.dynamic_btn').addEvents({
-			'mouseenter': function() {
-				this.addClass('over');
-			},
-			'mouseleave': function() {
-				this.removeClass('over');
-				this.removeClass('clicked');
-			},
-			'mousedown': function() {
-				this.removeClass('over');
-				this.addClass('clicked');
-			},
-			'mouseup': function() {
-				this.removeClass('clicked');
-				this.addClass('over');
-			}
-		});
+    const next = document.querySelector('#screenshots .next');
+    const prev = document.querySelector('#screenshots .prev');
 
+    if (next) next.addEventListener('click', (e) => { e.preventDefault(); moveLeft(); });
+    if (prev) prev.addEventListener('click', (e) => { e.preventDefault(); moveRight(); });
 
-		$$('#screenshots .next').addEvent('click', function(e) {
-				$('screenshot_list').fireEvent('moveLeft');
-			});
-		$$('#screenshots .prev').addEvent('click', function(e) {
-				$('screenshot_list').fireEvent('moveRight');
-			});
-	}
+    const dynamicBtns = Array.from(document.querySelectorAll('.dynamic_btn'));
+    dynamicBtns.forEach((el) => {
+      el.addEventListener('mouseenter', () => el.classList.add('over'));
+      el.addEventListener('mouseleave', () => {
+        el.classList.remove('over');
+        el.classList.remove('clicked');
+      });
+      el.addEventListener('mousedown', () => {
+        el.classList.remove('over');
+        el.classList.add('clicked');
+      });
+      el.addEventListener('mouseup', () => {
+        el.classList.remove('clicked');
+        el.classList.add('over');
+      });
+    });
 
-	t_minus();
+    setDisplay('#screenshots .prev img', 'none');
+  }
 
-});
+  function t_format1(el) {
+    const parts = (el.textContent || '').split(':');
+    const h = parseInt(parts[0] || '0', 10) || 0;
+    const m = parseInt(parts[1] || '0', 10) || 0;
+    const s = parseInt(parts[2] || '0', 10) || 0;
+    return h * 3600 + m * 60 + s;
+  }
 
-Fx.Screenshots = new Class({
+  function t_format2(seconds) {
+    if (seconds <= -1) return '0:00:0?';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor(seconds / 60) % 60;
+    const s = seconds % 60;
+    const mm = m < 10 ? `0${m}` : `${m}`;
+    const ss = s < 10 ? `0${s}` : `${s}`;
+    return `${h}:${mm}:${ss}`;
+  }
 
-	Implements: [Events, Options],
+  function t_minus() {
+    for (let i = 1; ; i++) {
+      const el = document.getElementById(`timer${i}`);
+      if (!el) break;
 
-	$current: 0,
-	$length: 0,
+      const next = t_format1(el) - 1;
+      if (next < 0) {
+        window.setTimeout(() => document.location.reload(), 1000);
+      } else {
+        el.textContent = t_format2(next);
+      }
+    }
+    window.setTimeout(t_minus, 1000);
+  }
 
-	initialize: function(image, headline, comment, elements){
-		var self = this;
+  class Screenshots {
+    constructor(imageId, headlineId, commentId, elements) {
+      this.elements = elements || [];
+      this.targetImg = document.getElementById(imageId);
+      this.targetHl = document.getElementById(headlineId);
+      this.targetDesc = document.getElementById(commentId);
+      this.$current = 0;
+      this.$length = this.elements.length;
+    }
 
-		this.elements = elements;
-		this.targetImg = $(image);
-		this.targetHl = $(headline);
-		this.targetDesc = $(comment);
-		this.$length = this.elements.length;
-	},
+    showNext() {
+      let index = this.$current + 1;
+      if (index >= this.$length) index = 0;
+      this.render(index);
+    }
 
-	showNext: function(){
-		var index = this.$current + 1;
-		if (index >= this.$length) index = 0;
-		this.render(index);
-	},
+    showPrev() {
+      let index = this.$current - 1;
+      if (index < 0) index = this.$length - 1;
+      this.render(index);
+    }
 
-	showPrev: function(){
-		var index = this.$current - 1;
-		if (index < 0) index = this.$length - 1;
-		this.render(index);
-	},
+    show(num) {
+      this.render(num);
+      return this;
+    }
 
-	show: function(num){
-		this.render(num);
-		return this;
-	},
+    render(index) {
+      if (!this.elements || this.elements.length === 0) return;
+      const safeIndex = this.elements[index] !== undefined ? index : 0;
+      const elem = this.elements[safeIndex];
+      if (this.targetImg) this.targetImg.src = elem.img;
+      if (this.targetHl) this.targetHl.innerHTML = elem.hl;
+      if (this.targetDesc) this.targetDesc.innerHTML = elem.desc;
+      this.$current = safeIndex;
+    }
+  }
 
-	render: function(index){
-		index = this.elements[index] != undefined ? index : 0;
-		var elem = this.elements[index];
-		this.targetImg.src = elem.img;
-		this.targetHl.innerHTML = elem.hl;
-		this.targetDesc.innerHTML = elem.desc;
-		this.$current = index;
-	}
+  function Popup(i, j, game_url) {
+    const frameBox = document.getElementById('frame_box');
+    if (!frameBox) return false;
 
-});
+    frameBox.innerHTML = '';
+    const src = `${game_url}manual.php?typ=${encodeURIComponent(i)}&s=${encodeURIComponent(j)}`;
+    frameBox.innerHTML = `<iframe frameborder="0" id="Frame" src="${src}" width="412" height="440" border="0"></iframe>`;
+    show(document.getElementById('iframe_layer'));
 
+    const w = window.innerWidth || 0;
+    const h = window.innerHeight || 0;
+    const content = document.querySelector('#iframe_layer .overlay_content');
+    if (content) {
+      content.style.position = w < 700 || h < 700 ? 'absolute' : 'fixed';
+    }
+    return w < 700 || h < 700;
+  }
 
+  window.handleMove = handleMove;
+  window.Popup = Popup;
+  window.t_minus = t_minus;
 
-function Popup(i, j, game_url)
-{
-	var layer = $('iframe_layer');
+  window.TravianScreenshots = Screenshots;
 
-	$('frame_box').empty();
-	$('frame_box').innerHTML = "<iframe frameborder=\"0\" id=\"Frame\" src=\"" + game_url + "manual.php?typ=" + i + "&s=" + j + "\" width=\"412\" height=\"440\" border=\"0\"></iframe>";
-
-	$('iframe_layer').fireEvent('show');
-
-	var windowSize = window.getSize();
-
-	if (windowSize.x < 700 || windowSize.y < 700) {
-		$$('#iframe_layer .overlay_content').setStyle('position', 'absolute');
-		return true;
-	} else {
-		$$('#iframe_layer .overlay_content').setStyle('position', 'fixed');
-		return false;
-	}
-}
-
-function t_minus()
-{
-	// Zeit wird herunter gezaehlt
-	for (i = 1;; i++)
-	{
-		myElement = document.getElementById("timer" + i);
-		if (myElement != null)
-		{
-			sek = t_format1(myElement) - 1;
-			if (sek < 0)
-			{
-				setTimeout("document.location.reload()", 1000);
-			}
-			else
-			{
-				sek = t_format2(sek);
-				myElement.innerHTML = sek;
-			}
-		}
-		else
-		{
-			break;
-		}
-	}
-	setTimeout("t_minus()", 1000);
-}
-
-function t_format1(myElement)
-{
-	// 00:01:30 wird zu 90s umformatiert
-	p = myElement.innerHTML.split(":");
-	sek = p[0] * 3600 + p[1] * 60 + p[2] * 1;
-	return sek;
-}
-
-function t_format2(s)
-{
-	// 90s wird zu 00:01:30 umformatiert
-	if (s > -1)
-	{
-		stunden = Math.floor(s / 3600);
-		minuten = Math.floor(s / 60) % 60;
-		sekunden = s % 60;
-		t = stunden + ":";
-		if (minuten < 10)
-		{
-			t += "0";
-		}
-		t += minuten + ":";
-		if (sekunden < 10)
-		{
-			t += "0";
-		}
-		t += sekunden;
-	}
-	else
-	{
-		t = "0:00:0?";
-	}
-	return t;
-}
-
-
-
-function showLayer(layer)
-{
-	closeLayers();
-	var layerName = layer+'_layer';
-	$(layerName).fireEvent('show');
-}
-
-function closeLayers()
-{
-	$$('div.overlay').fireEvent('hide');
-}
+  document.addEventListener('DOMContentLoaded', () => {
+    initOverlays();
+    initScreenshotOverlay();
+    t_minus();
+  });
+})();

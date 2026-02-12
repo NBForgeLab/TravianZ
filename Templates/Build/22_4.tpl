@@ -68,23 +68,23 @@ echo "<td colspan=\"2\"><div class=\"none\" align=\"center\">".RESEARCH_AVAILABL
 			</tbody>
             </table>
 <?php if($fail > 0) { 
-	echo "<p class=\"switch\"><a id=\"researchFutureLink\" href=\"#\" onclick=\"return $('researchFuture').toggle();\">".SHOW_MORE."</a></p>
+	echo "<p class=\"switch\"><a id=\"researchFutureLink\" href=\"#\" data-toggle-section=\"researchFuture,researchFutureLink,".SHOW_MORE.",".HIDE_MORE."\">".SHOW_MORE."</a></p>
 		<table id=\"researchFuture\" class=\"build_details hide\" cellspacing=\"1\" cellpadding=\"1\">
 			<thead><tr><td colspan=\"2\">".PREREQUISITES."</td></tr><tbody>";
      if(!$technology->meetRRequirement(33) && !$technology->getTech(33)) {
      echo"<tr><td class=\"desc\"><div class=\"tit\"><img class=\"unit u33\" title=\"".U33."\" alt=\"".U33."\" src=\"img/x.gif\"/>
-			<a onclick=\"return Popup(33, 1);\" href=\"#\">".U33."</a></div></td><td class=\"cond\"><a href=\"#\" onclick=\"return Popup(22, 4);\">".ACADEMY." </a>
+			<a href=\"#\" onClick=\"return Popup(33, 1);\">".U33."</a></div></td><td class=\"cond\"><a href=\"#\" onClick=\"return Popup(22, 4);\">".ACADEMY." </a>
 			<span title=\"+2\">".LEVEL." 3</span><br /><a href=\"#\" onclick=\"return Popup(12, 4);\">".BLACKSMITH." </a><span title=\"+1\">".LEVEL." 1</span>	</td></tr>";
      }
      if(!$technology->meetRRequirement(34) && !$technology->getTech(34)) {
      echo "<tr><td class=\"desc\"><div class=\"tit\"><img class=\"unit u34\" title=\"".U34."\" alt=\"".U34."\" src=\"img/x.gif\"/>
-		 	<a onclick=\"return Popup(34, 1);\" href=\"#\">".U34."</a></div></td><td class=\"cond\">
-            <a href=\"#\" onclick=\"return Popup(22, 4);\">".ACADEMY." </a><span title=\"+2\">".LEVEL." 1</span><br /><a href=\"#\" onclick=\"return Popup(15, 4);\">".MAINBUILDING."</a>
+		 	<a href=\"#\" onClick=\"return Popup(34, 1);\">".U34."</a></div></td><td class=\"cond\">
+            <a href=\"#\" onClick=\"return Popup(22, 4);\">".ACADEMY." </a><span title=\"+2\">".LEVEL." 1</span><br /><a href=\"#\" onClick=\"return Popup(15, 4);\">".MAINBUILDING."</a>
 			<span title=\"+3\">".LEVEL." 5</span>	</td></tr>";
      }
      if(!$technology->meetRRequirement(35) && !$technology->getTech(35)) {
      echo "<tr><td class=\"desc\"><div class=\"tit\"><img class=\"unit u35\" title=\"".U35."\" alt=\"".U35."\" src=\"img/x.gif\"/>
-			<a onclick=\"return Popup(35, 1);\" href=\"#\">".U35."</a></div></td><td class=\"cond\">
+			<a href=\"#\" onClick=\"return Popup(35, 1);\">".U35."</a></div></td><td class=\"cond\">
 			<a href=\"#\" onclick=\"return Popup(22, 4);\">".ACADEMY." </a><span title=\"+2\">".LEVEL." 5</span><br /><a href=\"#\" onclick=\"return Popup(20, 4);\">".STABLE." </a>
 			<span title=\"+5\">".LEVEL." 5</span>	</td></tr>";
      }
@@ -112,22 +112,7 @@ echo "<td colspan=\"2\"><div class=\"none\" align=\"center\">".RESEARCH_AVAILABL
 			<a href=\"#\" onclick=\"return Popup(16, 4);\">".RALLYPOINT." </a><span title=\"+4\">".LEVEL." 5</span><br /><a href=\"#\" onclick=\"return Popup(22, 4);\">
             ".ACADEMY." </a><span title=\"+17\">".LEVEL." 20</span></td></tr>";
      }
-     echo " <script type=\"text/javascript\">
-		//<![CDATA[
-			$(\"researchFuture\").toggle = (function()
-			{
-				this.toggleClass(\"hide\");
-
-				$(\"researchFutureLink\").set(\"text\",
-					this.hasClass(\"hide\")
-					?	\"".SHOW_MORE."\"
-					:	\"".HIDE_MORE."\"
-				);
-
-				return false;
-			}).bind($(\"researchFuture\"));
-		//]]>
-		</script>";
+     
      echo "</tbody></table>";
 }
 //$acares = $technology->grabAcademyRes();

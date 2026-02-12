@@ -31,7 +31,8 @@ if(isset($_GET['newdid'])) {
 }
 
 if(isset($_GET['fid']) || isset($_GET['fid2'])){
-	$fid = preg_replace("/[^0-9]/","",!empty($_GET['fid']) ? $_GET['fid'] : $_GET['fid2']);
+	$fidSource = $_GET['fid'] ?? ($_GET['fid2'] ?? '');
+	$fid = preg_replace("/[^0-9]/","",(string) $fidSource);
 	$forumInfos = $database->ForumCatEdit($fid);
 	
 	if(empty($forumInfos)){
@@ -91,7 +92,6 @@ if(isset($_GET['aid']) || isset($_GET['fid']) || isset($_GET['fid2']) ||
 	<meta http-equiv="expires" content="0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-full.js?0faab" type="text/javascript"></script>
 	<script src="unx.js?f4b7h" type="text/javascript"></script>
 	<script src="new.js?0faab" type="text/javascript"></script>
 	<link href="<?php
@@ -118,8 +118,7 @@ if(isset($_GET['aid']) || isset($_GET['fid']) || isset($_GET['fid2']) ||
 
 ?>
 	<script type="text/javascript">
-
-		window.addEvent('domready', start);
+		
 				function getMouseCoords(e) {
 					var coords = {};
 					if (!e) var e = window.event;
@@ -221,7 +220,7 @@ $userPermissions = $database->getAlliPermissions($session->uid, $session->allian
 		switch($_POST['o']){
 			case 1 :
 				if($userPermissions['opt1'] == 0) $alliance->redirect();
-				if(isset($_POST['s']) == 5 && isset($_POST['a_user'])){
+				if(isset($_POST['s']) && isset($_POST['a_user'])){
 					$alliance->procAlliForm($_POST);
 					include("Templates/Alliance/changepos.tpl");
 				}
@@ -229,17 +228,17 @@ $userPermissions = $database->getAlliPermissions($session->uid, $session->allian
 				break;
 			case 2 :
 				if($userPermissions['opt2'] == 0) $alliance->redirect();
-				if(isset($_POST['s']) == 5 && isset($_POST['a']) == 2) $alliance->procAlliForm($_POST);
+				if(isset($_POST['s'])) $alliance->procAlliForm($_POST);
 				include("Templates/Alliance/kick.tpl");
 				break;
 			case 3 :
 				if($userPermissions['opt3'] == 0) $alliance->redirect();
-				if(isset($_POST['s']) == 5 && isset($_POST['a']) == 3) $alliance->procAlliForm($_POST);
+				if(isset($_POST['s'])) $alliance->procAlliForm($_POST);
 				include("Templates/Alliance/allidesc.tpl");
 				break;
 			case 4 :
 				if($userPermissions['opt4'] == 0) $alliance->redirect();
-				if(isset($_POST['s']) == 5 && isset($_POST['a']) == 4) $alliance->procAlliForm($_POST);
+				if(isset($_POST['s']) && isset($_POST['a']) && (string)$_POST['a'] === '4') $alliance->procAlliForm($_POST);
 				include("Templates/Alliance/invite.tpl");
 				break;
 			case 5 :
@@ -253,12 +252,12 @@ $userPermissions = $database->getAlliPermissions($session->uid, $session->allian
 				include("Templates/Alliance/chgdiplo.tpl");
 				break;
 			case 11 :
-				if(isset($_POST['s']) == 5 && isset($_POST['a']) == 11) $alliance->procAlliForm($_POST);
+				if(isset($_POST['s'])) $alliance->procAlliForm($_POST);
 				include("Templates/Alliance/quitalli.tpl");
 				break;
 			case 100 :
 				if($userPermissions['opt3'] == 0) $alliance->redirect();
-				if(isset($_POST['s']) == 5 && isset($_POST['a']) == 100) $alliance->procAlliForm($_POST);
+				if(isset($_POST['s'])) $alliance->procAlliForm($_POST);
 				include("Templates/Alliance/changename.tpl");
 				break;
 			case 101 :

@@ -16,9 +16,9 @@ if(isset($id))
 		</thead>
 		<tbody>
 			<?php
-				$sql = "SELECT * FROM ".TB_PREFIX."login_log WHERE uid = $id";
-				$result = mysqli_query($GLOBALS["link"], $sql);
-				while($row = mysqli_fetch_assoc($result))
+				$sql = "SELECT * FROM ".TB_PREFIX."login_log WHERE uid = ".(int)$id;
+				$result = $database->query_return($sql);
+				foreach ($result as $row)
 				{
 					$i++;
 					echo '

@@ -63,7 +63,7 @@ $database->updateUserField($session->uid,gpack,$_POST["custom_url"],1);
 
                         <input type="radio" class="radio" name="gp_type" value="custom" checked="checked" />
                         User-defined graphic pack                    </label>
-                    <input class="text" type="text" name="custom_url" value="<?php echo $session->gpack; ?>" onclick="document.gp_selection.gp_type[1].checked = true" /><br />
+                    <input class="text" type="text" name="custom_url" value="<?php echo $session->gpack; ?>" data-check-radio="gp_selection.gp_type[1]" /><br />
                                         <div class="example">Example: <span class="path">file:///C:/Travian/gpack/</span> or <span class="path">http://www.travian.org/user/gpack/</span></div>
 										<center><div class="example">Default: <span class="path"><?php echo GP_LOCATE; ?></span></div></center>
                 </td>

@@ -14,12 +14,12 @@ $noticeClass = ["Scout Report", "Won as attacker without losses", "Won as attack
 		</tr>
 	</thead><tfoot>
 		<tr><th><?php
-		$MyGold = mysqli_query($database->dblink,"SELECT plus FROM ".TB_PREFIX."users WHERE `id`='".(int) $session->uid."'") or die(mysqli_error($database->dblink));
-		$golds = mysqli_fetch_array($MyGold);
+		$rows = $database->query_return("SELECT plus FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+		$golds = isset($rows[0]) ? $rows[0] : ['plus' => 0];
 		$date2=strtotime("NOW");
 		if ($golds['plus'] <= $date2) { ?>
 		<?php } else { ?>
-		<input class="check" type="checkbox" id="s10" name="s10" onclick="Allmsg(this.form);" />
+		<input class="check" type="checkbox" id="s10" name="s10" />
 		<?php } ?></th>
 			<th class="buttons"><input name="del" type="image" id="btn_delete" class="dynamic_img" src="img/x.gif" value="delete" alt="delete" />
             <?php if($session->plus) {

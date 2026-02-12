@@ -1,14 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       cel.php                                                     ##
-##  Developed by:  G3n3s!s & JimJam & LoppyLukas                               ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 $cel=array(1=>array('name'=>'Small Celebration','wood'=>6400,'clay'=>6650,'iron'=>5940,'crop'=>1340,'attri'=>500,'time'=>86400),array('name'=>'Great Celebration','wood'=>29700,'clay'=>33250,'iron'=>32000,'crop'=>6700,'attri'=>2000,'time'=>216000));
 

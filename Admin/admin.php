@@ -18,16 +18,32 @@
 #################################################################################
 
 session_start();
-include_once("../GameEngine/config.php");
-include_once("../GameEngine/Database.php");
-include_once ("../GameEngine/Lang/" . LANG . ".php");
-include_once("../GameEngine/Admin/database.php");
-include_once("../GameEngine/Data/buidata.php");
-include_once("../GameEngine/Artifacts.php");
+$adminDir = __DIR__;
+chdir($adminDir);
+
+include_once($adminDir . "/../GameEngine/config.php");
+include_once($adminDir . "/../GameEngine/Database.php");
+include_once($adminDir . "/../GameEngine/Lang/" . LANG . ".php");
+include_once($adminDir . "/../GameEngine/Admin/database.php");
+include_once($adminDir . "/../GameEngine/Data/buidata.php");
+include_once($adminDir . "/../GameEngine/Artifacts.php");
 
 include('Templates/ver.tpl');
 include('Templates/update_latest.tpl');
 $up_avl = $latest - $ver ;
+
+$autoUpgradeFromUserSession = function() use ($database) {
+    if (!isset($_SESSION['admin_username']) && isset($_SESSION['username']) && isset($_SESSION['id_user'])) {
+        $uid = (int) $_SESSION['id_user'];
+        $accessLevel = (int) $database->getUserField($uid, 'access', 0);
+        if ($accessLevel >= MULTIHUNTER) {
+            $_SESSION['admin_username'] = $_SESSION['username'];
+            $_SESSION['id'] = $uid;
+            $_SESSION['access'] = $accessLevel;
+        }
+    }
+};
+$autoUpgradeFromUserSession();
 
 $subpage = 'Login';
 $not_include_mootools_js = false;
@@ -75,7 +91,7 @@ if (!empty($_GET['p'])) {
             $subpage = 'General Search';
             break;
 
-        case 'message':
+        case 'message_search':
             $subpage = 'Search IGMs/Reports';
             break;
 
@@ -357,17 +373,9 @@ if (!empty($_GET['p'])) {
 		<link rel="stylesheet" type="text/css" href="../img/admin/admin.css">
 		<link rel="stylesheet" type="text/css" href="../img/admin/acp.css">
 		<link rel="stylesheet" type="text/css" href="../img/img.css">
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-		<script type="text/javascript" src="jquery.cookie.js"></script>
-		<?php
-		if($not_include_mootools_js){}else{
-		?>
-		<script type="text/javascript" src="/mt-full.js?423cb"></script>
+		<script type="text/javascript" src="admin-dom.js"></script>
 		<script type="text/javascript" src="ajax.js"></script>
 		<script type="text/javascript" src="../new.js?0faab"></script>
-		<?php
-		}
-		?>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<meta http-equiv="imagetoolbar" content="no">
 	</head>
@@ -445,39 +453,7 @@ if (!empty($_GET['p'])) {
 			}
 
 		</script>
-		<!-- Start Accordeon Menu -->
-		<script type="text/javascript">
-		$(document).ready(function () {
-			var checkCookie = $.cookie("sub-nav");
-			if (checkCookie != "") {
-				$('#menu > li.sub > a:eq('+checkCookie+')').addClass('active').next().show();
-			}
-			$('#menu > li.sub > a').click(function(){
-				var navIndex = $('#menu > li.sub > a').index(this);
-				$.cookie("sub-nav", navIndex);
-				$('#menu li ul').slideUp();
-				if ($(this).next().is(":visible")){
-					$(this).next().slideUp();
-				} else {
-					$(this).next().slideToggle();
-				}
-				return false;
-				$('#menu li a').removeClass('active');
-				$(this).addClass('active');
-			});
-			var checkCookie = $.cookie("sub-link");
-			if (checkCookie != "") {
-				$('#menu > li.sub > ul li a:eq('+checkCookie+')').addClass('active');
-			}
-			$('.sub ul li a').click(function(){
-				var subIndex = $('.sub ul li a').index(this);
-				$.cookie("sub-link", subIndex);
-				$('.sub ul li a').removeClass('active');
-				$(this).addClass('active');
-			});
-		});
-		</script>
-		<!-- End Accordeon Menu -->
+		
 		<div id="ltop1">
 			<div style="position:relative; height:100px; float:left;">
 				<img src="../img/x.gif" width="1" height="1">

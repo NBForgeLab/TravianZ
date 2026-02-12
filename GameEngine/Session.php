@@ -1,24 +1,17 @@
 <?php
 use App\Entity\User;
 
-ob_start(); // Enesure, that no more header already been sent error not showing up again
-mb_internal_encoding("UTF-8"); // Add for utf8 varriables.
+if(PHP_VERSION_ID < 80200) {
+    http_response_code(500);
+    exit('This script requires PHP 8.2+');
+}
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Version:       22.06.2015                    			       ##
-##  Filename       Session.php                                                 ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix   ##
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		       ##
-##  Fixed by:      InCube - double troops				       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2015. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro                		       ##
-##  Source code:   https://github.com/Shadowss/TravianZ		               ##
-##                                                                             ##
-#################################################################################
+ob_start(); // Enesure, that no more header already been sent error not showing up again
+if(function_exists('mb_internal_encoding')) {
+    mb_internal_encoding("UTF-8");
+}
+
+
 
 global $autoprefix;
 
@@ -52,7 +45,7 @@ include_once ("Form.php");
 include_once ("Generator.php");
 include_once ("Multisort.php");
 include_once ("Ranking.php");
-include_once ("Lang/" . LANG . ".php");
+include_once (__DIR__ . "/Lang/" . LANG . ".php");
 include_once ("Logging.php");
 include_once ("Message.php");
 include_once ("Alliance.php");
@@ -75,6 +68,10 @@ class Session {
 			public $userinfo = [];
 			private $userarray = [];
 			var $villages = [];
+			var $sit = 0;
+            var $sit1 = 0;
+            var $sit2 = 0;
+            var $cp = 0;
 
 			function __construct() {
         		global $database; //TienTN fix
@@ -102,24 +99,30 @@ class Session {
 				$_SESSION['sessid'] = $generator->generateRandID();
 				$_SESSION['username'] = $user;
 				$user_sanitized = $database->escape($user);
-				$_SESSION['checker'] = $generator->generateRandStr(3);
-				$_SESSION['mchecker'] = $generator->generateRandStr(5);
+                if (class_exists(\App\Legacy\SessionHelper::class) || class_exists(\App\Legacy\FormService::class) || travianz_form_try_require_autoloader()) {
+                    \App\Legacy\SessionHelper::putString('checker', $generator->generateRandStr(3));
+                    \App\Legacy\SessionHelper::putString('mchecker', $generator->generateRandStr(5));
+                } else {
+                    $_SESSION['checker'] = $generator->generateRandStr(3);
+                    $_SESSION['mchecker'] = $generator->generateRandStr(5);
+                }
 
                 $userFields = $database->getUserFields($user_sanitized, "quest, id", 1, true);
 				$_SESSION['qst'] = $userFields["quest"];
 
 				$dbarray = $database->getUserFields($user_sanitized, 'id, village_select', 1);
 				$selected_village=(int) $dbarray['village_select'];
+				$_SESSION['id_user'] = (int) $dbarray['id'];
 
 				if ($dbarray['id'] > 1) {
                     if(!isset($_SESSION['wid'])) {
                     	if(!empty($selected_village)) $data = $database->getVillage($selected_village);
-                        else $data = $database->getVillage($userFields["id"]);
+                        else $data = $database->getVillage($userFields["id"], 2);
                         $_SESSION['wid'] = $data['wref'];
                     } else
                         if(empty($_SESSION['wid'])) {
                         	if(!empty($selected_village)) $data = $database->getVillage($selected_village);
-                            else $data = $database->getVillage($userFields["id"]);
+                            else $data = $database->getVillage($userFields["id"], 2);
                             $_SESSION['wid'] = $data['wref'];
                         }
     				$this->PopulateVar();
@@ -154,25 +157,44 @@ class Session {
 			public function changeChecker() {
 				global $generator;
 				
-				$this->checker = $_SESSION['checker'] = $generator->generateRandStr(3);
-				$this->mchecker = $_SESSION['mchecker'] = $generator->generateRandStr(5);
+                if (class_exists(\App\Legacy\SessionHelper::class) || class_exists(\App\Legacy\FormService::class) || travianz_form_try_require_autoloader()) {
+                    $this->checker = $generator->generateRandStr(3);
+                    $this->mchecker = $generator->generateRandStr(5);
+                    \App\Legacy\SessionHelper::putString('checker', $this->checker);
+                    \App\Legacy\SessionHelper::putString('mchecker', $this->mchecker);
+                } else {
+                    $this->checker = $_SESSION['checker'] = $generator->generateRandStr(3);
+                    $this->mchecker = $_SESSION['mchecker'] = $generator->generateRandStr(5);
+                }
 			}
 
 			private function checkLogin(){
         		global $database;
         		
-        		$user = $id = '';
-        		$admin = false;
-        		$inAdmin = (strpos($_SERVER['REQUEST_URI'], '/Admin') !== false);
+       		$user = $id = '';
+       		$admin = false;
+       		$inAdmin = (strpos($_SERVER['REQUEST_URI'], '/Admin') !== false);
 
-        		if (!$inAdmin && isset($_SESSION['username'])) {
-        		    $user = $_SESSION['username'];
-        		    $id   = (int) $_SESSION['id_user'];
-        		} else if ($inAdmin && isset($_SESSION['admin_username'])) {
-        		    $user  = $_SESSION['admin_username'];
-        		    $id    = (int) $_SESSION['id'];
-        		    $admin = true;
-        		}
+       		// إذا حاولنا دخول لوحة الإدارة بدون جلسة إدارية، ولكن لدينا جلسة مستخدم عادي،
+       		// قم بترقية الجلسة تلقائياً إن كان للمستخدم صلاحيات إدارية (MULTIHUNTER أو أعلى)
+       		if ($inAdmin && !isset($_SESSION['admin_username']) && isset($_SESSION['username']) && isset($_SESSION['id_user'])) {
+       		    $possibleId = (int) $_SESSION['id_user'];
+       		    $accessLevel = (int) $database->getUserField($possibleId, 'access', 0);
+       		    if ($accessLevel >= MULTIHUNTER) {
+       		        $_SESSION['admin_username'] = $_SESSION['username'];
+       		        $_SESSION['id'] = $possibleId;
+       		        $_SESSION['access'] = $accessLevel;
+       		    }
+       		}
+
+       		if (!$inAdmin && isset($_SESSION['username'])) {
+       		    $user = $_SESSION['username'];
+       		    $id   = (int) $_SESSION['id_user'];
+       		} else if ($inAdmin && isset($_SESSION['admin_username'])) {
+       		    $user  = $_SESSION['admin_username'];
+       		    $id    = (int) $_SESSION['id'];
+       		    $admin = true;
+       		}
 
         		if($user && ($admin || isset($_SESSION['sessid']))) {        		    
         		    $this->maintenance();
@@ -266,7 +288,8 @@ class Session {
                         IFNULL((SELECT SUM(t11) FROM '.TB_PREFIX.'movement, '.TB_PREFIX.'attacks WHERE '.TB_PREFIX.'movement.`from` IN('.$villageIDs.') and '.TB_PREFIX.'movement.ref = '.TB_PREFIX.'attacks.id and '.TB_PREFIX.'movement.proc = 0 and '.TB_PREFIX.'movement.sort_type = 3), 0) +
                         IFNULL((SELECT SUM(t11) FROM '.TB_PREFIX.'movement, '.TB_PREFIX.'attacks where '.TB_PREFIX.'movement.`to` IN('.$villageIDs.') and '.TB_PREFIX.'movement.ref = '.TB_PREFIX.'attacks.id and '.TB_PREFIX.'movement.proc = 0 and '.TB_PREFIX.'movement.sort_type = 4), 0)
                         as herocount';
-   				$heroUnitRegisters = mysqli_fetch_array( mysqli_query($database->dblink, $q, MYSQLI_ASSOC ))['herocount'];
+                $rows = $database->query_return($q);
+                $heroUnitRegisters = (is_array($rows) && count($rows)) ? (int)($rows[0]['herocount'] ?? 0) : 0;
 
    				// check if the actual hero is alive or being trained/revived into a living state
                 $isHeroLivingOrRaising = $database->getHeroDeadReviveOrInTraining($this->uid);
@@ -279,7 +302,7 @@ class Session {
             }
 
 			private function PopulateVar() {
-				global $database;
+				global $database, $generator;
 				
 				$this->userarray = $this->userinfo = $database->getUserArray($_SESSION['username'], 0);
 				$this->username = $this->userarray['username'];
@@ -292,6 +315,12 @@ class Session {
 				$this->tribe = $this->userarray['tribe'];
 				$this->isAdmin = $this->access >= MODERATOR;
 				$this->alliance = $_SESSION['alliance_user'] = $this->userarray['alliance'];
+				if(!isset($_SESSION['checker']) || $_SESSION['checker'] === '') {
+                    $_SESSION['checker'] = $generator->generateRandStr(3);
+                }
+				if(!isset($_SESSION['mchecker']) || $_SESSION['mchecker'] === '') {
+                    $_SESSION['mchecker'] = $generator->generateRandStr(5);
+                }
 				$this->checker = $_SESSION['checker'];
 				$this->mchecker = $_SESSION['mchecker'];
 				$this->sit = $database->GetOnline($this->uid);

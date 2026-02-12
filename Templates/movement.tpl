@@ -1,14 +1,4 @@
 <?php 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       movement.tpl                                                ##
-##  Developed by:  Dzoki                                                       ##
-##  Updated by:    Shadow                                                      ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 $oases = 0;
 $array = $database->getOasis($village->wid);
 foreach($array as $conqured){

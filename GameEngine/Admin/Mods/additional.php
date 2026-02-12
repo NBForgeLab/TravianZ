@@ -1,13 +1,5 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       cp.php                                                      ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
+
 include_once("../../config.php");
 include_once("../../Database.php");
 if (!isset($_SESSION)) session_start();
@@ -33,7 +25,7 @@ $access = (int) $_POST['access'];
 $dur = (int) $_POST['protect'] * 86400;
 $protection = (time() + $dur);
 
-mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."users SET 
+$database->query("UPDATE ".TB_PREFIX."users SET 
 	access = ".$access.",
 	gold = ".(int) $_POST['gold'].",	
 	sit1 = '".(int) $_POST['sitter1']."',
@@ -45,7 +37,7 @@ mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."users SET
 	RR = '".(int) $_POST['res']."', 
 	apall = '".(int) $_POST['ooff']."', 
 	dpall = '".(int) $_POST['odef']."' 
-	WHERE id = ".$id) or die(mysqli_error($database->dblink));
+	WHERE id = ".(int)$id);
 
 header("Location: ../../../Admin/admin.php?p=player&uid=".$id."");
 ?>

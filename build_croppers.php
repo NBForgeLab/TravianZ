@@ -7,6 +7,16 @@
 
 use App\Utils\AccessLogger;
 
+// ensure autoloader is registered
+$autoprefix = '';
+for ($i = 0; $i < 5; $i++) {
+    $autoprefix = str_repeat('../', $i);
+    if (file_exists($autoprefix.'autoloader.php')) {
+        include_once $autoprefix.'autoloader.php';
+        break;
+    }
+}
+
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
@@ -36,14 +46,34 @@ $assetBase = '/'.ltrim($assetBase, '/');
 
 // CSRF
 if (empty($_SESSION['csrf_cb'])) {
-    $_SESSION['csrf_cb'] = bin2hex(random_bytes(16));
+    try {
+        $_SESSION['csrf_cb'] = bin2hex(random_bytes(16));
+    } catch (\Throwable $e) {
+        $_SESSION['csrf_cb'] = hash('sha256', microtime(true) . '|' . mt_rand() . '|' . ($_SERVER['REMOTE_ADDR'] ?? ''));
+    }
 }
 $csrf = $_SESSION['csrf_cb'];
 
 function h($s){ return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
+function safeQuerySql($sql) {
+    global $database;
+    $res = $database->query($sql);
+    if ($res === false) {
+        return [null, mysqli_error($database->dblink)];
+    }
+    return [$res, null];
+}
+
+function safeFetchAssocSql($sql) {
+    global $database;
+    $rows = $database->query_return($sql);
+    $row = (is_array($rows) && count($rows)) ? $rows[0] : [];
+    return [$row, null];
+}
+
 // Ensure table exists (minimal schema, unsigned tinyints)
-mysqli_query($database->dblink, "CREATE TABLE IF NOT EXISTS `$CROP_TABLE` (
+[$__resCreate, $__errCreate] = safeQuerySql("CREATE TABLE IF NOT EXISTS `$CROP_TABLE` (
   `wref` INT UNSIGNED NOT NULL PRIMARY KEY,
   `x` INT NOT NULL,
   `y` INT NOT NULL,
@@ -52,33 +82,38 @@ mysqli_query($database->dblink, "CREATE TABLE IF NOT EXISTS `$CROP_TABLE` (
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CHECK (`best_oasis_bonus` IN (0,25,50,75,100,125,150))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+if ($__errCreate) {
+    $notice = "DB error while creating croppers table: " . $__errCreate;
+}
 
 // Helpful indexes (ignore errors if already exist)
-@mysqli_query($database->dblink, "CREATE INDEX `idx_ft_bonus_xy` ON `$CROP_TABLE` (`fieldtype`, `best_oasis_bonus`, `x`, `y`)");
-@mysqli_query($database->dblink, "CREATE INDEX `idx_xy` ON `$CROP_TABLE` (`x`, `y`)");
-@mysqli_query($database->dblink, "CREATE INDEX `idx_bonus` ON `$CROP_TABLE` (`best_oasis_bonus`)");
+@$database->query("CREATE INDEX `idx_ft_bonus_xy` ON `$CROP_TABLE` (`fieldtype`, `best_oasis_bonus`, `x`, `y`)");
+@$database->query("CREATE INDEX `idx_xy` ON `$CROP_TABLE` (`x`, `y`)");
+@$database->query("CREATE INDEX `idx_bonus` ON `$CROP_TABLE` (`best_oasis_bonus`)");
 
 // ---------- Helpers ----------
 function worldSizeLabel(): string {
     if (defined('WORLD_MIN') && defined('WORLD_MAX')) {
-        $min = (int)WORLD_MIN; $max = (int)WORLD_MAX;
+        $min = (int)constant('WORLD_MIN'); $max = (int)constant('WORLD_MAX');
         return ($max - $min + 1) . "×" . ($max - $min + 1) . " (" . $min . " .. " . $max . ")";
     }
     if (defined('WORLD_MAX')) {
-        $max = (int)WORLD_MAX; $min = -$max;
+        $max = (int)constant('WORLD_MAX'); $min = -$max;
         return ($max - $min + 1) . "×" . ($max - $min + 1) . " (" . $min . " .. " . $max . ")";
     }
     return "unknown";
 }
 
-function getCounts($db, $WDATA, $CROP_TABLE) {
-    $c1 = mysqli_fetch_assoc(mysqli_query($db, "SELECT COUNT(*) c FROM `$WDATA` WHERE fieldtype IN (1,6)"));
-    $c2 = mysqli_fetch_assoc(mysqli_query($db, "SELECT COUNT(*) c FROM `$CROP_TABLE`"));
-    $lu = mysqli_fetch_assoc(mysqli_query($db, "SELECT MAX(updated_at) lu FROM `$CROP_TABLE`"));
+function getCounts($WDATA, $CROP_TABLE) {
+    [$c1, $e1] = safeFetchAssocSql("SELECT COUNT(*) c FROM `$WDATA` WHERE fieldtype IN (1,6)");
+    [$c2, $e2] = safeFetchAssocSql("SELECT COUNT(*) c FROM `$CROP_TABLE`");
+    [$lu, $e3] = safeFetchAssocSql("SELECT MAX(updated_at) lu FROM `$CROP_TABLE`");
+    $errors = array_values(array_filter([$e1, $e2, $e3]));
     return [
         'croppers_world' => (int)($c1['c'] ?? 0),
         'croppers_table' => (int)($c2['c'] ?? 0),
         'last_updated'   => $lu['lu'] ?? null,
+        'errors'         => $errors,
     ];
 }
 
@@ -106,30 +141,33 @@ if ($action && !$okCsrf) {
 }
 
 if ($action === 'truncate') {
-    mysqli_query($database->dblink, "TRUNCATE TABLE `$CROP_TABLE`");
+    $database->query("TRUNCATE TABLE `$CROP_TABLE`");
     $notice = "Croppers table truncated.";
 }
 if ($action === 'reindex') {
-    @mysqli_query($database->dblink, "DROP INDEX `idx_ft_bonus_xy` ON `$CROP_TABLE`");
-    @mysqli_query($database->dblink, "DROP INDEX `idx_xy` ON `$CROP_TABLE`");
-    @mysqli_query($database->dblink, "DROP INDEX `idx_bonus` ON `$CROP_TABLE`");
-    @mysqli_query($database->dblink, "CREATE INDEX `idx_ft_bonus_xy` ON `$CROP_TABLE` (`fieldtype`, `best_oasis_bonus`, `x`, `y`)");
-    @mysqli_query($database->dblink, "CREATE INDEX `idx_xy` ON `$CROP_TABLE` (`x`, `y`)");
-    @mysqli_query($database->dblink, "CREATE INDEX `idx_bonus` ON `$CROP_TABLE` (`best_oasis_bonus`)");
+    @$database->query("DROP INDEX `idx_ft_bonus_xy` ON `$CROP_TABLE`");
+    @$database->query("DROP INDEX `idx_xy` ON `$CROP_TABLE`");
+    @$database->query("DROP INDEX `idx_bonus` ON `$CROP_TABLE`");
+    @$database->query("CREATE INDEX `idx_ft_bonus_xy` ON `$CROP_TABLE` (`fieldtype`, `best_oasis_bonus`, `x`, `y`)");
+    @$database->query("CREATE INDEX `idx_xy` ON `$CROP_TABLE` (`x`, `y`)");
+    @$database->query("CREATE INDEX `idx_bonus` ON `$CROP_TABLE` (`best_oasis_bonus`)");
     $notice = "Indexes rebuilt.";
 }
 if ($action === 'estimate') {
     $notice = "Estimated counts refreshed.";
 }
 
-$stats = getCounts($database->dblink, $WDATA, $CROP_TABLE);
+$stats = getCounts($WDATA, $CROP_TABLE);
+if (!empty($stats['errors'])) {
+    $notice = $notice ?: ("DB error: " . $stats['errors'][0]);
+}
 $worldLabel = worldSizeLabel();
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
-	<title><?php echo SERVER_NAME ?> - Mass Message</title>
+	<title><?php echo SERVER_NAME ?> - Build Cropper</title>
 	<link rel="shortcut icon" href="favicon.ico"/>
 	<meta http-equiv="cache-control" content="max-age=0" />
 	<meta http-equiv="pragma" content="no-cache" />
@@ -137,7 +175,6 @@ $worldLabel = worldSizeLabel();
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
-	<script src="mt-full.js?0ac37" type="text/javascript"></script>
 	<script src="unx.js?f4b7h" type="text/javascript"></script>
 	<script src="new.js?0ac37" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -168,10 +205,6 @@ $worldLabel = worldSizeLabel();
 	}
 	</script>
 
-	<script type="text/javascript">
-
-		window.addEvent('domready', start);
-	</script>
 		<?php
 	if($session->gpack == null || GP_ENABLE == false) {
 	echo "
@@ -183,10 +216,10 @@ $worldLabel = worldSizeLabel();
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-	window.addEvent('domready', start);
-	</script>
     <style>
+        body{ background:#ffffff !important; }
+        .wrapper{ background:#ffffff !important; }
+        #content.player{ background:#ffffff !important; }
         .cb-container{ max-width:980px;margin:0 auto;padding:0 12px; }
         .cb-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         .cb-card{ background:#fff;border:1px solid #dcdde1;border-radius:12px;padding:14px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
@@ -247,7 +280,7 @@ $worldLabel = worldSizeLabel();
                             <button class="cb-btn" name="action" value="build">Build / Rebuild</button>
                             <button class="cb-btn gray" name="action" value="estimate" type="submit">Estimate</button>
                             <button class="cb-btn gray" name="action" value="reindex" type="submit">Reindex</button>
-                            <button class="cb-btn red" name="action" value="truncate" type="submit" onclick="return confirm('Really truncate the table?');">Truncate</button>
+                            <button class="cb-btn red" name="action" value="truncate" type="submit" data-confirm="Really truncate the table?">Truncate</button>
                         </form>
                         <div class="cb-muted" style="margin-top:8px;">
                             Building streams progress below. You can leave this page; the process stops when the request ends.
@@ -261,55 +294,62 @@ if ($action === 'build' && $okCsrf) {
     $batch = max(1000, min(20000, (int)($_POST['batch'] ?? 5000)));
     startStreaming();
 
-    $cnt = mysqli_fetch_assoc(mysqli_query($database->dblink, "SELECT COUNT(*) AS c FROM `$WDATA` WHERE `fieldtype` IN (1,6)"));
-    $target = (int)($cnt['c'] ?? 0);
-    logLine("Detected $target croppers.");
+    [$cnt, $cntErr] = safeFetchAssoc($database->dblink, "SELECT COUNT(*) AS c FROM `$WDATA` WHERE `fieldtype` IN (1,6)");
+    if ($cntErr) {
+        logLine("Count query failed: " . $cntErr);
+        logLine("Aborted.");
+        endStreaming();
+        $notice = "DB error: " . $cntErr;
+    } else {
+        $target = (int)($cnt['c'] ?? 0);
+        logLine("Detected $target croppers.");
 
-    $offset = 0; $total = 0;
-    while (true) {
-        $sql = "SELECT id AS wref, x, y, fieldtype
-                FROM `$WDATA`
-                WHERE `fieldtype` IN (1,6)
-                LIMIT $offset, $batch";
-        $res = mysqli_query($database->dblink, $sql);
-        if (!$res) { logLine('Query failed: '.mysqli_error($database->dblink)); break; }
+        $offset = 0; $total = 0;
+        while (true) {
+            $sql = "SELECT id AS wref, x, y, fieldtype
+                    FROM `$WDATA`
+                    WHERE `fieldtype` IN (1,6)
+                    LIMIT $offset, $batch";
+            $res = mysqli_query($database->dblink, $sql);
+            if (!$res) { logLine('Query failed: '.mysqli_error($database->dblink)); break; }
 
-        $rows = [];
-        while ($r = mysqli_fetch_assoc($res)) { $rows[] = $r; }
-        if (!$rows) break;
+            $rows = [];
+            while ($r = mysqli_fetch_assoc($res)) { $rows[] = $r; }
+            if (!$rows) break;
 
-        $values = [];
-        foreach ($rows as $r) {
-            $x = (int)$r['x']; $y = (int)$r['y'];
-            $bonus = (int)$database->getBestOasisCropBonus($x, $y);
-            if (!in_array($bonus, [0,25,50,75,100,125,150], true)) {
-                $bonus = max(0, min(150, $bonus));
+            $values = [];
+            foreach ($rows as $r) {
+                $x = (int)$r['x']; $y = (int)$r['y'];
+                $bonus = (int)$database->getBestOasisCropBonus($x, $y);
+                if (!in_array($bonus, [0,25,50,75,100,125,150], true)) {
+                    $bonus = max(0, min(150, $bonus));
+                }
+                $values[] = sprintf("(%d,%d,%d,%d,%d)",
+                    (int)$r['wref'], $x, $y, (int)$r['fieldtype'], $bonus);
             }
-            $values[] = sprintf("(%d,%d,%d,%d,%d)",
-                (int)$r['wref'], $x, $y, (int)$r['fieldtype'], $bonus);
-        }
-        if ($values) {
-            $sql = "REPLACE INTO `$CROP_TABLE`
-                    (`wref`,`x`,`y`,`fieldtype`,`best_oasis_bonus`)
-                    VALUES ".implode(',', $values);
-            if (!mysqli_query($database->dblink, $sql)) {
-                logLine('Upsert failed: '.mysqli_error($database->dblink));
-                break;
+            if ($values) {
+                $sql = "REPLACE INTO `$CROP_TABLE`
+                        (`wref`,`x`,`y`,`fieldtype`,`best_oasis_bonus`)
+                        VALUES ".implode(',', $values);
+                if (!mysqli_query($database->dblink, $sql)) {
+                    logLine('Upsert failed: '.mysqli_error($database->dblink));
+                    break;
+                }
             }
+            $countThis = count($rows);
+            $total += $countThis;
+            $offset += $batch;
+            logLine("Processed $total / $target");
         }
-        $countThis = count($rows);
-        $total += $countThis;
-        $offset += $batch;
-        logLine("Processed $total / $target");
+
+        @mysqli_query($database->dblink, "ANALYZE TABLE `$CROP_TABLE`");
+        logLine("Analyze complete.");
+        logLine("Done.");
+        endStreaming();
+
+        // Refresh stats after build
+        $stats = getCounts($database->dblink, $WDATA, $CROP_TABLE);
     }
-
-    @mysqli_query($database->dblink, "ANALYZE TABLE `$CROP_TABLE`");
-    logLine("Analyze complete.");
-    logLine("Done.");
-    endStreaming();
-
-    // Refresh stats after build
-    $stats = getCounts($database->dblink, $WDATA, $CROP_TABLE);
 }
 ?>
             </div>

@@ -1,20 +1,5 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Project:       TravianZ                                                    ##
-##  Version:       22.06.2015                    			       ## 
-##  Filename       Alliance.php                                                ##
-##  Developed by:  Mr.php , Advocaite , brainiacX , yi12345 , Shadow , ronix   ## 
-##  Fixed by:      Shadow - STARVATION , HERO FIXED COMPL.  		       ##
-##  Fixed by:      InCube - double troops				       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2015. All rights reserved.                ##
-##  URLs:          http://travian.shadowss.ro                		       ##
-##  Source code:   https://github.com/Shadowss/TravianZ		               ## 
-##                                                                             ##
-#################################################################################
 
 use App\Entity\User;
 
@@ -301,6 +286,8 @@ class Alliance {
 		private function acceptInvite($get) {
 			global $form, $database, $session;
 
+            $accept_error = 0;
+            $max = 0;
 			foreach ($this->inviteArray as $invite) {
 			    if ($session->alliance == 0) {
 			        if ($invite['id'] == $get['d'] && $invite['uid'] == $session->uid) {
@@ -581,7 +568,7 @@ class Alliance {
 			if($this->userPermArray['opt6'] == 1){
 			    if(!empty($post['a_name']) || !empty($post['dipl'])){
 			        $aName = $post['a_name'];
-			        $aType = (int)intval($post['dipl']);
+                    $aType = (int) $post['dipl'];
 			        if($database->aExist($aName, "tag")) {
 			            $allianceID = $database->getAllianceID($aName);
 			            if($allianceID != $session->alliance) {

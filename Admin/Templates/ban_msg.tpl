@@ -1,15 +1,7 @@
-﻿<?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       ban_msq.tpl                                                 ##
-##  Developed by:  yi12345                                                     ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
+<?php
 $time = time();
-$ban = mysqli_query($GLOBALS["link"], "SELECT * FROM ".TB_PREFIX."banlist WHERE `uid` = '".(int) $session->uid."' and active = 1");
-$ban1 = mysqli_fetch_array($ban);
+$rows = $database->query_return("SELECT * FROM ".TB_PREFIX."banlist WHERE uid = ".(int)$session->uid." AND active = 1 LIMIT 1");
+$ban1 = isset($rows[0]) ? $rows[0] : [];
 ?>
 
 <p></br>

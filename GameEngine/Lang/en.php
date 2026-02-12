@@ -1,5 +1,10 @@
 <?php
 
+if(defined('TRAVIANZ_LANG_EN_LOADED')) {
+    return;
+}
+define('TRAVIANZ_LANG_EN_LOADED', true);
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                             TRAVIANZ                                             //
 //            Only for advanced users, do not edit if you dont know what are you doing!             //
@@ -194,7 +199,6 @@ define('WISHES_YOU', 'wishes you');
 define('X_MAS', 'Merry Christmas');
 define('NEW_YEAR', 'Happy New Year');
 define('EASTER', 'Happy Easter');
-define('PEACE', 'Peace');
 
 define('GOLD', 'Gold');
 define('GOLD_IMG', '<img src=\"/img/x.gif\" class=\"gold\" alt=\"'.GOLD.'\" title=\"'.GOLD.'\">');
@@ -626,8 +630,8 @@ define('MODERATOR', 'Moderator');
 define('ACTIVE', 'Active');
 define('ONLINE', 'Online');
 define('TUTORIAL', 'Tutorial');
-define('FAQ', 'Faq');
-define('SPIELREGELN', 'Game Rules');
+define('FAQ', 'FAQ');
+define('SPIELREGELN', 'Rules');
 define('PLAYER_STATISTICS', 'Player statistics');
 define('TOTAL_PLAYERS', PLAYERS.' in total');
 define('ACTIVE_PLAYERS', 'Active players');
@@ -645,8 +649,6 @@ define('BECOME_COMUNITY', 'Become part of our community now!');
 define('BECOME_COMUNITY2', 'Become a part of one of<br>the biggest gaming<br>communities in the<br>world.');
 define('NEWS', 'News');
 define('SCREENSHOTS', 'Screenshots');
-define('FAQ', 'FAQ');
-define('SPIELREGELN', 'Rules');
 define('AGB', 'Terms and Conditions');
 define('LEARN1', 'Upgrade your fields and mines to increase your resource production. You will need resources to construct buildings and train soldiers.');
 define('LEARN2', 'Construct and expand the buildings in your village. Buildings improve your overall infrastructure, increase your resource production and allow you to research, train and upgrade your troops.');
@@ -1031,7 +1033,7 @@ define('CRANNY', 'Cranny');
 define('CURRENT_HIDDEN_UNITS', 'Currently hidden units per resource:');
 define('HIDDEN_UNITS_LEVEL', 'Hidden units per resource at level');
 define('UNITS', 'units');
-define('CRANNY_DESC', 'The cranny hides some of your resources in case the village gets attacked. These resources cannot get stolen.<br>At level 1 the cranny can hold '.(100*((int)CRANNY_CAPACITY)).' of each resource. The capacity of Gallic crannies is 1.5 times larger.<br>If a Teutonic hero attacks a village, crannies can hide only 80% of their normal capacity');
+define('CRANNY_DESC', 'The cranny hides some of your resources in case the village gets attacked. These resources cannot get stolen.<br>At level 1 the cranny can hold ' . 100 * (int) CRANNY_CAPACITY . ' of each resource. The capacity of Gallic crannies is 1.5 times larger.<br>If a Teutonic hero attacks a village, crannies can hide only 80% of their normal capacity');
 
 define('TOWNHALL', 'Town Hall');
 define('CELEBRATIONS_COMMENCE_TOWNHALL', 'Celebrations can commence when the town hall is completed.');
@@ -1331,7 +1333,6 @@ define('PLAYER_ADMIN', 'This player is Admin');
 define('PLAYER_MH', 'This player is Multihunter');
 define('PLAYER_BANNED', 'This player is BANNED');
 define('PLAYER_VACATION', 'This player is on VACATION');
-define('BANNED', 'Banned');
 define('GENDER', 'Gender');
 define('GENDER0', 'n/a');
 define('MALE0', 'm');
@@ -1486,7 +1487,7 @@ To build a WW, you must own a plan yourself (you = the WW village owner) from lv
 
 The construction plans are conquerable immediately when they appear to the server. 
 
-There will be a countdown in game, showing the exact time of the release, '.(5 / SPEED).' days prior to the launch.');
+There will be a countdown in game, showing the exact time of the release, ' . 5 / SPEED . ' days prior to the launch.');
 
 //Building Plans
 define('WILL_SPAWN_IN', 'will spawn in');

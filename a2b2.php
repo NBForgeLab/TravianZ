@@ -2,15 +2,7 @@
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       a2b2.php                                                    ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
+
 
 use App\Utils\AccessLogger;
 
@@ -36,7 +28,6 @@ else $building->procBuild($_GET);
 	<meta http-equiv="expires" content="0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-full.js?0faab" type="text/javascript"></script>
 	<script src="unx.js?f4b7h" type="text/javascript"></script>
 	<script src="new.js?0faab" type="text/javascript"></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
@@ -52,10 +43,6 @@ else $building->procBuild($_GET);
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-
-		window.addEvent('domready', start);
-	</script>
 </head>
 <body class="v35 ie ie8">
 <div class="wrapper">
@@ -71,12 +58,12 @@ else $building->procBuild($_GET);
 <?php
 if ($amount == 199) {
 // Statement retrieve Gold Package A
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds = mysqli_fetch_array($MyGold);
-$goldnow = $golds['6'] + 60; 
-mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set gold = '".$goldnow."' where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds1 = mysqli_fetch_array($MyGold);
+$rows = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds = (is_array($rows) && count($rows)) ? $rows[0] : ['gold' => 0];
+$goldnow = (int)$golds['gold'] + 60; 
+$database->query("UPDATE ".TB_PREFIX."users SET gold = '".$goldnow."' WHERE id = ".(int)$session->uid);
+$rows2 = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds1 = (is_array($rows2) && count($rows2)) ? $rows2[0] : ['gold' => $goldnow];
 ?><p>Thank you for your purchase here at <?php echo SERVER_NAME ?></p><p>Below you see the entry record.  Out of it, you can observe your old as well as your new account balance.</p> 
 <table class="plusFunctions" cellpadding="1" cellspacing="1">
 		<thead>
@@ -91,7 +78,7 @@ $golds1 = mysqli_fetch_array($MyGold);
 		<tbody>
 			<tr>
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (old)</b></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds['gold']; ?></div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
                 <td class="act"><div style="text-align: center">&nbsp;</div></td>
@@ -107,7 +94,7 @@ $golds1 = mysqli_fetch_array($MyGold);
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (new)</b></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds1['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds1['gold']; ?></div></td>
                 <td class="act"><div style="text-align: center"><?php echo date('d.m.Y H:i:s'); ?></div></td>
 			</tr>
              </tbody></table>
@@ -115,16 +102,15 @@ $golds1 = mysqli_fetch_array($MyGold);
             <p>Please mail your username, package, order time and email used to <a href="mailto:<?php echo (defined('PAYPAL_EMAIL') ? PAYPAL_EMAIL : 'novgorodschi@icloud.com') ?>">our billing address</a>.</p>
           
 <?php
-
 }
 if ($amount == 499) {
 // Statement retrieve Gold Package B
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds = mysqli_fetch_array($MyGold);
-$goldnow = $golds['6'] + 120; 
-mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set gold = '".$goldnow."' where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds1 = mysqli_fetch_array($MyGold);
+$rows = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds = (is_array($rows) && count($rows)) ? $rows[0] : ['gold' => 0];
+$goldnow = (int)$golds['gold'] + 120; 
+$database->query("UPDATE ".TB_PREFIX."users SET gold = '".$goldnow."' WHERE id = ".(int)$session->uid);
+$rows2 = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds1 = (is_array($rows2) && count($rows2)) ? $rows2[0] : ['gold' => $goldnow];
 ?><p>Thank you for your purchase here at <?php echo SERVER_NAME ?>.</p><p>Below you see the entry record.  Out of it, you can observe your old as well as your new account balance.</p> 
 <table class="plusFunctions" cellpadding="1" cellspacing="1">
 		<thead>
@@ -139,7 +125,7 @@ $golds1 = mysqli_fetch_array($MyGold);
 		<tbody>
 			<tr>
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (old)</b></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds['gold']; ?></div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
                 <td class="act"><div style="text-align: center">&nbsp;</div></td>
@@ -155,23 +141,22 @@ $golds1 = mysqli_fetch_array($MyGold);
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (new)</b></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds1['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds1['gold']; ?></div></td>
                 <td class="act"><div style="text-align: center"><?php echo date('d.m.Y H:i:s'); ?></div></td>
 			</tr>
              </tbody></table>
                       <p>Please verify the information.<br />It will let us know if the data is incorrect.</p>
             <p>Please mail your username, package, order time and email used to <a href="mailto:<?php echo (defined('PAYPAL_EMAIL') ? PAYPAL_EMAIL : 'novgorodschi@icloud.com') ?>">our billing address</a>.</p>
 <?php
-
 }
 if ($amount == 999) {
 // Statement retrieve Gold Package C
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds = mysqli_fetch_array($MyGold);
-$goldnow = $golds['6'] + 360; 
-mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set gold = '".$goldnow."' where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds1 = mysqli_fetch_array($MyGold);
+$rows = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds = (is_array($rows) && count($rows)) ? $rows[0] : ['gold' => 0];
+$goldnow = (int)$golds['gold'] + 360; 
+$database->query("UPDATE ".TB_PREFIX."users SET gold = '".$goldnow."' WHERE id = ".(int)$session->uid);
+$rows2 = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds1 = (is_array($rows2) && count($rows2)) ? $rows2[0] : ['gold' => $goldnow];
 ?><p>Thank you for your purchase here at <?php echo SERVER_NAME ?>.</p><p>Below you see the entry record.  Out of it, you can observe your old as well as your new account balance.</p>
 <table class="plusFunctions" cellpadding="1" cellspacing="1">
 		<thead>
@@ -186,7 +171,7 @@ $golds1 = mysqli_fetch_array($MyGold);
 		<tbody>
 			<tr>
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (old)</b></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds['gold']; ?></div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
                 <td class="act"><div style="text-align: center">&nbsp;</div></td>
@@ -202,23 +187,22 @@ $golds1 = mysqli_fetch_array($MyGold);
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (new)</b></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds1['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds1['gold']; ?></div></td>
                 <td class="act"><div style="text-align: center"><?php echo date('d.m.Y H:i:s'); ?></div></td>
 			</tr>
              </tbody></table>
                        <p>Please verify the information.<br />It will let us know if the data is incorrect.</p>
             <p>Please mail your username, package, order time and email used to <a href="mailto:<?php echo (defined('PAYPAL_EMAIL') ? PAYPAL_EMAIL : 'novgorodschi@icloud.com') ?>">our billing address</a>.</p>
 <?php
-
 }
 if ($amount == 1999) {
 // Statement retrieve Gold Package D
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds = mysqli_fetch_array($MyGold);
-$goldnow = $golds['6'] + 1000; 
-mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set gold = '".$goldnow."' where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds1 = mysqli_fetch_array($MyGold);
+$rows = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds = (is_array($rows) && count($rows)) ? $rows[0] : ['gold' => 0];
+$goldnow = (int)$golds['gold'] + 1000; 
+$database->query("UPDATE ".TB_PREFIX."users SET gold = '".$goldnow."' WHERE id = ".(int)$session->uid);
+$rows2 = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds1 = (is_array($rows2) && count($rows2)) ? $rows2[0] : ['gold' => $goldnow];
 ?><p>Thank you for your purchase here at <?php echo SERVER_NAME ?>.</p><p>Below you see the entry record.  Out of it, you can observe your old as well as your new account balance.</p>
 <table class="plusFunctions" cellpadding="1" cellspacing="1">
 		<thead>
@@ -233,7 +217,7 @@ $golds1 = mysqli_fetch_array($MyGold);
 		<tbody>
 			<tr>
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (old)</b></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds['gold']; ?></div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
                 <td class="act"><div style="text-align: center">&nbsp;</div></td>
@@ -249,23 +233,22 @@ $golds1 = mysqli_fetch_array($MyGold);
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (new)</b></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds1['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds1['gold']; ?></div></td>
                 <td class="act"><div style="text-align: center"><?php echo date('d.m.Y H:i:s'); ?></div></td>
 			</tr>
              </tbody></table>
                         <p>Please verify the information.<br />It will let us know if the data is incorrect.</p>
             <p>Please mail your username, package, order time and email used to <a href="cata7007@gmail.com">our billing address</a>.</p>
 <?php
-
 }
 if ($amount == 4999) {
 // Statement retrieve Gold Package E
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds = mysqli_fetch_array($MyGold);
-$goldnow = $golds['6'] + 2000; 
-mysqli_query($database->dblink,"UPDATE ".TB_PREFIX."users set gold = '".$goldnow."' where `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-$golds1 = mysqli_fetch_array($MyGold);
+$rows = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds = (is_array($rows) && count($rows)) ? $rows[0] : ['gold' => 0];
+$goldnow = (int)$golds['gold'] + 2000; 
+$database->query("UPDATE ".TB_PREFIX."users SET gold = '".$goldnow."' WHERE id = ".(int)$session->uid);
+$rows2 = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+$golds1 = (is_array($rows2) && count($rows2)) ? $rows2[0] : ['gold' => $goldnow];
 ?><p>Thank you for your purchase here at <?php echo SERVER_NAME ?>.</p><p>Below you see the entry record.  Out of it, you can observe your old as well as your new account balance.</p>
 <table class="plusFunctions" cellpadding="1" cellspacing="1">
 		<thead>
@@ -280,7 +263,7 @@ $golds1 = mysqli_fetch_array($MyGold);
 		<tbody>
 			<tr>
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (old)</b></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds['gold']; ?></div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
                 <td class="act"><div style="text-align: center">&nbsp;</div></td>
@@ -296,7 +279,7 @@ $golds1 = mysqli_fetch_array($MyGold);
 				<td class="desc"><b>&nbsp;&nbsp;Account Balance (new)</b></td>
 				<td class="desc"><div style="text-align: center">&nbsp;</div></td>
 				<td class="desc"><div style="text-align: center"><b>&nbsp;</b></div></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds1['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds1['gold']; ?></div></td>
                 <td class="act"><div style="text-align: center"><?php echo date('d.m.Y H:i:s'); ?></div></td>
 			</tr>
              </tbody></table>
@@ -306,8 +289,8 @@ $golds1 = mysqli_fetch_array($MyGold);
 }
 				if ($amount == 0) 
 				{
-				$MyGold = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."users WHERE `id`='".$session->uid."'") or die(mysqli_error($database->dblink));
-				$golds = mysqli_fetch_array($MyGold);	
+				$rows = $database->query_return("SELECT gold FROM ".TB_PREFIX."users WHERE id = ".(int)$session->uid." LIMIT 1");
+				$golds = (is_array($rows) && count($rows)) ? $rows[0] : ['gold' => 0];	
 					 ?>
                 
 <p>Here you can see your current account statement.</p> 
@@ -325,14 +308,13 @@ $golds1 = mysqli_fetch_array($MyGold);
 				<td class="desc"><b>Current account balance</b></td>
 				<td class="desc"><div style="text-align: center">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
 				<td class="desc"><div style="text-align: center"><b>Account inquiry</b></div></td>
-				<td class="desc"><div style="text-align: center"><?php echo $golds['6']; ?></div></td>
+				<td class="desc"><div style="text-align: center"><?php echo $golds['gold']; ?></div></td>
                 <td class="act"><div style="text-align: center"><?php echo date('d.m.Y H:i:s'); ?></div></td>
              </tr>
              </tbody></table>
                        <p>Please verify the information.<br />It will let us know if the data is incorrect.</p>
             <p>Please mail your username, package, order time and email used to <a href="mailto:<?php echo (defined('PAYPAL_EMAIL') ? PAYPAL_EMAIL : 'novgorodschi@icloud.com') ?>">our billing address</a>.</p>
 				<?php
-				
 				}
 
 ?>

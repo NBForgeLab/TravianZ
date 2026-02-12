@@ -99,7 +99,7 @@ $query2 = "SELECT
 			ORDER BY FIND_IN_SET(".TB_PREFIX."wdata.id,'$maparray2')";
 
 //echo $query2;
-$result2 = mysqli_query($database->dblink,$query2) or die(mysqli_error($database->dblink));
+$result2 = $database->query_return($query2);
 
 $i=0;
 $i2=0;
@@ -108,7 +108,7 @@ $row = 0;
 $coorindex = 0;
 $map_js ='';
 
-while ($donnees = mysqli_fetch_assoc($result2)){
+foreach ($result2 as $donnees){
 
 $targetalliance=$donnees["aliance_id"];
 $friendarray=$database->getAllianceAlly($donnees["aliance_id"],1);

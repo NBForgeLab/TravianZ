@@ -1,4 +1,10 @@
 <?php
+    $vendorAutoload = __DIR__ . '/vendor/autoload.php';
+    if (file_exists($vendorAutoload)) {
+        require_once $vendorAutoload;
+        return;
+    }
+
     function autoloadClass($class) {
         // strip the App classname's namespace
         $clazz = str_replace(['App\\', '\\'], ['', '/'], $class);
@@ -16,7 +22,10 @@
         }
 
         if (!$class_found) {
-            throw new Exception('Unable to find class ' . $clazz . '.');
+            if (!defined('TRAVIANZ_AUTOLOAD_THROW_ON_MISS') || TRAVIANZ_AUTOLOAD_THROW_ON_MISS) {
+                throw new Exception('Unable to find class ' . $clazz . '.');
+            }
+            return;
         }
     }
 

@@ -1,14 +1,3 @@
-<?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       MaintenenceResetGold.tpl                                    ##
-##  Developed by:  aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
-?>
 <form action="../GameEngine/Admin/Mods/mainteneceResetGold.php" method="POST">
 	<input type="hidden" name="admid" id="admid" value="<?php echo $_SESSION['id']; ?>">
 	<table id="member" cellpadding="1" cellspacing="1" >

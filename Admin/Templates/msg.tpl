@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       msg.tpl                                                     ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 include_once("../GameEngine/Generator.php");
 include_once("../GameEngine/Technology.php");
 include_once("../GameEngine/Message.php");
@@ -15,9 +6,8 @@ include_once("../GameEngine/Message.php");
 if(isset($_GET['nid']) && is_numeric($_GET['nid'])) $msg = $database->getMessage($_GET['nid'], 3);
 else
 {
-    $sql = "SELECT * FROM " . TB_PREFIX . "mdata ORDER BY time DESC ";
-    $result = mysqli_query($GLOBALS["link"], $sql);
-    $allMessages = $database->mysqli_fetch_all($result);
+    $sql = "SELECT * FROM " . TB_PREFIX . "mdata ORDER BY time DESC";
+    $allMessages = $database->query_return($sql);
 }
 
 if(!empty($allMessages)){

@@ -10,7 +10,7 @@ include("menu.tpl");
 <th>Sender</th>
 <th class="sent"><a href="nachrichten.php?s=0&amp;t=3&amp;o=1">Sent</a></th>
 </tr></thead><tfoot><tr><th>
-		<input class="check" type="checkbox" id="s10" name="s10" onclick="Allmsg(this.form);" />
+		<input class="check" type="checkbox" id="s10" name="s10" />
 	</th>
 	<th colspan="2" class="buttons">
 		<button name="delmsg" value="delete" id="btn_delete" class="trav_buttons">Delete</button> <button name="start" value="Back" id="btn_back" class="trav_buttons">Back</button></th>

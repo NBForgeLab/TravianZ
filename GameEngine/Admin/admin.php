@@ -26,10 +26,9 @@ include("../GameEngine/Admin/database.php");
 <head>
   <link rel="shortcut icon" href="favicon.ico"/>
 	<title>Admin Control Panel - TravianZ</title>
-	<link rel=stylesheet type="text/css" href="../img/admin/admin.css">
-	<link rel=stylesheet type="text/css" href="../img/admin/acp.css">
-	<link rel=stylesheet type="text/css" href="../img/../img.css">
-		<script src="mt-full.js?423cb"  type="text/javascript"></script>
+	<link rel=stylesheet type="text/css" href="/img/admin/admin.css">
+	<link rel=stylesheet type="text/css" href="/img/admin/acp.css">
+	<link rel=stylesheet type="text/css" href="/img/img.css">
 	<script src="ajax.js" type="text/javascript"></script>
 
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8">

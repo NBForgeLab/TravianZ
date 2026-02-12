@@ -1,18 +1,9 @@
 <?php
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Mailer.php                                                  ##
-##  Developed by:  Dixie                                                       ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 class Mailer {
 
-	function sendActivate($email,$username,$pass,$act) {
+	function sendActivate($email,$username,$act) {
 
 		$subject = "Welcome to ".SERVER_NAME;
 
@@ -22,7 +13,6 @@ Thank you for your registration.
 
 ----------------------------
 Name: ".$username."
-Password: ".$pass."
 Activation code: ".$act."
 ----------------------------
 
@@ -34,14 +24,17 @@ Travian adminision";
 
 		$headers = "From: ".ADMIN_EMAIL."\n";
 
-		mail($email, $subject, $message, $headers);
+		$to      = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
+		if ($to === '') return false;
+		$subject = mb_encode_mimeheader($subject, 'UTF-8');
+		return mail($to, $subject, $message, $headers);
 	}
 
 	function sendInvite($email,$uid,$text) {
 
-		$subject = "".SERVER_NAME." registeration";
+		$subject = "".SERVER_NAME." registration";
 
-		$message = "Hello ".$username."
+		$message = "Hello,
 
 Try the new ".SERVER_NAME."!
 
@@ -56,7 +49,10 @@ Travian";
 
 		$headers = "From: ".ADMIN_EMAIL."\n";
 
-		mail($email, $subject, $message, $headers);
+		$to      = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
+		if ($to === '') return false;
+		$subject = mb_encode_mimeheader($subject, 'UTF-8');
+		return mail($to, $subject, $message, $headers);
 	}
 
 	function sendPassword($email,$uid,$username,$npw,$cpw) {
@@ -75,7 +71,7 @@ Password: ".$npw."
 Please click this link to activate your new password. The old password then
 becomes invalid:
 
-http://${_SERVER['HTTP_HOST']}/password.php?cpw=$cpw&npw=$uid
+http://{$_SERVER['HTTP_HOST']}/password.php?cpw={$cpw}&npw={$uid}
 
 If you want to change your new password, you can enter a new one in your profile
 on tab \"account\".
@@ -87,7 +83,39 @@ Travian
 
 		$headers = "From: ".ADMIN_EMAIL."\n";
 
-		mail($email, $subject, $message, $headers);
+		$to      = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
+		if ($to === '') return false;
+		$subject = mb_encode_mimeheader($subject, 'UTF-8');
+		return mail($to, $subject, $message, $headers);
+	}
+
+	function sendPasswordResetLink($email,$uid,$username,$token) {
+
+		$subject = "Password reset request";
+
+		$link = "http://{$_SERVER['HTTP_HOST']}/password.php?action=reset&uid={$uid}&token={$token}";
+		$message = "Hello {$username}
+
+You have requested to reset your password for ".SERVER_NAME.".
+
+----------------------------
+Name: {$username}
+----------------------------
+
+Click the following link to set a new password:
+{$link}
+
+If you did not request a password reset you may ignore this email.
+
+Travian
+";
+
+		$headers = "From: ".ADMIN_EMAIL."\n";
+
+		$to      = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : '';
+		if ($to === '') return false;
+		$subject = mb_encode_mimeheader($subject, 'UTF-8');
+		return mail($to, $subject, $message, $headers);
 	}
 
 };

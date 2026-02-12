@@ -1,4 +1,4 @@
-		<table id="member">
+<table id="member">
 			<thead>
 				<tr>
 					<th colspan="2">Additional Information &nbsp;&nbsp;&nbsp;<a href='admin.php?p=editAdditional&uid=<?php echo $id; ?>'><img src="../img/admin/edit.gif" title="Edit Player Additional Info"></a></th>

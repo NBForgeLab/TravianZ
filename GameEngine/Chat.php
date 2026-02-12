@@ -1,13 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       Chat.php                                                    ##
-##  Developed by:  TTMMTT                                                      ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
 if (!isset($SAJAX_INCLUDED)) {
 
@@ -101,12 +92,19 @@ if (!isset($SAJAX_INCLUDED)) {
 				$args = array();
 		}
 
-		if (! in_array($func_name, $sajax_export_list))
-			echo "-:$func_name not callable";
-		else {
-			echo "+:";
-			$result = call_user_func_array($func_name, $args);
-			echo "var res = " . trim(sajax_get_js_repr($result)) . "; res;";
+		header('Content-Type: application/json; charset=utf-8');
+
+		if (! in_array($func_name, $sajax_export_list)) {
+			http_response_code(400);
+			echo "-:" . json_encode("$func_name not callable", JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+		} else {
+			try {
+				$result = call_user_func_array($func_name, $args);
+				echo "+:" . json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+			} catch (Throwable $e) {
+				http_response_code(500);
+				echo "-:" . json_encode('Internal error', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+			}
 		}
 		exit;
 	}
@@ -242,11 +240,23 @@ if (!isset($SAJAX_INCLUDED)) {
 
 					if (status == "") {
 						// let's just assume this is a pre-response bailout and let it slide for now
-					} else if (status == "-")
-						alert("Error: " + data);
-					else {
+					} else if (status == "-") {
+						try {
+							alert("Error: " + JSON.parse(data));
+						} catch (e) {
+							alert("Error: " + data);
+						}
+					} else {
+						var parsed;
+						try {
+							parsed = JSON.parse(data);
+						} catch (e) {
+							sajax_debug("Invalid JSON response: " + data);
+							return;
+						}
+
 						if (target_id != "")
-							document.getElementById(target_id).innerHTML = eval(data);
+							document.getElementById(target_id).innerHTML = parsed;
 						else {
 							try {
 								var callback;
@@ -257,9 +267,9 @@ if (!isset($SAJAX_INCLUDED)) {
 								} else {
 									callback = args[args.length-1];
 								}
-								callback(eval(data), extra_data);
+								callback(parsed, extra_data);
 							} catch (e) {
-								sajax_debug("Caught error " + e + ": Could not eval " + data );
+								sajax_debug("Caught error " + e + ": Could not handle response " + data );
 							}
 						}
 					}
@@ -352,30 +362,52 @@ if (!isset($SAJAX_INCLUDED)) {
 	function add_data($data) {
 		global $session,$database;
 
-		//$data = explode("|",$data);
-		if (is_array($data)){$msg = htmlspecialchars($data[1]);}else{$msg = htmlspecialchars($data);};
-		$msg = $database->escape($msg);
-//		$msg=htmlspecialchars($msg);
-		$name = addslashes($session->username);
-
-		if ($msg != ""){
-		    $id_user = (int) $session->uid;
-			$alliance = $database->escape($session->alliance);
-			$now = time();
-				echo $q = "INSERT into ".TB_PREFIX."chat (id_user,name,alli,date,msg) values ($id_user,'$name','$alliance','$now','$msg')";
-				mysqli_query($database->dblink,$q);
+		$msg = is_array($data) ? (string) ($data[1] ?? '') : (string) $data;
+		$msg = trim($msg);
+		if ($msg === '') {
+			return;
 		}
+		$msg = htmlspecialchars($msg, ENT_QUOTES, 'UTF-8');
+		$name = (string) $session->username;
+
+	    $id_user = (int) $session->uid;
+		$alliance = (string) $session->alliance;
+		$now = time();
+
+		$stmt = mysqli_prepare(
+			$database->dblink,
+			"INSERT INTO " . TB_PREFIX . "chat (id_user, name, alli, date, msg) VALUES (?, ?, ?, ?, ?)"
+		);
+		if (!$stmt) {
+			return;
+		}
+		mysqli_stmt_bind_param($stmt, "issis", $id_user, $name, $alliance, $now, $msg);
+		mysqli_stmt_execute($stmt);
+		mysqli_stmt_close($stmt);
 	}
 
 	function get_data() {
 		global $session,$database;
 
-		$alliance = $database->escape($session->alliance);
-		$query = mysqli_query($database->dblink,"select id_user, name, date, msg from ".TB_PREFIX."chat where alli='$alliance' order by id desc limit 0,13");
-			while ($r = mysqli_fetch_array($query)) {
-			$dates = date("g:i",$r['date']);
-			$data .= "[{$dates}] <a href='spieler.php?uid={$r['id_user']}'>{$r['name']}</a>: {$r['msg']} <br>";
-			}
+		$alliance = (string) $session->alliance;
+		$data = '';
+
+		$stmt = mysqli_prepare(
+			$database->dblink,
+			"SELECT id_user, name, date, msg FROM " . TB_PREFIX . "chat WHERE alli = ? ORDER BY id DESC LIMIT 13"
+		);
+		if (!$stmt) {
+			return $data;
+		}
+		mysqli_stmt_bind_param($stmt, "s", $alliance);
+		mysqli_stmt_execute($stmt);
+		mysqli_stmt_bind_result($stmt, $idUser, $name, $date, $msg);
+		while (mysqli_stmt_fetch($stmt)) {
+			$dates = date("g:i", (int) $date);
+			$data .= "[{$dates}] <a href='spieler.php?uid=" . (int) $idUser . "'>" . htmlspecialchars((string) $name, ENT_QUOTES, 'UTF-8') . "</a>: " . htmlspecialchars((string) $msg, ENT_QUOTES, 'UTF-8') . " <br>";
+		}
+		mysqli_stmt_close($stmt);
+
 		return $data;
 	}
 

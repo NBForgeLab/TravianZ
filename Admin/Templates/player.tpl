@@ -1,14 +1,4 @@
 <?php
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       player.tpl                                                  ##
-##  Developed by:  Dzoki                                                       ##
-##  Reworked:      aggenkeech                                                  ##
-##  License:       TravianZ Project                                            ##
-##  Copyright:     TravianZ (c) 2010-2025. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 $id = $_GET['uid'];
 if(isset($id))
 {
@@ -49,8 +39,9 @@ if(isset($id))
 		</div>
 
 		<?php
-			$sql = "SELECT * FROM ".TB_PREFIX."banlist WHERE uid = ".(int) $id."";
-			$numbans = mysqli_num_rows(mysqli_query($GLOBALS["link"], $sql));
+			$sql = "SELECT * FROM ".TB_PREFIX."banlist WHERE uid = ".(int) $id;
+			$banRows = $database->query_return($sql);
+			$numbans = is_array($banRows) ? count($banRows) : 0;
 		?>
 		<table id="member" cellpadding="1" cellspacing="1">
 			<thead>
@@ -66,14 +57,13 @@ if(isset($id))
 			</thead>
 			<tbody>
 				<?php
-					$result = mysqli_query($GLOBALS["link"], $sql);
-					while($row = mysqli_fetch_assoc($result))
+					foreach ($banRows as $row)
 					{
 						echo '
 							<tr>
-								<td class="hab">'.date('d:m:Y H:i', $row['time']).'</td>
-								<td class="hab">'.date('d:m:Y H:i', $row['end']).'</td>
-								<td class="hab">'.round((($row['end'] - $row['time']) / 3600), 2).' minutes</td>
+								<td class="hab">'.date('d:m:Y H:i', (int)$row['time']).'</td>
+								<td class="hab">'.date('d:m:Y H:i', (int)$row['end']).'</td>
+								<td class="hab">'.round(((((int)$row['end'] - (int)$row['time']) / 3600)), 2).' minutes</td>
 								<td class="on">'.$row['reason'].'</td>
 							</tr>';
 					}

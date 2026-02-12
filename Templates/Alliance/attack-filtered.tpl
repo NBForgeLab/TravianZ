@@ -1,9 +1,9 @@
 <?php
 $filterType = $_GET['f'];
-if($filterType == 31) $sql = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."ndata WHERE ally = ".(int) $session->alliance." AND (ntype != 0 AND ntype < 4 OR ntype > 17 AND ntype != 20 AND ntype != 21 AND ntype != 22) ORDER BY time DESC LIMIT 20");
-elseif($filterType == 32) $sql = mysqli_query($database->dblink,"SELECT * FROM ".TB_PREFIX."ndata WHERE ally = ".(int) $session->alliance." AND (ntype < 1 OR ntype > 3 AND ntype < 8 OR ntype > 19) AND ntype != 22 ORDER BY time DESC LIMIT 20");
+if($filterType == 31) $rows = $database->query_return("SELECT * FROM ".TB_PREFIX."ndata WHERE ally = ".(int)$session->alliance." AND (ntype != 0 AND ntype < 4 OR ntype > 17 AND ntype != 20 AND ntype != 21 AND ntype != 22) ORDER BY time DESC LIMIT 20");
+elseif($filterType == 32) $rows = $database->query_return("SELECT * FROM ".TB_PREFIX."ndata WHERE ally = ".(int)$session->alliance." AND (ntype < 1 OR ntype > 3 AND ntype < 8 OR ntype > 19) AND ntype != 22 ORDER BY time DESC LIMIT 20");
     
-$query = mysqli_num_rows($sql);
+$query = is_array($rows) ? count($rows) : 0;
 $outputList = '';
 $name = 1;
 
@@ -11,7 +11,7 @@ if(!$query) $outputList .= "<td colspan=\"4\" class=\"none\">There are no report
 else
 {
 
-while($row = mysqli_fetch_array($sql)){ 
+foreach ($rows as $row){ 
 	$dataarray = explode(",",$row['data']);
     $id = $row["id"];
     $uid = $row["uid"];

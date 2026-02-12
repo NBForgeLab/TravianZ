@@ -1,5 +1,10 @@
 <?php
 
+if(defined('TRAVIANZ_LANG_IT_LOADED')) {
+    return;
+}
+define('TRAVIANZ_LANG_IT_LOADED', true);
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                             TRAVIANZ                                             //
 //            Only for advanced users, do not edit if you dont know what are you doing!             //

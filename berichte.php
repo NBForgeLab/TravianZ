@@ -2,23 +2,33 @@
 include_once("GameEngine/Generator.php");
 $start_timer = $generator->pageLoadTimeStart();
 
-#################################################################################
-##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
-## --------------------------------------------------------------------------- ##
-##  Filename       berichte.php                                                 ##
-##  Developed by:  Dzoki                                                       ##
-##  License:       TravianX Project                                            ##
-##  Copyright:     TravianX (c) 2010-2011. All rights reserved.                ##
-##                                                                             ##
-#################################################################################
 
+
+use App\Service\ReportService;
 use App\Utils\AccessLogger;
+use App\View\ViewRenderer;
 
 include_once("GameEngine/Village.php");
 AccessLogger::logRequest();
 
-$message->noticeType($_GET);
-$message->procNotice($_POST);
+$reportService = new ReportService($database, $session);
+$reportService->initializeLegacyMessage($message, $_GET);
+if (!$reportService->tryHandlePost($_POST)) {
+	$message->procNotice($_POST);
+}
+
+$view = ViewRenderer::fromProjectRoot();
+$viewContext = [
+	'session' => $session,
+	'database' => $database,
+	'message' => $message,
+	'generator' => $generator,
+	'village' => $village ?? null,
+	'building' => $building ?? null,
+	'phpSession' => $_SESSION,
+	'gameSession' => $session,
+	'messageObj' => $message,
+];
 if(isset($_GET['newdid'])) {
 	$_SESSION['wid'] = $_GET['newdid'];
     if ( isset( $_GET['t'] ) ) {
@@ -46,9 +56,8 @@ if(isset($_GET['newdid'])) {
 	<meta http-equiv="expires" content="0" />
 	<meta http-equiv="imagetoolbar" content="no" />
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-	<script src="mt-full.js?0faab" type="text/javascript"></script>
-	<script src="unx.js?f4b7h" type="text/javascript"></script>
-	<script src="new.js?0faab" type="text/javascript"></script>
+	<script src="unx.js?f4b7h" type="text/javascript" <?php echo trz_csp_nonce_attr(); ?>></script>
+	<script src="new.js?0faab" type="text/javascript" <?php echo trz_csp_nonce_attr(); ?>></script>
 	<link href="<?php echo GP_LOCATE; ?>lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
 	<link href="<?php echo GP_LOCATE; ?>lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
 	<?php
@@ -62,10 +71,6 @@ if(isset($_GET['newdid'])) {
 	<link href='".$session->gpack."lang/en/lang.css?e21d2' rel='stylesheet' type='text/css' />";
 	}
 	?>
-	<script type="text/javascript">
-
-		window.addEvent('domready', start);
-	</script>
 </head>
 
 
@@ -74,9 +79,9 @@ if(isset($_GET['newdid'])) {
 <img style="filter:chroma();" src="img/x.gif" id="msfilter" alt="" />
 <div id="dynamic_header">
 	</div>
-<?php include("Templates/header.tpl"); ?>
+<?php $view->displayPhp('Templates/header.tpl', $viewContext); ?>
 <div id="mid">
-<?php include("Templates/menu.tpl"); ?>
+<?php $view->displayPhp('Templates/menu.tpl', $viewContext); ?>
 		<div id="content"  class="reports">
 <h1>Reports</h1>
 <div id="textmenu">
@@ -110,21 +115,25 @@ if (isset($_GET['id']))
         $type = ($message->readingNotice['ntype'] == 9) ? $message->readingNotice['archive'] : $message->readingNotice['ntype'];
     }
     
-    if(isset($type)) include("Templates/Notice/".$message->getReportType($type).".tpl");
+    if(isset($type)) {
+        $view->displayPhp('Templates/Notice/' . ReportService::mapReportType((int) $type) . '.tpl', $viewContext);
+    }
     unset($type);
 }
-else include("Templates/Notice/all.tpl");
+else {
+    $view->displayPhp('Templates/Notice/all.tpl', $viewContext);
+}
 ?>
 </div>
 
 <br /><br /><br /><br /><div id="side_info">
 <?php
-include("Templates/multivillage.tpl");
-include("Templates/quest.tpl");
-include("Templates/news.tpl");
+$view->displayPhp('Templates/multivillage.tpl', $viewContext);
+$view->displayPhp('Templates/quest.tpl', $viewContext);
+$view->displayPhp('Templates/news.tpl', $viewContext);
 if(!NEW_FUNCTIONS_DISPLAY_LINKS) {
 	echo "<br><br><br><br>";
-	include("Templates/links.tpl");
+	$view->displayPhp('Templates/links.tpl', $viewContext);
 }
 ?>
 </div>
@@ -134,8 +143,8 @@ if(!NEW_FUNCTIONS_DISPLAY_LINKS) {
 <div class="clear"></div>
 
 <?php
-include("Templates/footer.tpl");
-include("Templates/res.tpl");
+$view->displayPhp('Templates/footer.tpl', $viewContext);
+$view->displayPhp('Templates/res.tpl', $viewContext);
 ?>
 <div id="stime">
 <div id="ltime">
