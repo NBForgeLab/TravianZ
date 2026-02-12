@@ -1,8 +1,8 @@
 <h5><img src="img/en/t2/newsbox1.gif" alt="newsbox 1"></h5>
 <?php
 
-$online = mysqli_query($database->dblink,"SELECT Count(*) as Total FROM " . TB_PREFIX . "users WHERE timestamp > ".(time() - (60*10))." AND tribe!=0 AND tribe!=4 AND tribe!=5");
-$top_rank = mysqli_fetch_assoc(mysqli_query($database->dblink,"SELECT username FROM ".TB_PREFIX."users WHERE ".(INCLUDE_ADMIN ? '' : 'access< 8 AND ')."id > 5 AND tribe<=3 AND tribe > 0 ORDER BY oldrank ASC Limit 1"));
+$rowsOnline = $database->query_return("SELECT Count(*) as Total FROM " . TB_PREFIX . "users WHERE timestamp > ".(int)(time() - (60*10))." AND tribe!=0 AND tribe!=4 AND tribe!=5");
+$rowsTop = $database->query_return("SELECT username FROM ".TB_PREFIX."users WHERE ".(INCLUDE_ADMIN ? '' : 'access< 8 AND ')."id > 5 AND tribe<=3 AND tribe > 0 ORDER BY oldrank ASC LIMIT 1");
 
 ?>
 
@@ -12,11 +12,7 @@ $top_rank = mysqli_fetch_assoc(mysqli_query($database->dblink,"SELECT username F
 <td align="left"><b>Online Users</b></td>
 <td>: <font color="Red"><b><?php
 
-	if (!empty($online)) {
-    	echo mysqli_fetch_assoc($online)['Total'];
-    } else {
-    	echo 0;
-    }
+	echo (int)($rowsOnline[0]['Total'] ?? 0);
 
 ?> users</b></font></td>
 </tr>
@@ -58,7 +54,7 @@ $top_rank = mysqli_fetch_assoc(mysqli_query($database->dblink,"SELECT username F
 </tr>
 <tr>
 <td><b>Best Player</b></td>
-<td><b>:  <font color="Red"><?php echo $top_rank['username'] ?></font></b></td>
+<td><b>:  <font color="Red"><?php echo ($rowsTop[0]['username'] ?? '') ?></font></b></td>
 </tr>
 </table>
 </div>
