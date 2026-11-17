@@ -2,6 +2,26 @@
 // install/ajax_croppers.php
 // Streams croppers build progress via SSE
 
+if (!headers_sent()) {
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+}
+
+if (file_exists(__DIR__ . '/../var/installed')) {
+    header('HTTP/1.1 403 Forbidden');
+    exit('Installation completed.');
+}
+
+if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
+}
+if (empty($_SESSION['tz_csrf'])) {
+    header('HTTP/1.1 403 Forbidden');
+    exit('Forbidden: active installer session required.');
+}
+@session_write_close();
+
 // --- Includes ---
 require_once __DIR__ . '/../GameEngine/config.php';
 require_once __DIR__ . '/../GameEngine/Database.php';

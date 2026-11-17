@@ -14,6 +14,27 @@
 #################################################################################
 
 
+        if (!headers_sent()) {
+            header('X-Frame-Options: SAMEORIGIN');
+            header('X-Content-Type-Options: nosniff');
+            header('Referrer-Policy: strict-origin-when-cross-origin');
+        }
+
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+
+        if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST' && empty($_POST)) {
+            header("Location: ../index.php?s=4");
+            exit;
+        }
+
+        // verify CSRF token
+        if (empty($_SESSION['tz_csrf']) || empty($_POST['csrf']) || !is_string($_POST['csrf']) || !hash_equals($_SESSION['tz_csrf'], (string) $_POST['csrf'])) {
+            header("Location: ../index.php?s=4&err=3");
+            exit;
+        }
+
         // verify form
         if (empty($_POST['mhpw']) || empty($_POST['spw'])) {
             header("Location: ../index.php?s=4&err=1");
@@ -195,5 +216,6 @@
 
         $gameinstall = 0;
 		header("Location: ../index.php?s=5");
+		exit;
 
 ?>

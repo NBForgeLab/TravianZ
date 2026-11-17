@@ -18,38 +18,70 @@
 // don't let SQL time out when 30-500 seconds (depending on php.ini) is not enough
 @set_time_limit(0);
 
+if (!headers_sent()) {
+	header('X-Frame-Options: SAMEORIGIN');
+	header('X-Content-Type-Options: nosniff');
+	header('Referrer-Policy: strict-origin-when-cross-origin');
+}
+
+if (session_status() === PHP_SESSION_NONE) {
+	@session_start();
+}
+
+function tz_install_fail($message) {
+	if (!headers_sent()) {
+		header('X-Frame-Options: SAMEORIGIN');
+		header('X-Content-Type-Options: nosniff');
+		header('Referrer-Policy: strict-origin-when-cross-origin');
+		header('Content-Type: text/html; charset=utf-8');
+	}
+	echo '<!DOCTYPE html><html lang="en" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
+	echo '<title>TravianZ Installation</title>';
+	echo '<style>body{margin:0;background:#f1f5f9;color:#0f172a;font:14px/1.6 system-ui,sans-serif}.box{max-width:760px;margin:0 auto;padding:40px 16px}';
+	echo '.alert{padding:16px;border:1px solid #f0b4b4;border-radius:12px;background:#fef2f2;color:#b91c1c}';
+	echo '.btn{display:inline-block;margin-top:14px;padding:10px 18px;border:1px solid #c3cddd;border-radius:10px;color:#0f172a;text-decoration:none}</style>';
+	echo '</head><body><div class="box">';
+	echo '<div class="alert"><strong>ERROR!</strong><br>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</div>';
+	echo '<a class="btn" href="index.php">Back to installer</a></div></body></html>';
+	exit;
+}
+
 if (file_exists("../var/installed")) {
-	die("<span class='f18 c5'>ERROR!</span><br />Installation appears to have been completed.<br />If this is an error remove /var/installed file in install directory.");
+	tz_install_fail('Installation appears to have been completed. If this is a mistake, remove the var/installed file.');
 }
 
 class Process {
 
 	function __construct() {
-		if(isset($_POST['subconst'])) {
+		if (strtoupper($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' || !empty($_POST)) {
+			if (empty($_SESSION['tz_csrf']) || empty($_POST['csrf']) || !is_string($_POST['csrf']) || !hash_equals($_SESSION['tz_csrf'], (string) $_POST['csrf'])) {
+				tz_install_fail('Invalid security token (CSRF). Please refresh and try again.');
+			}
+		}
+		if (isset($_POST['subconst'])) {
 			$this->constForm();
-		} else
-			if(isset($_POST['substruc'])) {
-				$this->createStruc();
-			} else
-				if(isset($_POST['subwdata'])) {
-					$this->createWdata();
-				} else
-					if(isset($_POST['subacc'])) {
-						$this->createAcc();
-						} else {
-							header("Location: index.php");
-						}
+		} elseif (isset($_POST['substruc'])) {
+			$this->createStruc();
+		} elseif (isset($_POST['subwdata'])) {
+			$this->createWdata();
+		} elseif (isset($_POST['subacc'])) {
+			header("Location: include/accounts.php");
+			exit;
+		} else {
+			header("Location: index.php");
+			exit;
+		}
 	}
 
 	private function constForm() {
 	    $configFile = "../GameEngine/config.php";
 		$configTemplateFile = "../GameEngine/Admin/Mods/constant_format.tpl";
 
-		$gameConfig = @fopen($configFile, 'w') or die("<br/><br/><br/>Can't create or update file: GameEngine\config.php");
+		$gameConfig = @fopen($configFile, 'w') or tz_install_fail('Cannot create or update file: GameEngine/config.php. Grant the web-server user write access to GameEngine/.');
 
 		// copy the contents of the config template file into a new location, used when editing
 		// game configuration from the in-game Admin (since the install folder would be deleted at that point)
-		$templateFile = @fopen($configTemplateFile, 'w') or die("<br/><br/><br/>Can't create or update file: GameEngine\Admin\Mods\constant_format.tpl");
+		$templateFile = @fopen($configTemplateFile, 'w') or tz_install_fail('Cannot create or update file: GameEngine/Admin/Mods/constant_format.tpl. Grant the web-server user write access to that folder.');
 		fclose($templateFile);
 
 		$text = file_get_contents("data/constant_format.tpl");
@@ -305,6 +337,7 @@ class Process {
 		}
 
 		fclose($gameConfig);
+		exit;
 	}
 
 	/**
