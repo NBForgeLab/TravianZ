@@ -2,7 +2,7 @@
 namespace Tests;
 
 require_once __DIR__ . '/../DatabaseTestCase.php';
-require_once __DIR__ . '/../../GameEngine/Market.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 class MarketTest extends DatabaseTestCase
 {

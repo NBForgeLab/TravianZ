@@ -8,7 +8,8 @@ class ArtifactsTest extends DatabaseTestCase
     public function testArtifactsInitialization()
     {
         // Use the global database initialized in DatabaseTestCase
-        $artifacts = new \Artifacts($GLOBALS['database']);
+        $config = $this->createMock(\App\GameEngine\IConfig::class);
+        $artifacts = new \Artifacts($GLOBALS['database'], $config);
         $this->assertInstanceOf(\Artifacts::class, $artifacts);
     }
 }

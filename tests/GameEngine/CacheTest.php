@@ -2,7 +2,7 @@
 use PHPUnit\Framework\TestCase;
 use App\GameEngine\Cache;
 
-require_once __DIR__ . '/../../GameEngine/Cache.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 class CacheTest extends TestCase
 {

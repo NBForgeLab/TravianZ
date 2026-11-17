@@ -41,6 +41,7 @@ namespace {
 
     // Include autoloader
     require_once __DIR__ . '/../vendor/autoload.php';
+    require_once __DIR__ . '/../autoloader.php';
 
     // Include language
     require_once __DIR__ . '/../GameEngine/Lang/en.php';
@@ -90,7 +91,10 @@ namespace {
     $GLOBALS['database'] = $database;
     $GLOBALS['db'] = $database;
     $GLOBALS['link'] = $database->return_link();
-
+    
+    // Debug
+    // var_dump("bootstrap.php running");
+    // var_dump($GLOBALS['database']);
     // Define missing constants for tests
     if (!defined('NATARS_SPAWN_TIME')) define('NATARS_SPAWN_TIME', 86400);
     if (!defined('NATARS_WW_BUILD_TIME')) define('NATARS_WW_BUILD_TIME', 3600);

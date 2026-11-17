@@ -17,11 +17,22 @@ class RankTest extends DatabaseTestCase
         if (!defined('SHOW_NATARS')) define('SHOW_NATARS', false);
         if (!defined('INCLUDE_ADMIN')) define('INCLUDE_ADMIN', false);
         if (!defined('TB_PREFIX')) define('TB_PREFIX', 'tz_');
+
+        // Clean up data
+        $GLOBALS['database']->query("DELETE FROM " . TB_PREFIX . "users");
+        $GLOBALS['database']->query("DELETE FROM " . TB_PREFIX . "vdata");
+        $GLOBALS['database']->query("DELETE FROM " . TB_PREFIX . "alidata");
     }
 
     public function testGetRankReturnsArray()
     {
-        $this->ranking = new \Ranking();
+        $this->ranking = new \Ranking($GLOBALS['database']);
         $this->assertIsArray($this->ranking->getRank());
+    }
+
+    public function testGetUserRankReturnsZeroIfNotFound()
+    {
+        $this->ranking = new \Ranking($GLOBALS['database']);
+        $this->assertEquals(0, $this->ranking->getUserRank(999));
     }
 }

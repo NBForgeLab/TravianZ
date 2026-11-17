@@ -2,7 +2,7 @@
 
 namespace App\GameEngine;
 
-class Config
+class Config implements IConfig
 {
     public function get(string $key)
     {

@@ -1,10 +1,7 @@
 <?php
 namespace Tests\GameEngine;
 
-require_once __DIR__ . '/../../autoloader.php';
 require_once __DIR__ . '/../DatabaseTestCase.php';
-require_once __DIR__ . '/../../GameEngine/Alliance.php';
-require_once __DIR__ . '/../../GameEngine/Database.php';
 
 use Tests\DatabaseTestCase;
 
@@ -16,6 +13,7 @@ class AllianceTest extends DatabaseTestCase
     {
         parent::setUp();
         if (!defined('ADMIN')) define('ADMIN', 2);
+        if (!defined('SERVER')) define('SERVER', 'http://localhost/');
         
         // Mock the Database class using the actual class name to allow method mocking
         $this->mockDatabase = $this->getMockBuilder(\MYSQLi_DB::class)
@@ -58,5 +56,58 @@ class AllianceTest extends DatabaseTestCase
 
         $this->alliance->procAlliForm(['s' => 1, 'o' => 2, 'a_user' => 2]);
         $this->assertGreaterThan(0, $this->mockForm->returnErrors());
+    }
+
+    public function testQuitAllyAsLeaderWithPromotion()
+    {
+        // Mock dependencies
+        $this->mockDatabase->method('isAllianceOwner')->willReturn(1);
+        $this->mockDatabase->method('countAllianceMembers')->willReturn(2);
+        
+        $member = ['id' => 2, 'username' => 'newLeader'];
+        $this->mockDatabase->method('getAllMember')->willReturn([
+            ['id' => 1, 'username' => 'leader'],
+            $member
+        ]);
+        
+        // Ensure promoteNewAllianceLeader is called
+        $this->mockDatabase->expects($this->once())
+            ->method('promoteNewAllianceLeader');
+            
+        // Mock user password verification
+        $this->mockSession->userinfo = ['password' => password_hash('password123', PASSWORD_DEFAULT)];
+        
+        // Use a output buffer to swallow header() calls
+        ob_start();
+        $this->alliance->procAlliForm([
+            's' => 1, 
+            'o' => 11, 
+            'pw' => 'password123',
+            'new_founder' => 2
+        ]);
+        $output = ob_get_clean();
+        
+        $this->assertEquals(0, $this->mockForm->returnErrors());
+    }
+
+    public function testKickAlliUserDeletesAllianceIfEmpty()
+    {
+        // Mock permissions
+        $this->alliance->userPermArray = ['opt2' => 1];
+        
+        // Mock other DB calls
+        $this->mockDatabase->method('isAllianceOwner')->willReturn(0);
+        $this->mockDatabase->method('getUserArray')->willReturn(['id' => 2, 'username' => 'target']);
+        $this->mockDatabase->method('getUserField')->willReturn(1);
+        
+        // Ensure deleteAlliance is called
+        $this->mockDatabase->expects($this->once())
+            ->method('deleteAlliance');
+            
+        ob_start();
+        $this->alliance->procAlliForm(['s' => 1, 'o' => 2, 'a_user' => 2]);
+        $output = ob_get_clean();
+        
+        $this->assertEquals(0, $this->mockForm->returnErrors());
     }
 }

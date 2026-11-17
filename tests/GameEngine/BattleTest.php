@@ -2,7 +2,6 @@
 use PHPUnit\Framework\TestCase;
 use App\Database\IDbConnection;
 
-require_once __DIR__ . '/../../GameEngine/Battle.php';
 require_once __DIR__ . '/../DatabaseTestCase.php';
 
 interface MockableDb extends IDbConnection {
@@ -54,6 +53,7 @@ class BattleTest extends \Tests\DatabaseTestCase
 
     public function testGetBattleHeroThrowsErrorWithoutDependencies() {
         // Clear globals to force failure
+        $originalDb = $GLOBALS['database'];
         unset($GLOBALS['database']);
         $battle = new Battle(null, null, null, null, null);
 
@@ -65,6 +65,8 @@ class BattleTest extends \Tests\DatabaseTestCase
         // When database is null, calling getHero on it will throw a TypeError (or Error)
         $this->expectException(Error::class);
         $method->invoke($battle, 1);
+        
+        $GLOBALS['database'] = $originalDb;
     }
 
     public function testUsesGlobalsIfArgumentsAreNull()
@@ -79,8 +81,6 @@ class BattleTest extends \Tests\DatabaseTestCase
         $property->setAccessible(true);
         
         $this->assertEquals($this->database, $property->getValue($battle));
-        
-        unset($GLOBALS['database']);
     }
 
     public function testComputeBreweryAttackBonusUsesInjectedDatabase()

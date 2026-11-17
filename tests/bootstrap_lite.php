@@ -3,6 +3,7 @@ namespace {
     if (!defined('USER')) define('USER', 2);
     // ... define other necessary constants
     require_once __DIR__ . '/../vendor/autoload.php';
+    require_once __DIR__ . '/../autoloader.php';
     require_once __DIR__ . '/../GameEngine/Database.php';
     
     // Mock database if needed
