@@ -1119,7 +1119,7 @@ class Units {
         // in GameEngine/Data/cp.php.
         // verificarea de puncte de cultura la intemeierea satului era ocolita
         // server-side (doar UI-ul o respecta). Importam exact tabloul folosit.
-        $cp = $GLOBALS['cp'.CP];
+        $cp = $this->unitData['cp'.CP];
 
         $mode = CP;
         $total = count($database->getProfileVillages($session->uid));
@@ -1165,7 +1165,7 @@ class Units {
                 // try to load a hero who's alive first
                 if (!$herodata && $hero['dead'] != 1) {
                     // this global value comes from GameEngine/Data/unitdata.php
-                    $herodata = $GLOBALS["h".$hero['unit']];
+                    $herodata = $this->unitData["h".$hero['unit']];
                     $singleHeroArrayID = $id;
                     break;
                 }
@@ -1176,7 +1176,7 @@ class Units {
             // as that would be the one most recently updated/used
             if (!$herodata) {
                 // this global value comes from GameEngine/Data/unitdata.php
-                $herodata = $GLOBALS["h".$heroarray[0]['unit']];
+                $herodata = $this->unitData["h".$heroarray[0]['unit']];
             }
 
             return $this->buildHeroStats($heroarray[$singleHeroArrayID], $herodata);
@@ -1184,7 +1184,7 @@ class Units {
             // build up a full array of heroes and their stats
             $heroes = [];
             foreach ($heroarray as $id => $hero) {
-                $herodata = $GLOBALS["h".$heroarray[$id]['unit']];
+                $herodata = $this->unitData["h".$heroarray[$id]['unit']];
                 $heroes[] = $this->buildHeroStats($heroarray[$id], $herodata);
             }
             
@@ -1372,13 +1372,13 @@ class Units {
 
         for($i = 0; $i <= 9; $i++){
             if(isset($unitArray[$i]) && $unitArray[$i] > 0){
-                $speeds[] = $GLOBALS['u'.($i + $start)]['speed'];
+                $speeds[] = $this->unitData['u'.($i + $start)]['speed'];
             }
         }
         
         if(isset($unitArray[10]) && $unitArray[10] > 0){
             $heroUnit = $database->getHeroField($owner, 'unit');
-            $speeds[]  = $GLOBALS['u'.$heroUnit]['speed'];
+            $speeds[]  = $this->unitData['u'.$heroUnit]['speed'];
         }
 
         // Defensive: the tribe-offset loop above only inspects the owner's

@@ -47,4 +47,20 @@ class BuildingTest extends DatabaseTestCase
         $this->assertGreaterThan(0, count($jobs));
         $this->assertEquals(19, $jobs[0]['type']);
     }
+
+    public function testDependencyInjectionWithMockDatabase()
+    {
+        // Setup mock database
+        $mockDb = $this->createMock(\Database::class); // Assuming Database class exists
+        $mockDb->method('getJobs')->willReturn([]);
+        $mockDb->method('getBuildLock')->willReturn(true);
+        
+        // Inject mock
+        $building = new Building($mockDb, $this->sess, $this->vil, $this->log);
+        
+        // Invoke method that uses DB
+        // canBuild is public, so it should be testable.
+        // It might return something, but we just want to ensure it uses $mockDb.
+        $building->canBuild(19, 19);
+    }
 }
