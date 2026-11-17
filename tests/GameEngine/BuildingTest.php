@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../GameEngine/Building.php';
+require_once __DIR__ . '/../../GameEngine/Database.php';
 use PHPUnit\Framework\TestCase;
 
 class BuildingTest extends TestCase
@@ -11,7 +12,11 @@ class BuildingTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->mockDb = $this->createMock(\MYSQLi_DB::class);
+        // Mock the concrete MYSQLi_DB class
+        $this->mockDb = $this->getMockBuilder(\MYSQLi_DB::class)
+                             ->disableOriginalConstructor()
+                             ->onlyMethods(['getJobs'])
+                             ->getMock();
         
         // Setup session
         $this->sess = new class {
@@ -35,10 +40,17 @@ class BuildingTest extends TestCase
 
     public function testDependencyInjectionWithMockDatabase()
     {
-        // Inject mock
+        // Configure the mock
+        $this->mockDb->expects($this->once())
+                     ->method('getJobs')
+                     ->with($this->equalTo(1))
+                     ->willReturn([]);
+        
+        // Inject mock - constructor calls loadBuilding() which calls getJobs()
+        // If it uses the injected mock, this will pass.
         $building = new Building($this->mockDb, $this->sess, $this->vil, $this->log);
         
-        // Ensure $building->db is our mock
-        $this->assertSame($this->mockDb, $building->db);
+        // If we reach here, the mock was used and the expectation was met
+        $this->assertTrue(true);
     }
 }

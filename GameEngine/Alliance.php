@@ -44,6 +44,20 @@ class Alliance {
     public $inviteArray = [];
     public $allianceArray = [];
     public $userPermArray = [];
+
+    private $database;
+    private $session;
+    private $form;
+    private $bid18;
+    private $building;
+
+    public function __construct($database = null, $session = null, $form = null, $bid18 = null, $building = null) {
+        $this->database = $database ?? $GLOBALS['database'] ?? null;
+        $this->session = $session ?? $GLOBALS['session'] ?? null;
+        $this->form = $form ?? $GLOBALS['form'] ?? null;
+        $this->bid18 = $bid18 ?? $GLOBALS['bid18'] ?? null;
+        $this->building = $building ?? $GLOBALS['building'] ?? null;
+    }
     
     public function procAlliance(array $get): void {
         global $session, $database;
