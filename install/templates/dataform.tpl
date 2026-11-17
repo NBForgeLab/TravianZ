@@ -19,21 +19,23 @@
 ## --------------------------------------------------------------------------- ##
 #################################################################################
 
-include_once('../GameEngine/config.php');
-if(isset($_GET['c']) && $_GET['c'] == 1) {
-    echo '<div class="card" style="border-color:#fecaca;background:#fef2f2;color:#991b1b;"><b>Error importing database. Check configuration.</b></div>';
+@include_once __DIR__ . '/../../GameEngine/config.php';
+if (isset($_GET['c']) && $_GET['c'] == 1) {
+    echo '<div class="tz-alert tz-alert-error"><strong>Error importing database.</strong> Check the configuration and database credentials.</div>';
 }
-if(isset($_GET['err']) && $_GET['err'] == 1) {
-    echo '<div class="card" style="border-color:#fecaca;background:#fef2f2;color:#991b1b;">Existing structure found! Please remove tables with prefix <b>'.TB_PREFIX.'</b> from database <b>'.SQL_DB.'</b>.</div>';
+if (isset($_GET['err']) && $_GET['err'] == 1) {
+    echo '<div class="tz-alert tz-alert-error">Existing structure found! Please remove tables with prefix <b>' . TB_PREFIX . '</b> from database <b>' . SQL_DB . '</b>.</div>';
 }
 ?>
 <form action="process.php" method="post" id="dataform">
+  <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['tz_csrf'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
   <input type="hidden" name="substruc" value="1">
   <div class="card">
-    <span class="f10 c">Create Database Structure</span>
-    <p style="color:#475569;"><b>Warning</b>: This can take some time. Please wait until the next page loads.</p>
-    <div style="text-align:center;margin-top:12px;">
-      <button class="btn" id="Submit" onclick="return proceed()">Create Database...</button>
+    <h3 class="tz-card-title">Create database structure</h3>
+    <div class="tz-alert tz-alert-warning">This imports the schema and can take a while. Do not close the page until the next step loads.</div>
+    <div class="tz-actions">
+      <span class="tz-actions-note">Step 3 of 6 &middot; uses the credentials from the previous step</span>
+      <button class="btn" id="Submit" type="submit" onclick="return proceed()" data-processing="Importing...">Create database</button>
     </div>
   </div>
 </form>
