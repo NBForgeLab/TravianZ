@@ -20,10 +20,12 @@
 #################################################################################
 
 if(isset($_GET['c']) && $_GET['c'] == 1) {
-echo "<div class=\"headline\"><span class=\"f10 c5\">Error creating constant.php check cmod.</span></div><br>";
+echo '<div class="tz-alert tz-alert-error"><strong>Error creating constant.php.</strong><br>Check that GameEngine/ and GameEngine/Admin/Mods/ are writable by the web server.</div>';
 }
 
-@session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
+}
 
 $envPath = dirname(__DIR__, 2). '/.env';
 $envDefaults = [];
@@ -83,14 +85,15 @@ $dbPrefix = $_SESSION['install_random_prefix'];
 ?>
 
 <form action="process.php" method="post" id="dataform">
+<input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['tz_csrf'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 <input type="hidden" name="subconst" value="1">
 
-<div class="card">
-  <span class="f10 c">SERVER RELATED</span>
-  <div class="grid-2" style="margin-top:8px;">
+<div class="card" data-group="server">
+  <h3 class="tz-card-title">SERVER RELATED</h3>
+  <div class="grid-2 tz-mt-2">
     <div><label>Server name</label><input class="input" name="servername" id="servername" value="TravianZ"></div>
     <div><label>Timezone</label>
-      <select class="input" name="tzone" onchange="refresh(this.value)">
+      <select class="input" name="tzone">
         <option value="1,Africa/Dakar" <?=$tz==1?'selected':''?>>Africa</option>
         <option value="2,America/New_York" <?=$tz==2?'selected':''?>>America</option>
         <option value="13,America/Sao_Paulo" <?=$tz==13?'selected':''?>>Brazil</option>
@@ -134,9 +137,9 @@ $dbPrefix = $_SESSION['install_random_prefix'];
 </div>
 
 <div class="grid-2">
-  <div class="card">
-    <span class="f10 c">NATARS & MAP</span>
-    <div style="margin-top:12px;display:grid;gap:10px;">
+  <div class="card" data-group="gameplay">
+    <h3 class="tz-card-title">NATARS & MAP</h3>
+    <div class="tz-field-group">
       <div><label>Natars Units Multiplier</label><input class="input" name="natars_units" id="natars_units" value="100"></div>
       <div><label>Natars Spawn (days)</label><input class="input" name="natars_spawn_time" id="natars_spawn_time" value="260"></div>
       <div><label>WW Spawn (days)</label><input class="input" name="natars_ww_spawn_time" id="natars_ww_spawn_time" value="260"></div>
@@ -145,9 +148,9 @@ $dbPrefix = $_SESSION['install_random_prefix'];
       <div><label>Nature regen</label><select class="input" name="nature_regtime"><option value="28800">8 hours</option><option value="36000">10 hours</option><option value="43200" selected>12 hours</option><option value="57600">16 hours</option><option value="72000">20 hours</option><option value="86400">24 hours</option></select></div>
     </div>
   </div>
-  <div class="card">
-    <span class="f10 c">OASIS & STORAGE</span>
-    <div style="margin-top:12px;display:grid;gap:10px;">
+  <div class="card" data-group="gameplay">
+    <h3 class="tz-card-title">OASIS & STORAGE</h3>
+    <div class="tz-field-group">
       <div><label>Wood multiplier</label><input class="input" name="oasis_wood_multiplier" id="oasis_wood_multiplier" value="40"></div>
       <div><label>Clay multiplier</label><input class="input" name="oasis_clay_multiplier" id="oasis_clay_multiplier" value="40"></div>
       <div><label>Iron multiplier</label><input class="input" name="oasis_iron_multiplier" id="oasis_iron_multiplier" value="40"></div>
@@ -159,23 +162,31 @@ $dbPrefix = $_SESSION['install_random_prefix'];
 </div>
 
 <div class="grid-2">
-  <div class="card">
-    <span class="f10 c">SQL RELATED</span>
-    <div style="margin-top:12px;display:grid;gap:10px;">
+  <div class="card" data-group="database">
+    <h3 class="tz-card-title">SQL RELATED</h3>
+    <div class="tz-field-group">
       <div><label>Hostname</label><input class="input" name="sserver" id="sserver" value="<?=htmlspecialchars($dbHost, ENT_QUOTES, 'UTF-8')?>"></div>
       <div><label>Port</label><input class="input" name="sport" id="sport" value="<?=htmlspecialchars($dbPort, ENT_QUOTES, 'UTF-8')?>"></div>
       <div><label>Username</label><input class="input" name="suser" id="suser" value="<?=htmlspecialchars($dbUser, ENT_QUOTES, 'UTF-8')?>"></div>
-      <div><label>Password</label><input class="input" type="password" name="spass" id="spass" value="<?=htmlspecialchars($dbPass, ENT_QUOTES, 'UTF-8')?>"></div>
+      <div><label for="spass">Password</label>
+        <div class="tz-password-wrap">
+          <input class="input" type="password" name="spass" id="spass" value="<?=htmlspecialchars($dbPass, ENT_QUOTES, 'UTF-8')?>" autocomplete="current-password">
+          <button type="button" class="tz-pw-toggle" aria-label="Show password" title="Show password" aria-pressed="false">
+            <svg class="tz-pw-icon tz-pw-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="tz-pw-icon tz-pw-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
       <div><label>DB name</label><input class="input" name="sdb" id="sdb" value="<?=htmlspecialchars($dbName, ENT_QUOTES, 'UTF-8')?>"></div>
       <div><label>Prefix</label><input class="input" name="prefix" id="prefix" value="<?=htmlspecialchars($dbPrefix, ENT_QUOTES, 'UTF-8')?>" size="7"></div>
       <div><label>Type</label><select class="input" name="connectt"><option value="0" disabled>MYSQL (deprecated, removed in PHP 7)</option><option value="1" selected>MYSQLi</option></select></div>
     </div>
   </div>
-  <div class="card">
-    <span class="f10 c">SERVER URLS</span>
-    <div style="margin-top:12px;display:grid;gap:10px;">
-      <div><label>Server</label><input class="input" name="server" id="homepage" value="http://<?=$_SERVER['HTTP_HOST']?>/"></div>
-      <div><label>Domain</label><input class="input" name="domain" id="homepage" value="http://<?=$_SERVER['HTTP_HOST']?>/"></div>
+  <div class="card" data-group="database">
+    <h3 class="tz-card-title">SERVER URLS</h3>
+    <div class="tz-field-group">
+      <div><label>Server</label><input class="input" name="server" id="server_url" value="http://<?=$_SERVER['HTTP_HOST']?>/"></div>
+      <div><label>Domain</label><input class="input" name="domain" id="domain_url" value="http://<?=$_SERVER['HTTP_HOST']?>/"></div>
       <div><label>Homepage</label><input class="input" name="homepage" id="homepage" value="http://<?=$_SERVER['HTTP_HOST']?>/"></div>
       <div><label>Medal Interval</label><select class="input" name="medalinterval"><option value="0">none</option><option value="(3600*24)">1 day</option><option value="(3600*24*2)">2 days</option><option value="(3600*24*3)">3 days</option><option value="(3600*24*4)">4 days</option><option value="(3600*24*5)">5 days</option><option value="(3600*24*6)">6 days</option><option value="(3600*24*7)" selected>7 days</option></select></div>
       <div><label>Great Workshop</label><select class="input" name="great_wks"><option value="true">true</option><option value="false" selected>false</option></select></div>
@@ -186,9 +197,9 @@ $dbPrefix = $_SESSION['install_random_prefix'];
   </div>
 </div>
 
-<div class="card">
-  <span class="f10 c">NEW MECHANICS AND FUNCTIONS</span>
-	<div class="grid-1" style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+<div class="card" data-group="features">
+  <h3 class="tz-card-title">NEW MECHANICS AND FUNCTIONS</h3>
+	<div class="tz-stack tz-mt-3">
 <?php
 $mechs = [
     'new_functions_oasis'                 => 'Display oasis in profile',
@@ -220,7 +231,7 @@ $mechs = [
 
 foreach($mechs as $k => $l){
     echo "
-    <div style='display:flex;flex-direction:column;gap:4px;'>
+    <div class='tz-field-col'>
         <label>$l</label>
         <select class='input' name='$k'>
             <option value='true'>true</option>
@@ -229,16 +240,16 @@ foreach($mechs as $k => $l){
     </div>";
 }
 ?>
-<div style='display:flex;flex-direction:column;gap:4px;margin-top:4px;'>
+<div class='tz-field-col tz-mt-1'>
     <label>Registration Bonus Gold &ndash; amount (used only when the toggle above is true)</label>
     <input class='input' type='number' min='0' step='1' name='new_function_registration_gold_value' id='new_function_registration_gold_value' value='200'>
 </div>                      
 </div>
 </div>
 
-<div class="card">
-  <span class="f10 c">PLUS GOLD PACKAGES</span>
-  <div class="grid-2" style="margin-top:12px;">
+<div class="card" data-group="advanced">
+  <h3 class="tz-card-title">PLUS GOLD PACKAGES</h3>
+  <div class="grid-2 tz-mt-3">
     <div><label>PayPal Email</label><input class="input" name="paypal-email" id="paypal-email" value="@"></div>
     <div><label>Currency</label><input class="input" name="paypal-currency" id="paypal-currency" value="EUR"></div>
     <div><label>Package A Gold</label><input class="input" name="plus-a-gold" id="plus-a-gold" value="60"></div>
@@ -257,17 +268,17 @@ foreach($mechs as $k => $l){
 </div>
 
 <div class="grid-2">
-  <div class="card">
-    <span class="f10 c">NEWSBOX OPTIONS</span>
-    <div style="margin-top:12px;display:grid;gap:10px;">
+  <div class="card" data-group="advanced">
+    <h3 class="tz-card-title">NEWSBOX OPTIONS</h3>
+    <div class="tz-field-group">
       <div><label>Newsbox 1</label><select class="input" name="box1"><option value="true">Enabled</option><option value="false" selected>Disabled</option></select></div>
       <div><label>Newsbox 2</label><select class="input" name="box2"><option value="true">Enabled</option><option value="false" selected>Disabled</option></select></div>
       <div><label>Newsbox 3</label><select class="input" name="box3"><option value="true">Enabled</option><option value="false" selected>Disabled</option></select></div>
     </div>
   </div>
-  <div class="card">
-    <span class="f10 c">LOG RELATED (You should disable them)</span>
-    <div style="margin-top:12px;display:grid;gap:10px;">
+  <div class="card" data-group="advanced">
+    <h3 class="tz-card-title">LOG RELATED (You should disable them)</h3>
+    <div class="tz-field-group">
       <div><label>Log Building</label><select class="input" name="log_build"><option value="true">Yes</option><option value="false" selected>No</option></select></div>
       <div><label>Log Tech</label><select class="input" name="log_tech"><option value="true">Yes</option><option value="false" selected>No</option></select></div>
       <div><label>Log Login</label><select class="input" name="log_login"><option value="true">Yes</option><option value="false" selected>No</option></select></div>
@@ -280,9 +291,9 @@ foreach($mechs as $k => $l){
   </div>
 </div>
 
-<div class="card">
-  <span class="f10 c">EXTRA OPTIONS</span>
-  <div class="grid-2" style="margin-top:12px;">
+<div class="card" data-group="features">
+  <h3 class="tz-card-title">EXTRA OPTIONS</h3>
+  <div class="grid-2 tz-mt-3">
     <div><label>Quest</label><select class="input" name="quest"><option value="true" selected>Yes</option><option value="false">No</option></select></div>
     <div><label>Quest Type</label><select class="input" name="qtype"><option value="25" selected>Official Travian</option><option value="37">TravianZ Extended</option></select></div>
     <div><label>Activate</label><select class="input" name="activate"><option value="true">Yes</option><option value="false" selected>No</option></select></div>
@@ -297,9 +308,9 @@ foreach($mechs as $k => $l){
   </div>
 </div>
 
-<div class="card">
-  <span class="f10 c">CRON &amp; AUTOMATION</span>
-  <div class="grid-2" style="margin-top:12px;">
+<div class="card" data-group="advanced">
+  <h3 class="tz-card-title">CRON &amp; AUTOMATION</h3>
+  <div class="grid-2 tz-mt-3">
     <div><label>Cron invocation length (sec)</label><select class="input" name="cron_loop">
         <option value="300" selected>300 - cron every 5 min (default)</option>
         <option value="600">600 - cron every 10 min</option>
@@ -346,15 +357,19 @@ foreach($mechs as $k => $l){
     <div><label>Hero resources per point (all four)</label><input class="input" name="hero_res_all" id="hero_res_all" value="3"></div>
     <div><label>Hero resources per point (single type)</label><input class="input" name="hero_res_one" id="hero_res_one" value="10"></div>
   </div>
-  <div class="f10" style="margin-top:8px;opacity:.75;">
+  <p class="tz-note tz-mt-2">
     Automation runs from cron.php instead of players' page loads. One cron invocation keeps working for
     "invocation length" seconds and processes a tick every "tick interval" seconds &mdash; so a host that only
     allows a cron every 5 minutes still gets processing every minute. 0 days disables a cleanup rule;
     reports archived by players are never deleted. All of these can be changed later from the admin panel.
-  </div>
+  </p>
 </div>
 
-<div style="text-align:center;margin:18px 0;">
-  <button class="btn" type="submit" name="Submit" id="Submit">Save Configuration →</button>
+<div class="tz-actions">
+  <span class="tz-actions-note">Every section is submitted together &middot; nothing is written until you save</span>
+  <div class="tz-actions-row">
+    <a class="btn tz-btn-secondary" href="?s=0">Back</a>
+    <button class="btn" type="submit" name="Submit" id="Submit">Save configuration</button>
+  </div>
 </div>
 </form>
