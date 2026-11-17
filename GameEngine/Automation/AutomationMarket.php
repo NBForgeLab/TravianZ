@@ -22,13 +22,13 @@ trait AutomationMarket {
 
 
     private function delTradeRoute() {
-        global $database;
+        $database = $this->database;
      
         $database->delTradeRoute();
     }
 
     private function TradeRoute() {
-        global $database;
+        $database = $this->database;
         $time = time();
         $q = "SELECT `from`, wood, clay, iron, crop, wid, deliveries, id FROM ".TB_PREFIX."route where timestamp < $time";
         $dataarray = $database->query_return($q);
@@ -57,7 +57,7 @@ trait AutomationMarket {
     }
 
     private function marketCompleteDeliveries($time) {
-        global $database, $units;
+        $database = $this->database; $units = $this->units;
 
         $q = "SELECT s.wood, s.clay, s.iron, s.crop, `to`, `from`, endtime, merchant, send, moveid FROM ".TB_PREFIX."movement m, ".TB_PREFIX."send s WHERE m.ref = s.id AND m.proc = 0 AND sort_type = 0 AND endtime < $time";
         $dataarray = $database->query_return($q);
@@ -111,7 +111,7 @@ trait AutomationMarket {
     }
 
     private function marketCompleteResends($time) {
-        global $database;
+        $database = $this->database;
 
         $q1 = "SELECT send, moveid, `to`, wood, clay, iron, crop, `from` FROM ".TB_PREFIX."movement WHERE proc = 0 and sort_type = 2 and endtime < $time";
         $dataarray1 = $database->query_return($q1);
@@ -135,7 +135,7 @@ trait AutomationMarket {
     }
 
     private function sendResource2($wtrans, $ctrans, $itrans, $crtrans, $from, $to, $tribe, $send) {
-        global $bid17, $bid28, $database, $units;
+        $bid17 = $this->bid17; $bid28 = $this->bid28; $database = $this->database; $units = $this->units;
 
         $availableWood = $database->getWoodAvailable($from);
         $availableClay = $database->getClayAvailable($from);

@@ -29,7 +29,7 @@ trait AutomationVillageUpkeep {
     }
 
     function recountPop($vid, $use_cache = true){
-        global $database;
+        $database = $this->database;
         
         $vid = (int) $vid;
         $fdata = $database->getResourceLevel($vid, $use_cache);
@@ -81,7 +81,7 @@ trait AutomationVillageUpkeep {
     }
 
     private function loyaltyRegeneration() {
-    	global $database;
+    	$database = $this->database;
         
         $array = [];
         $array = $database->getProfileVillages(0, 6);
@@ -135,7 +135,7 @@ trait AutomationVillageUpkeep {
     }
 
     public function getTypeLevel($tid, $vid) {
-        global $database;
+        $database = $this->database;
         
         $keyholder = [];
 
@@ -180,7 +180,7 @@ trait AutomationVillageUpkeep {
     // pruneResource() (vdata) and pruneOResource() (odata) share it. The $table
     // argument is an internal constant string, never user input.
     private function pruneResourceMinimums($table) {
-        global $database;
+        $database = $this->database;
 
         $database->query("UPDATE
                   ".TB_PREFIX.$table."
@@ -206,7 +206,7 @@ trait AutomationVillageUpkeep {
         }
     }
     private function pruneResource() {
-        global $database;
+        $database = $this->database;
 
         if(!ALLOW_BURST) {
             $this->pruneResourceMinimums('vdata');
@@ -227,7 +227,7 @@ trait AutomationVillageUpkeep {
     }
 
     private function culturePoints() {
-        global $database;
+        $database = $this->database;
 
         // FIX: punctele de cultura date de coifuri (Gladiator/Tribune/Consul =
         // 100/400/800 pe zi) nu erau adaugate nicaieri - HB_CP exista doar in
@@ -252,7 +252,7 @@ trait AutomationVillageUpkeep {
      * join-ul nu poate dubla castigul.
      */
     private function applyHeroCulturePoints() {
-        global $database, $heroItemCatalog;
+        $database = $this->database; global $heroItemCatalog;
 
         if (!class_exists('HeroBattleBonus') || !HeroBattleBonus::enabled()) {
             return;
@@ -336,7 +336,7 @@ trait AutomationVillageUpkeep {
     }
 
     private function updateORes($bountywid) {
-    	global $database;
+    	$database = $this->database;
     	
     	$oasisInfoArray = $database->getOasisV($bountywid);
     	$timepast = time() - $oasisInfoArray['lastupdated'];
@@ -349,7 +349,7 @@ trait AutomationVillageUpkeep {
     }
     
     private function updateRes($bountywid) {
-    	global $database, $technology;
+    	$database = $this->database; global $technology;
     	
     	//Get village infos
     	$villageInfoArray = $database->getVillage($bountywid);
@@ -422,7 +422,7 @@ trait AutomationVillageUpkeep {
     }
 
     private function updateStore() {
-        global $database, $bid10, $bid38, $bid11, $bid39;
+        $database = $this->database; global $bid10, $bid38, $bid11, $bid39;
 
         // HOTFIX deadlock (log 20-23 iul): rutina scria toata vdata intr-o SINGURA
         // tranzactie lunga, tinand lock-uri pe multe randuri => coliziuni fatale cu
@@ -502,7 +502,7 @@ trait AutomationVillageUpkeep {
     }
 
     private function regenerateOasisTroops() {
-        global $database;
+        $database = $this->database;
         
         $timeFinal = time() - NATURE_REGTIME;
         $q = "SELECT wref FROM " . TB_PREFIX . "odata where conqured = 0 and lastupdated2 < $timeFinal";

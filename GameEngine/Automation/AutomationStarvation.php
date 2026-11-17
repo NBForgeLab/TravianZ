@@ -28,7 +28,7 @@ trait AutomationStarvation {
      */
     
     private function starvation() {
-        global $database, $technology;
+        $database = $this->database; global $technology;
 
         // Starvation is disabled during the peace period (holidays).
         if(PEACE) return;
@@ -57,7 +57,7 @@ trait AutomationStarvation {
     **/
 	 
     private function starvationUpdateAllVillages() {
-        global $database;
+        $database = $this->database;
         $starvarray = $database->getProfileVillages(0, 7);
         foreach($starvarray as $starv) {
             $database->addStarvationData($starv['wref']);
@@ -69,7 +69,7 @@ trait AutomationStarvation {
     **/
 	
     private function starvationGetVillagesWithDeficit() {
-        global $database;
+        $database = $this->database;
         return $database->getStarvation();
     }
 
@@ -78,7 +78,7 @@ trait AutomationStarvation {
     **/
 	
     private function starvationPrepareCaches(array $vilIDs) {
-        global $database;
+        $database = $this->database;
         $database->getEnforceVillage($vilIDs, 0);
         $database->getOasisEnforce($vilIDs, 2);
         $database->getOasisEnforce($vilIDs, 3);
@@ -92,7 +92,7 @@ trait AutomationStarvation {
     **/
 	
     private function starvationProcessVillage($starv, $time) {
-        global $database, $technology;
+        $database = $this->database; global $technology;
 
         $unitarrays = $this->getAllUnits($starv['wref']);
         // Original upkeep formula
@@ -142,7 +142,7 @@ trait AutomationStarvation {
     **/
 	 
     private function starvationFindFirstTroopGroup($starv) {
-        global $database;
+        $database = $this->database;
         
         $enforceArrays = [
             $database->getOasisEnforce($starv['wref'], 2),
@@ -181,7 +181,7 @@ trait AutomationStarvation {
     **/
 	
     private function starvationKillTroops($starv, &$starvingTroops, $type, $subtype, $difcrop, $upkeep, $time) {
-        global $database;
+        $database = $this->database;
 
         $tribe = $database->getUserField(($type == 2) ? $starv['owner'] : $database->getVillageField($starvingTroops['from'], "owner"), "tribe", 0);
         $special = in_array($type, [1, 3]);
@@ -241,7 +241,7 @@ trait AutomationStarvation {
     **/
 	 
     private function starvationApplyDatabaseChanges($starv, $starvingTroops, $type, $killedUnits, $totalUnits, $totalKilledUnits, $newCrop, $upkeep, $time) {
-        global $database;
+        $database = $this->database;
 
         switch($type){
             case 0: // enforce
@@ -286,7 +286,7 @@ trait AutomationStarvation {
     **/
 	 
     private function starvationCheckReset($starv, $upkeep) {
-        global $database;
+        $database = $this->database;
         $crop = $database->getCropProdstarv($starv['wref'], false);
         if ($crop > $upkeep) {
             $database->setVillageFields($starv['wref'], ['starv', 'starvupdate'], [0, 0]);

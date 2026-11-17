@@ -24,7 +24,7 @@ trait AutomationNatarsWWBuild
      */
     private function buildNatarsWonder()
     {
-        global $database, $bid40;
+        $database = $this->database; global $bid40;
 
         $delay = defined('NATARS_WW_START_DELAY') ? (int) NATARS_WW_START_DELAY : 10;
 

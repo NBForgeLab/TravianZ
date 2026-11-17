@@ -22,7 +22,7 @@ trait AutomationBuildQueue {
 
 
     private function buildComplete() {
-        global $database;
+        $database = $this->database;
 
         $time = time();
         // IDs of villages that were affected by this building completion update,
@@ -129,7 +129,7 @@ trait AutomationBuildQueue {
      * and record the last upgrade time.
      */
     private function completeWorldWonder($indi) {
-        global $database;
+        $database = $this->database;
 
         // Natarii NU se pot ataca pe ei insisi.
         //
@@ -155,7 +155,7 @@ trait AutomationBuildQueue {
     }
 
     private function researchComplete() {
-        global $database;
+        $database = $this->database;
 
         $time = time();
         $deleteIDs = [];
@@ -203,7 +203,7 @@ trait AutomationBuildQueue {
     }
 
     private function demolitionComplete() {
-        global $database;
+        $database = $this->database;
 
         $varray = $database->getDemolition();
         foreach($varray as $vil) {
@@ -244,7 +244,7 @@ trait AutomationBuildQueue {
     }
 
     private function MasterBuilder() {
-        global $database;
+        $database = $this->database;
         
         $q = "SELECT id, wid, type, level, field, timestamp FROM ".TB_PREFIX."bdata WHERE master = 1";
         $array = $database->query_return($q);

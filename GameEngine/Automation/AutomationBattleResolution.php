@@ -192,7 +192,7 @@ trait AutomationBattleResolution {
 
     private function applyCatapults($data, $battlepart, $catp_pic, $can_destroy, $isoasis, $targettribe, $info_cat)
     {
-        global $database;
+        $database = $this->database;
 
         // village_destroyed stays unset in the pop<=0 path of the original;
         // downstream treats unset as 0, so initialising to 0 here is equivalent.
@@ -354,7 +354,7 @@ trait AutomationBattleResolution {
     }
 
     private function claimMovementRecord($moveid) {
-        global $database;
+        $database = $this->database;
 
         $moveid = (int)$moveid;
         if ($moveid <= 0) {
@@ -379,7 +379,7 @@ trait AutomationBattleResolution {
 	*/
 	
 	private function claimReturnMovementRecord($moveid, $ref) {
-    global $database;
+    $database = $this->database;
 
     $moveid = (int)$moveid;
     $ref    = (int)$ref;
@@ -517,7 +517,7 @@ trait AutomationBattleResolution {
         bool  $cannotsend,
         int   $attackType
     ): void {
-        global $database;
+        $database = $this->database;
 
         if (!($evasion == 1 && $maxevasion > 0 && $gold > 1 && !$cannotsend && $attackType > 2)) {
             return;
@@ -593,7 +593,7 @@ trait AutomationBattleResolution {
         int   $village_destroyed,
         int   $chief_pic
     ): array {
-        global $database, $units;
+        $database = $this->database; global $units;
 
         $info_chief      = ',';
         $chiefing_village = 0;
@@ -829,7 +829,7 @@ trait AutomationBattleResolution {
      * @return array Rows of pending/completed attacks.
      */
     private function fetchCompletedAttacks($time) {
-        global $database;
+        $database = $this->database;
 
         $time = (int) $time;
         $q = "
@@ -861,7 +861,7 @@ trait AutomationBattleResolution {
      * @param array $dataarray Completed attacks (each with 'from' and 'to').
      */
     private function preloadBattleData(array $dataarray) {
-        global $database;
+        $database = $this->database;
 
         $vilIDs = [];
         foreach ($dataarray as $data) {
@@ -879,7 +879,7 @@ trait AutomationBattleResolution {
     }
 
     private function buildScoutReport($data, $spy_pic, $isoasis, $targettribe, $crannySpy, $totwood, $totclay, $totiron, $totcrop) {
-        global $database;
+        $database = $this->database;
         $info_spy = "";
                         if ($data['spy'] == 1){
                             $info_spy = "".$spy_pic.",<div class=\"res\"><img class=\"r1\" src=\"img/x.gif\" alt=\"".LUMBER."\" title=\"".LUMBER."\" />".round($totwood)." |
@@ -928,7 +928,7 @@ trait AutomationBattleResolution {
      * @return string HTML fragment for the trap report line; empty if no prisoners freed.
      */
     private function handlePrisoners($data, $from, $to, $ownally, $type, $totalsend_att, $totaldead_att, $totaltraped_att) {
-        global $database, $units, $bid19, $u99;
+        $database = $this->database; global $units, $bid19, $u99;
 
         if ($type != 3 || $totalsend_att - ($totaldead_att + $totaltraped_att) <= 0) {
             return '';
@@ -1228,7 +1228,7 @@ trait AutomationBattleResolution {
      * A missing owner/user is inconsistent data, not evidence of tribe 4.
      */
     private function resolveReinforcementBattleTribe($enforce) {
-        global $database;
+        $database = $this->database;
 
         if (!isset($enforce['from'])) return null;
         if ($enforce['from'] === 0 || $enforce['from'] === '0') return 4;
@@ -1263,7 +1263,7 @@ trait AutomationBattleResolution {
      * @return array Map of dead own troops: keys are the unit index (int) plus 'hero'.
      */
     private function applyOwnDefenceCasualties($data, $targettribe, $battlepart) {
-        global $database;
+        $database = $this->database;
 		
         // FIX: final guard against invalid SQL column names. The main loop
         // validates this BEFORE combat; this guard also protects future callers.
@@ -1358,7 +1358,7 @@ trait AutomationBattleResolution {
      * @return array Tribe-presence flags among the reinforcements: keys rom,ger,gal,nat,natar (0/1).
      */
     private function applyReinforcementCasualties($data, $battlepart, $from, $to, $ownally, $AttackArrivalTime, $scout, array &$alldead, array &$DefenderHeroesDeadArray) {
-        global $database;
+        $database = $this->database;
 
         $rom = $ger = $gal = $nat = $natar = $hun = $egy = $spa = $vik = 0;
 
@@ -1493,7 +1493,7 @@ trait AutomationBattleResolution {
      *               totalsend_alldef, defenderHero.
      */
     private function collectReinforcementReport($data, $targettribe, $Defender) {
-        global $database;
+        $database = $this->database;
 
         $DefenderEnf = [];
         $DefenderHeroesTotArray = [];
@@ -1571,7 +1571,7 @@ trait AutomationBattleResolution {
      * @return array{varray:array,varray1:array,defpop:int,attpop:int}
      */
     private function calculatePopulations($to, $from, $isoasis, $defpop, $attpop) {
-        global $database;
+        $database = $this->database;
 
         $varray = $database->getProfileVillages($to['owner'], 0, false);
 
@@ -1614,7 +1614,7 @@ trait AutomationBattleResolution {
      * }
      */
     private function calculateTrappedUnits($data, $Defender, $Attacker, $NatarCapital, $scout, $start, $end) {
-        global $database;
+        $database = $this->database;
 
         $traped = [];
         for($i = 1; $i <= 11; $i++) $traped[$i] = 0;
@@ -1708,7 +1708,7 @@ trait AutomationBattleResolution {
      * @return array { battlepart: array (possibly recalculated), info_ram: string }
      */
     private function applyRamDamage($data, $walllevel, $wallid, $ram_pic, $battlepart, array $ctx) {
-        global $database, $battle;
+        $database = $this->database; global $battle;
 
         $info_ram = "".$ram_pic.",".rc_tok('RC_NO_WALL');
 
@@ -1811,7 +1811,7 @@ trait AutomationBattleResolution {
      * @return array { Defender, enforDefender, enforcementarray }
      */
     private function buildDefenderUnits($wref) {
-        global $database;
+        $database = $this->database;
 
         $enforDefender = [];
         $Defender = $database->getUnit($wref, false);
@@ -1860,7 +1860,7 @@ trait AutomationBattleResolution {
      *                NatarCapital, AttackerID, owntribe, ownally, from, fromF}
      */
     private function resolveAttackContext($data) {
-        global $database;
+        $database = $this->database;
 
         $owner = $this->getCachedUser($database->getVillageField($data['from'], "owner"), 1);
 
@@ -1892,7 +1892,7 @@ trait AutomationBattleResolution {
      * @return array Target + battle-environment context.
      */
     private function resolveVillageTarget($data, $dataarray, $data_num, $owntribe) {
-        global $database, $units;
+        $database = $this->database; global $units;
 
         $DefenderUserData = $this->getCachedUser($database->getVillageField($data['to'],"owner"),1);
         // BUG FIXED: when the target village was razed mid-batch (issue #298 scenario),
@@ -2002,7 +2002,7 @@ trait AutomationBattleResolution {
      * @return array Target + battle-environment context.
      */
     private function resolveOasisTarget($data, $dataarray, $data_num, $owntribe) {
-        global $database;
+        $database = $this->database;
 
         $DefenderUserData = $this->getCachedUser($database->getOasisField($data['to'], "owner"),1);
         $DefenderID = $DefenderUserData["id"];
@@ -2071,7 +2071,7 @@ trait AutomationBattleResolution {
         &$heroxp, &$defheroxp,
         array $defensePointShares = []
     ) {
-        global $database;
+        $database = $this->database;
 
         $totaldead_def = 0;
         $totalpoint_att = 0;
@@ -2244,7 +2244,7 @@ trait AutomationBattleResolution {
      * @return array ['totclay','totiron','totwood','totcrop','avclay','aviron','avwood','avcrop'].
      */
     private function resolveResourcesAfterBattle($data, $isoasis, $conqureby, $owntribe, $targettribe, &$crannySpy) {
-        global $database, $bid23;
+        $database = $this->database; global $bid23;
 
         if ($isoasis == 0){
             // get total cranny value:
@@ -2343,7 +2343,7 @@ trait AutomationBattleResolution {
      * @return void
      */
     private function handleHeroPostBattle($data, $from, $to, $dead11, $traped11, $heroxp, $hero_pic, $isoasis, $type, $targettribe, $info_cat, &$info_hero, &$can_destroy, &$village_destroyed) {
-        global $database;
+        $database = $this->database;
 
         if(($data['t11'] - $dead11 - $traped11) > 0){ //hero
             if ($heroxp == 0) {
@@ -2428,7 +2428,7 @@ trait AutomationBattleResolution {
      * @return void
      */
     private function sendBattleNotifications($scout, $battlepart, $from, $to, $targetally, $data2, $AttackArrivalTime, $unitsdead_att, $unitssend_att, $defspy, $info_troop, $totalsend_alldef, $totalsend_att, $totaldead_att, $totaltraped_att, $totaldead_alldef) {
-        global $database;
+        $database = $this->database;
 
         //Undetected and detected in here.
         if(!empty($scout)){
@@ -2492,7 +2492,7 @@ trait AutomationBattleResolution {
      * @return void
      */
     private function finalizeReturnOrDeath($data, $from, $to, $owntribe, $type, $isoasis, $conqureby, $AttackArrivalTime, $targetally, $ownally, $data2, $data_fail, $chiefing_village, $DefenderWref, $AttackerWref, $steal, $dead, $traped, $troopsdead, $totalsend_att, $totaldead_att, $totaltraped_att, &$totalstolentaken) {
-        global $database, $units;
+        $database = $this->database; global $units;
 
         // Spital: o parte din trupele proprii moarte IN ATAC devin ranite acasa.
         // $dead e indexat 1..11 pe sloturile tribului; doar unitatile de lupta (1-8).
@@ -2588,7 +2588,7 @@ trait AutomationBattleResolution {
      * @return void
      */
     private function handleVillageDestruction($village_destroyed, $can_destroy, $data, $to, $varray) {
-        global $database;
+        $database = $this->database;
 
         if (!($village_destroyed == 1 && $can_destroy == 1)) {
             return;
@@ -3245,7 +3245,7 @@ trait AutomationBattleResolution {
     }
 
     function getAllUnits($base, $use_cache = true) {
-        global $database;
+        $database = $this->database;
 
         $ownunit = $database->getUnit($base, $use_cache);
 		$enforcementarray = $database->getEnforceVillage($base, 0);

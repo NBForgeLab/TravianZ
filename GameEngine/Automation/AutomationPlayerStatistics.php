@@ -27,7 +27,7 @@ trait AutomationPlayerStatistics
      */
     private function recordPlayerStatistics()
     {
-        global $database;
+        $database = $this->database;
 
         if (!defined('NEW_FUNCTIONS_PLUS_STATISTICS') || !NEW_FUNCTIONS_PLUS_STATISTICS) {
             return false;
@@ -71,7 +71,7 @@ trait AutomationPlayerStatistics
      */
     private function writePlayerStatisticsSnapshot($now)
     {
-        global $database;
+        $database = $this->database;
 
         $table = TB_PREFIX . 'player_statistics_history';
 
@@ -160,7 +160,7 @@ trait AutomationPlayerStatistics
      */
     private function addTroopTotals(array &$players)
     {
-        global $database;
+        $database = $this->database;
 
         // consumul fiecarei unitati, din datele de joc
         $upkeep = array();
@@ -223,7 +223,7 @@ trait AutomationPlayerStatistics
     /** Sterge instantaneele mai vechi decat retentia configurata. */
     private function trimPlayerStatistics($now)
     {
-        global $database;
+        $database = $this->database;
 
         $days = defined('PLUS_STATS_KEEP_DAYS') ? (int) PLUS_STATS_KEEP_DAYS : 0;
 

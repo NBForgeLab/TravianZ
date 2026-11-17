@@ -39,7 +39,7 @@ trait AutomationCleanup {
      */
     private function cleanupOldData() {
 
-        global $database;
+        $database = $this->database;
 
         $interval = defined('CLEANUP_INTERVAL') ? (int) CLEANUP_INTERVAL : 3600;
 

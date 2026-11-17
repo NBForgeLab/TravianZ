@@ -22,7 +22,7 @@ trait AutomationNatarsWW {
 
 
     private function startNatarAttack($level, $vid, $time) {
-        global $database;
+        $database = $this->database;
 
         // bad, but should work :D
         // I took the data from my first ww (first .org world)
@@ -56,7 +56,7 @@ trait AutomationNatarsWW {
      * catapult target slot (0 for the first wave, 40 for the second).
      */
     private function launchNatarWave($source, $vid, $unitRow, $ctar1, $time, $arrival) {
-        global $database;
+        $database = $this->database;
 
         $ref = $database->addAttack($source, 0, $unitRow[0], $unitRow[1], 0, $unitRow[2], $unitRow[3], $unitRow[4], $unitRow[5], 0, 0, 0, 3, $ctar1, 0, 0, 0, 20, 20, 0, 20, 20, 20, 20);
         $database->addMovement(3, $source, $vid, $ref, $time, $arrival);
@@ -93,7 +93,7 @@ trait AutomationNatarsWW {
     }
 
     private function checkWWAttacks() {
-        global $database;
+        $database = $this->database;
         
         $query = mysqli_query($database->dblink,'SELECT vid, attack_time FROM `' . TB_PREFIX . 'ww_attacks` WHERE `attack_time` <= ' . time());
         while ($row = mysqli_fetch_assoc($query))
@@ -109,7 +109,7 @@ trait AutomationNatarsWW {
      */
     
     private function spawnNatars(){
-    	global $database;
+    	$database = $this->database;
     	
     	//Check if Natars account is already created and if the time
     	//is come and we have to create Natars and spawn their artifacts
@@ -128,7 +128,7 @@ trait AutomationNatarsWW {
      */
     
     private function spawnWWVillages(){
-    	global $database;
+    	$database = $this->database;
     	
     	//Check if Natars account has already been created, if WW villages have already been spawned
     	//and if it's the time to spawn them or not
@@ -147,7 +147,7 @@ trait AutomationNatarsWW {
      */
     
     private function spawnWWBuildingPlans(){
-    	global $database;
+    	$database = $this->database;
     	
     	//Check if Natars account is already spawned, if WW building plans have already been spawned
     	//and if it's the time to spawn them or not
@@ -166,7 +166,7 @@ trait AutomationNatarsWW {
      */
     
     private function activateArtifacts() {
-        global $database;
+        $database = $this->database;
         
         //Check if there's at least one artifact, if not, return
         if(!$database->areArtifactsSpawned()) return;
@@ -176,7 +176,7 @@ trait AutomationNatarsWW {
     }
 
     private function artefactOfTheFool() {
-        global $database;
+        $database = $this->database;
         
         $time = time();
         $q = "SELECT id, size FROM " . TB_PREFIX . "artefacts where type = 8 AND active = 1 AND del = 0 AND lastupdate <= ".($time - (86400 / (SPEED == 2 ? 1.5 : (SPEED == 3 ? 2 : SPEED))));

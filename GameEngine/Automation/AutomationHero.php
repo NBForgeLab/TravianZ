@@ -44,7 +44,7 @@ trait AutomationHero {
     }
 
     private function updateHero() {
-        global $database, $hero_levels;
+        $database = $this->database; global $hero_levels;
         
         $harray = $database->getHero();
         if(!empty($harray)){
@@ -240,7 +240,7 @@ trait AutomationHero {
     // Revive completion: marks the hero unit alive and clears the revive flag.
     // Returns a column fragment plus the health (100) and lastUpdate overrides.
     private function handleReviveCompletion($hdata) {
-        global $database;
+        $database = $this->database;
 
         if($hdata['trainingtime'] < time() && $hdata['inrevive'] == 1){
             mysqli_query($database->dblink,"UPDATE " . TB_PREFIX . "units SET hero = 1 WHERE vref = ".(int) $hdata['wref']."");
@@ -260,7 +260,7 @@ trait AutomationHero {
     // Training completion: marks the hero unit alive and clears the training flag.
     // Returns a column fragment plus the lastUpdate override (health untouched).
     private function handleTrainingCompletion($hdata) {
-        global $database;
+        $database = $this->database;
 
         if($hdata['trainingtime'] < time() && $hdata['intraining'] == 1){
             mysqli_query($database->dblink,"UPDATE " . TB_PREFIX . "units SET hero = 1 WHERE vref = ".(int) $hdata['wref']);

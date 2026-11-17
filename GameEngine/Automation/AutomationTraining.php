@@ -28,7 +28,7 @@ trait AutomationTraining {
      * Doar unitatile de lupta (X1-X8); chief, settler si eroul nu pot fi raniti.
      */
     private function applyHospitalWounded($vref, array $deadByUnit) {
-        global $database;
+        $database = $this->database;
 
         $hospital = $database->getFieldLevelInVillage($vref, '46');
         $bighospital = $database->getFieldLevelInVillage($vref, '48');
@@ -64,7 +64,7 @@ trait AutomationTraining {
      * incremental (una la fiecare 'eachtime' secunde), ca la antrenare.
      */
     private function healingComplete() {
-        global $database;
+        $database = $this->database;
 
         $time = time();
         $healinglist = $database->getHealingDue($time);
@@ -88,7 +88,7 @@ trait AutomationTraining {
     }
 
     private function trainingComplete() {
-        global $database, $technology;
+        $database = $this->database; global $technology;
 
         $time = time();
         $trainlist = $database->getTrainingList();
@@ -148,7 +148,7 @@ trait AutomationTraining {
     }
 
     private function celebrationComplete() {
-        global $database;
+        $database = $this->database;
 
         $varray = $database->getCel();
         foreach($varray as $vil){
@@ -167,7 +167,7 @@ trait AutomationTraining {
      * bonus / chief penalty / catapult randomization while it was active.
      */
     private function festivalComplete() {
-        global $database;
+        $database = $this->database;
 
         $varray = $database->getFestivals();
         foreach($varray as $vil){

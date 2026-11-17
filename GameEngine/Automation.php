@@ -96,6 +96,8 @@ include_once __DIR__ . '/Automation/AutomationMedals.php';
 include_once __DIR__ . '/Automation/AutomationCleanup.php';
 include_once __DIR__ . '/Automation/AutomationPlayerStatistics.php';
 
+use App\Database\IDbConnection;
+
 class Automation {
     // === Faza S2: metodele clasei, grupate pe domenii ===
     use AutomationVillageUpkeep;
@@ -110,15 +112,12 @@ class Automation {
     use AutomationNatarsWW;
     use AutomationNatarsWWBuild;
     use AutomationMedals;
-
-
-
     use AutomationCleanup;
     use AutomationPlayerStatistics;
+
     /**
      * @var object The artifacts class, used to create Natars, artifacts and obtaining info about them
      */
-    
     private $artifacts;
     
     /**
@@ -127,10 +126,38 @@ class Automation {
      */
     private $userCache = [];
     
-    public function __construct() {
-    	
-        //Classes initialization
-        $this->artifacts = new Artifacts();
+    /** @var IDbConnection */
+    public $database;
+    public $ranking;
+    public $units;
+    public $battle;
+    public $technology;
+    public $hero_levels;
+    public $heroItemCatalog;
+    public $bid17;
+    public $bid18;
+    public $bid28;
+
+    public function __construct(IDbConnection $database, Artifacts $artifacts = null) {
+        global $ranking, $units, $battle, $technology, $hero_levels, $heroItemCatalog, $bid17, $bid18, $bid28;
+        $this->database = $database;
+        $this->ranking = $ranking;
+        $this->units = $units;
+        $this->battle = $battle;
+        $this->technology = $technology;
+        $this->hero_levels = $hero_levels;
+        $this->heroItemCatalog = $heroItemCatalog;
+        $this->bid17 = $bid17;
+        $this->bid18 = $bid18;
+        $this->bid28 = $bid28;
+        $this->artifacts = $artifacts ?: new Artifacts();
+    }
+
+    public function getGlobal($name) {
+        return $GLOBALS[$name] ?? null;
+    }
+
+    public function run() {
         
     	$autoprefix = "";
     	for ($i = 0; $i < 5; $i++) {
@@ -158,7 +185,7 @@ class Automation {
         				  "heroAdventureComplete",
         				  "cleanupOldData",
         				  "recordPlayerStatistics",
-					  "buildNatarsWonder"];
+        					  "buildNatarsWonder"];
         
         foreach($methodsArrays as $method){
         	$file = fopen($autoprefix."GameEngine/Prevention/".$method.".txt", "w");
@@ -190,16 +217,19 @@ class Automation {
     **/
 	
     private function getCachedUser($uid, $mode = 1) {
-        global $database;
         $uid = (int)$uid;
         if (!isset($this->userCache[$uid])) {
-            $this->userCache[$uid] = $database->getUserArray($uid, $mode);
+            $this->userCache[$uid] = $this->database->getUserArray($uid, $mode);
         }
         return $this->userCache[$uid];
     }
 }
-$automation = new Automation;
 
-// remove automation lock file
-@unlink( AUTOMATION_LOCK_FILE_NAME );
+if (!defined('TRAVIANZ_TEST_MODE')) {
+    global $database;
+    $automation = new Automation($database);
+    $automation->run();
+    // remove automation lock file
+    @unlink( AUTOMATION_LOCK_FILE_NAME );
+}
 ?>

@@ -108,7 +108,7 @@ trait AutomationTroopMovements {
     // (from = 0) returning home. $targetally / $AttackArrivalTime are intentionally
     // left undefined here, exactly as in the original inline code.
     private function completeReinforcementFromElders($data, $to) {
-        global $database;
+        $database = $this->database;
 
         $DefenderID = $database->getVillageField($data['to'], "owner");
         $database->addEnforce(['from' => $data['from'], 'to' => $data['to'], 't1' => 0, 't2' => 0, 't3' => 0, 't4' => 0, 't5' => 0, 't6' => 0, 't7' => 0, 't8' => 0, 't9' => 0, 't10' => 0, 't11' => 0]);
@@ -123,7 +123,7 @@ trait AutomationTroopMovements {
     // and the reinforcement notices. $ownally / $targetally / $AttackArrivalTime are
     // intentionally left undefined (guarded by isset()), exactly as in the original.
     private function completeReinforcementDelivery($data, $to, $isoasis, $DefenderID) {
-        global $database;
+        $database = $this->database;
 
         //set base things
         $from = $database->getMInfo($data['from']);
@@ -178,7 +178,7 @@ trait AutomationTroopMovements {
     // transferred as a unit ($HeroTransfer), his t11 is temporarily zeroed for the
     // merge and restored afterwards, exactly as in the original.
     private function mergeOrCreateEnforcement($data, $owntribe, $HeroTransfer) {
-        global $database;
+        $database = $this->database;
 
         $temphero = $data['t11'];
         if ($HeroTransfer) $data['t11'] = 0;
@@ -206,7 +206,7 @@ trait AutomationTroopMovements {
     }
 
     private function returnunitsComplete() {
-        global $database, $technology;
+        $database = $this->database; global $technology;
 
         $time = time();
         $q = "
@@ -284,7 +284,7 @@ trait AutomationTroopMovements {
     }
 
     private function sendSettlersComplete() {
-        global $database;
+        $database = $this->database;
 
         $time = microtime(true);
         $q = "SELECT `to`, `from`, moveid, starttime, ref FROM ".TB_PREFIX."movement where proc = 0 and sort_type = 5 and endtime < $time";

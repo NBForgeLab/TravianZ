@@ -23,7 +23,7 @@ trait AutomationAccountMaintenance {
 
 
     private function clearDeleting() {
-    	global $database;
+    	$database = $this->database;
         
         $needDelete = $database->getNeedDelete();
         if(count($needDelete) > 0) {
@@ -82,7 +82,7 @@ trait AutomationAccountMaintenance {
     }
 
     private function ClearUser() {
-        global $database;
+        $database = $this->database;
         
         if(AUTO_DEL_INACTIVE) {
             $time = time() - UN_ACT_TIME;
@@ -94,7 +94,7 @@ trait AutomationAccountMaintenance {
 
 
     private function checkInvitedPlayes() {
-        global $database;
+        $database = $this->database;
         
         $q = "SELECT id, invited FROM ".TB_PREFIX."users WHERE invited > 0";
         $array = $database->query_return($q);
@@ -122,7 +122,7 @@ trait AutomationAccountMaintenance {
     }
 
     private function updateGeneralAttack() {
-        global $database;
+        $database = $this->database;
 
         mysqli_query($database->dblink, "
             UPDATE ".TB_PREFIX."general
@@ -134,7 +134,7 @@ trait AutomationAccountMaintenance {
     }
 
     private function procNewClimbers() {
-    	global $database, $ranking;
+    	$database = $this->database; global $ranking;
 
         $ranking->procRankArray();
         $climbers = $ranking->getRank();
@@ -187,7 +187,7 @@ trait AutomationAccountMaintenance {
     }
 
     private function procClimbers($uid) {
-        global $database, $ranking;
+        $database = $this->database; global $ranking;
         
         $ranking->procRankArray();
         $climbers = $ranking->getRank();
@@ -290,7 +290,7 @@ trait AutomationAccountMaintenance {
     }
 
     private function checkBan() {
-        global $database;
+        $database = $this->database;
 
         mysqli_query($database->dblink, "
             UPDATE ".TB_PREFIX."banlist as b
@@ -305,7 +305,7 @@ trait AutomationAccountMaintenance {
     }
 
     public static function updateMax($leader) {
-        global $bid18, $database;
+        global $bid18; $database = $this->database;
         
         $q = mysqli_fetch_array(mysqli_query($database->dblink,"SELECT Count(*) as Total FROM " . TB_PREFIX . "alidata where leader = ". (int) $leader), MYSQLI_ASSOC);
         if ($q['Total'] > 0) {

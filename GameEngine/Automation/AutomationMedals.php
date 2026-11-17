@@ -27,7 +27,7 @@ trait AutomationMedals {
      */
     
 	function medals() {
-        global $database;
+        $database = $this->database;
 
         // Check the timing window; $time is the next "last awarded" stamp to write.
         $time = $this->shouldAwardMedalsNow();
@@ -54,7 +54,7 @@ trait AutomationMedals {
     // null to skip this run. On the very first run after server start it only
     // schedules the next run (and returns null).
     private function shouldAwardMedalsNow() {
-        global $database;
+        $database = $this->database;
 
         $giveMedal = false;
         $time = null;
@@ -83,7 +83,7 @@ trait AutomationMedals {
 
     // Next week number for a medal table (medal / allimedal).
     private function getNextMedalWeek($table) {
-        global $database;
+        $database = $this->database;
 
         $q = "SELECT week FROM ".TB_PREFIX."$table ORDER BY week DESC LIMIT 1";
         $res = mysqli_query($database->dblink, $q);
@@ -92,7 +92,7 @@ trait AutomationMedals {
 
     // Insert a user medal row.
     private function insertUserMedal($userid, $category, $place, $week, $points, $img) {
-        global $database;
+        $database = $this->database;
 
         $q = "INSERT INTO ".TB_PREFIX."medal (userid, categorie, plaats, week, points, img) VALUES (".
             (int)$userid.", ".(int)$category.", ".(int)$place.", ".(int)$week.", '".mysqli_real_escape_string($database->dblink, $points)."', '".mysqli_real_escape_string($database->dblink, $img)."')";
@@ -101,7 +101,7 @@ trait AutomationMedals {
 
     // Insert an alliance medal row.
     private function insertAllianceMedal($allyid, $cat, $place, $week, $points, $img) {
-        global $database;
+        $database = $this->database;
 
         $q = "INSERT INTO ".TB_PREFIX."allimedal (allyid, categorie, plaats, week, points, img) VALUES (".(int)$allyid.", '".(int)$cat."', ".(int)$place.", '".(int)$week."', '".mysqli_real_escape_string($database->dblink, $points)."', '".mysqli_real_escape_string($database->dblink, $img)."')";
         mysqli_query($database->dblink, $q);
@@ -109,7 +109,7 @@ trait AutomationMedals {
 
     // Award the top 10 users for a stat field (one category).
     private function awardTopMedals($field, $category, $imgPrefix, $week, $userFilter) {
-        global $database;
+        $database = $this->database;
 
         $q = "SELECT id, $field FROM ".TB_PREFIX."users WHERE $userFilter ORDER BY $field DESC, id DESC LIMIT 10";
         $res = mysqli_query($database->dblink, $q);
@@ -122,7 +122,7 @@ trait AutomationMedals {
 
     // Award milestone ribbons for 3/5/10 appearances in a top3 or top10 category.
     private function awardMilestoneMedals($field, $sourceCat, $topLimit, $targetCat, $imgBase, $week, $userFilter) {
-        global $database;
+        $database = $this->database;
 
         $res = mysqli_query($database->dblink, "SELECT id FROM ".TB_PREFIX."users WHERE $userFilter ORDER BY $field DESC, id DESC LIMIT 10");
         while ($u = mysqli_fetch_array($res)) {
@@ -138,7 +138,7 @@ trait AutomationMedals {
 
     // Player medals: top 10 of each category, the attack+defense bonus, then milestones.
     private function awardPlayerMedals($week, $userFilter) {
-        global $database;
+        $database = $this->database;
 
         // Top 10 for each category
         $this->awardTopMedals('ap', 1, 't2_', $week, $userFilter);   // Attackers of the week (cat 1)
@@ -182,7 +182,7 @@ trait AutomationMedals {
 
     // Alliance medals: top 10 of each category, then the attack+defense bonus.
     private function awardAllianceMedals($allyweek) {
-        global $database;
+        $database = $this->database;
 
         $allyCats = [
             ['ap', 1, 'a2_'],
@@ -214,7 +214,7 @@ trait AutomationMedals {
 
     // Reset the weekly stat columns for every id in a table (optionally filtered).
     private function resetWeeklyStats($table, $where, $setClause) {
-        global $database;
+        $database = $this->database;
 
         $ids = [];
         $sql = "SELECT id FROM ".TB_PREFIX.$table;

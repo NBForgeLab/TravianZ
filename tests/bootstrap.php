@@ -42,6 +42,7 @@ namespace {
     require_once __DIR__ . '/../vendor/autoload.php';
 
     require_once __DIR__ . '/../GameEngine/Database.php';
+    require_once __DIR__ . '/../GameEngine/Ranking.php';
 
     // Reset database
     $mysqli = new mysqli(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB);
@@ -70,6 +71,7 @@ namespace {
     $GLOBALS['village'] = new class { public $wid = 1; public $resarray = []; public $natar = 0; public $master = 0; public $allcrop = 1000; public $pop = 10; public $unitarray = ['u11' => 10, 'hero' => 1]; };
     $GLOBALS['unitsbytype'] = ['cavalry' => [], 'catapult' => [], 'ram' => []];
     $GLOBALS['session'] = new Session();
+    $GLOBALS['ranking'] = new \Ranking();
     $GLOBALS['bid34'] = [];
     $GLOBALS['bid35'] = [];
 }
