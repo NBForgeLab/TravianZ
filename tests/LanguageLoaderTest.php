@@ -3,19 +3,23 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-function fail_test($message)
-{
-    throw new RuntimeException($message);
+if (!function_exists('fail_test')) {
+    function fail_test($message)
+    {
+        throw new RuntimeException($message);
+    }
 }
 
-function assert_same($expected, $actual, $message)
-{
-    if ($expected !== $actual) {
-        fail_test(
-            $message
-            . "\nExpected: " . var_export($expected, true)
-            . "\nActual:   " . var_export($actual, true)
-        );
+if (!function_exists('assert_same')) {
+    function assert_same($expected, $actual, $message)
+    {
+        if ($expected !== $actual) {
+            fail_test(
+                $message
+                . "\nExpected: " . var_export($expected, true)
+                . "\nActual:   " . var_export($actual, true)
+            );
+        }
     }
 }
 

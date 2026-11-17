@@ -66,6 +66,8 @@ include_once("Data/resdata.php");
 include_once("Data/unitdata.php");
 include_once("Data/hero_full.php");
 include_once("config.php");
+if (!defined('LANG')) define('LANG', 'en');
+if (!defined('TB_PREFIX')) define('TB_PREFIX', 'tz_');
 include_once("Database.php");
 include_once("Mailer.php");
 include_once("Form.php");

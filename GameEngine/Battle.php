@@ -26,12 +26,22 @@ class Battle {
     private $form;
     private $village;
     private $unitsbytype;
+    private $heroData;
+    private $session;
+    private $bid34;
+    private $bid35;
+    private $unitsData;
 
-    public function __construct($database = null, $form = null, $village = null, $unitsbytype = null) {
+    public function __construct($database = null, $form = null, $village = null, $unitsbytype = null, $heroData = null, $session = null, $bid34 = null, $bid35 = null, $unitsData = null) {
         $this->database = $database ?? $GLOBALS['database'];
         $this->form = $form ?? $GLOBALS['form'];
         $this->village = $village ?? $GLOBALS['village'];
         $this->unitsbytype = $unitsbytype ?? $GLOBALS['unitsbytype'];
+        $this->heroData = $heroData ?? $GLOBALS;
+        $this->session = $session ?? $GLOBALS['session'];
+        $this->bid34 = $bid34 ?? $GLOBALS['bid34'] ?? [];
+        $this->bid35 = $bid35 ?? $GLOBALS['bid35'] ?? [];
+        $this->unitsData = $unitsData ?? $GLOBALS;
     }
 
 	/*****************************************
@@ -188,7 +198,7 @@ class Battle {
 
     $hero = $heroarray[0];
     $heroUnit = $hero['unit'];
-    if (!isset($GLOBALS['h'.$heroUnit])) {
+    if (!isset($this->heroData['h'.$heroUnit])) {
 
         // ob/db sunt MULTIPLICATORI: 0 ar anula toata puterea armatei ($ap *= ob).
         // Un erou lipsa/invalid trebuie sa fie neutru, nu catastrofal.
@@ -204,7 +214,7 @@ class Battle {
         ];
     }
 
-    $herodata = $GLOBALS['h'.$heroUnit];
+    $herodata = $this->heroData['h'.$heroUnit];
     $attack = (int)$hero['attack'];
     $defence = (int)$hero['defence'];
     $attackBonus = (int)$hero['attackbonus'];
@@ -540,11 +550,11 @@ class Battle {
     /******************************************************************
      * ARTIFACTS (GLOBAL EFFECTS)
      ******************************************************************/
-    $attacker_artefact = $database->getArtifactsValueInfluence($AttackerID, $AttackerWref, 3, 1, false);
-    $defender_artefact = $database->getArtifactsValueInfluence($DefenderID, $DefenderWref, 3, 1, false);
-    $strongerbuildings = $database->getArtifactsValueInfluence($DefenderID, $DefenderWref, 1, 1, false);
+    $attacker_artefact = $this->database->getArtifactsValueInfluence($AttackerID, $AttackerWref, 3, 1, false);
+    $defender_artefact = $this->database->getArtifactsValueInfluence($DefenderID, $DefenderWref, 3, 1, false);
+    $strongerbuildings = $this->database->getArtifactsValueInfluence($DefenderID, $DefenderWref, 1, 1, false);
 
-    $isWWVillage = $database->getVillageField($DefenderWref, 'natar');
+    $isWWVillage = $this->database->getVillageField($DefenderWref, 'natar');
 
     /******************************************************************
      * HERO LOADING (ATTACKER / DEFENDER)
@@ -906,7 +916,8 @@ class Battle {
     $DefenderID = 0
 ) {
 
-    global $database;
+    $database = $this->database;
+
 
     $dp = 0;
     $cdp = 0;
@@ -1099,8 +1110,6 @@ class Battle {
     $AttackerID = 0
 ) {
 
-    global $unitsbytype;
-
     $start = ($att_tribe - 1) * 10 + 1;
     $end   = $att_tribe * 10;
 
@@ -1125,15 +1134,15 @@ class Battle {
                 continue;
             }
 
-            global ${'u'.$i};
+            $unitData = $this->unitsData['u'.$i];
 
-            if (in_array($i, $unitsbytype['scout'])) {
+            if (in_array($i, $this->unitsbytype['scout'])) {
 
                 if ($scoutAB > 0) {
 
                     $unitAttack = round(
                         35 + (
-                            35 + (300 * ${'u'.$i}['pop'] / 7)
+                            35 + (300 * $unitData['pop'] / 7)
                         ) * (pow(1.007, $scoutAB) - 1),
                         4
                     );
@@ -1167,9 +1176,7 @@ class Battle {
                 continue;
             }
 
-            global ${'u'.$i};
-
-            $unitData = ${'u'.$i};
+            $unitData = $this->unitsData['u'.$i];
             $unitAttack = $unitData['atk'];
 
             if ($abcount <= 8 && $attAb[$abcount] > 0) {
@@ -1247,7 +1254,8 @@ class Battle {
              * cornul de vanatoare contra Natarilor.
              */
             if (class_exists('HeroBattleBonus') && HeroBattleBonus::enabled()) {
-                global $session;
+                $session = $this->session;
+
 
                 $simUid = isset($session->uid) ? (int) $session->uid : 0;
 
@@ -1277,7 +1285,8 @@ class Battle {
 
             // Aceleasi iteme conteaza si cand simulezi apararea.
             if (class_exists('HeroBattleBonus') && HeroBattleBonus::enabled()) {
-                global $session;
+                $session = $this->session;
+
 
                 $simUid = isset($session->uid) ? (int) $session->uid : 0;
 
@@ -1317,7 +1326,7 @@ class Battle {
         // Intr-o lupta reala $AttackerID e mereu setat, deci ramura asta nu se
         // atinge acolo.
         if ($metalOwner <= 0 && ($offhero > 0 || $deffhero > 0 || $hero_strenght > 0)) {
-            global $session;
+            $session = $this->session;
 
             if (isset($session->uid)) {
                 $metalOwner = (int) $session->uid;
@@ -1365,8 +1374,7 @@ class Battle {
 
 	private function computeBreweryAttackBonus($AttackerID, $att_tribe) {
 
-    global $bid35, $database;
-
+    $database = $this->database;
     $bonus = 0;
 
     // Brewery (35) Mead-Festival attack bonus: Teuton-only, capital-only but
@@ -1385,8 +1393,8 @@ class Battle {
 
             $typeLevel = $this->getTypeLevel(35, $attackerCapital['wref']);
 
-            $bonus = isset($bid35[$typeLevel])
-                ? $bid35[$typeLevel]['attri']
+            $bonus = isset($this->bid35[$typeLevel])
+                ? $this->bid35[$typeLevel]['attri']
                 : 0;
         }
     }
@@ -1573,8 +1581,6 @@ class Battle {
     $safeRap, $safeRdp, $attpop, $defpop, $strongerbuildings
 ) {
 
-    global $bid34;
-
     if ($catp <= 0 || $tblevel == 0) {
         return [];
     }
@@ -1582,7 +1588,7 @@ class Battle {
     $upgrades = round(200 * pow(1.0205, $att_ab8)) / 200;
 
     $durability = ($stonemason > 0)
-        ? $bid34[$stonemason]['attri'] / 100
+        ? $this->bid34[$stonemason]['attri'] / 100
         : 1;
 
     $attackDefenseRatio = $safeRap / $safeRdp;
@@ -1624,7 +1630,7 @@ class Battle {
     $safeRap, $safeRdp, $strongerbuildings
 ) {
 
-    global $bid34;
+    $bid34 = $this->bid34;
 
     if ($ram <= 0 || $walllevel == 0) {
         return [];
@@ -1705,7 +1711,8 @@ class Battle {
 
 	private function applyHeroBattleDamage($hero_id, $lossRatio, $reduceForUid = null, $armyWipedOut = false, $previousVerdict = null) {
 
-    global $database;
+    $database = $this->database;
+
 
     $hero_id = (int)$hero_id;
 
@@ -1824,7 +1831,7 @@ class Battle {
 
     for ($i = $start; $i <= $end; $i++) {
 
-        global ${'u'.$i};
+        $unitData = $this->unitsData['u'.$i] ?? [];
 
         $y = $i - (($att_tribe - 1) * 10);
 
@@ -1832,7 +1839,7 @@ class Battle {
             (int)$Attacker['u'.$i]
             - (int)$casualties[$y];
 
-        $max_bounty += $aliveUnits * (int)${'u'.$i}['cap'];
+        $max_bounty += $aliveUnits * (int)$unitData['cap'];
     }
 
     return $max_bounty;
@@ -1853,8 +1860,7 @@ class Battle {
      * SCOUT UNITS ONLY 
      ******************************************************************/
 	 
-    global $unitsbytype;
-    $scoutUnits = $unitsbytype['scout'];
+    $scoutUnits = $this->unitsbytype['scout'];
 
     foreach ($scoutUnits as $y) {
         $unitAmount = isset($defenders['u'.$y])
@@ -1863,8 +1869,7 @@ class Battle {
         if ($unitAmount <= 0) {
             continue;
         }
-        global ${'u'.$y};
-        $unitData = ${'u'.$y};
+        $unitData = $this->unitsData['u'.$y] ?? [];
         $abLevel = isset($def_ab[$y])
             ? (int)$def_ab[$y]
             : 0;
@@ -1908,8 +1913,7 @@ class Battle {
         if ($unitAmount <= 0) {
             continue;
         }
-        global ${'u'.$y};
-        $unitData = ${'u'.$y};
+        $unitData = $this->unitsData['u'.$y] ?? [];
         $abLevel = isset($def_ab[$y])
             ? (int)$def_ab[$y]
             : 0;

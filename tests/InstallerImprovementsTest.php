@@ -3,19 +3,25 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-function fail_test(string $msg): void {
-    throw new RuntimeException($msg);
-}
-
-function assert_true(bool $cond, string $msg): void {
-    if (!$cond) {
-        fail_test("FAILED: {$msg}");
+if (!function_exists('fail_test')) {
+    function fail_test(string $msg): void {
+        throw new RuntimeException($msg);
     }
 }
 
-function assert_equals($expected, $actual, string $msg): void {
-    if ($expected !== $actual) {
-        fail_test("FAILED: {$msg} | Expected: " . var_export($expected, true) . ", Got: " . var_export($actual, true));
+if (!function_exists('assert_true')) {
+    function assert_true(bool $cond, string $msg): void {
+        if (!$cond) {
+            fail_test("FAILED: {$msg}");
+        }
+    }
+}
+
+if (!function_exists('assert_equals')) {
+    function assert_equals($expected, $actual, string $msg): void {
+        if ($expected !== $actual) {
+            fail_test("FAILED: {$msg} | Expected: " . var_export($expected, true) . ", Got: " . var_export($actual, true));
+        }
     }
 }
 

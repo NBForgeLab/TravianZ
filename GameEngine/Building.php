@@ -55,6 +55,9 @@ class Building {
     private $sess;
     private $vil;
     private $log;
+    private $technology;
+    private $generator;
+    private $bidData;
 
     // B-W1: fostele "static $cache" din interiorul metodelor, mutate pe instanta
     // si cheiate pe wid unde conteaza. Static-urile per metoda NU se resetau la
@@ -131,12 +134,15 @@ class Building {
         50 => array('tribe' => array(9), 'unique' => false),                       // Barricade (Vikingi)
     );
 
-    public function __construct($database = null, $session = null, $village = null, $logging = null) {
+    public function __construct($database = null, $session = null, $village = null, $logging = null, $technology = null, $generator = null, $bidData = null) {
 
         $this->db   = $database ?? $GLOBALS['database'];
         $this->sess = $session ?? $GLOBALS['session'];
         $this->vil  = $village ?? $GLOBALS['village'];
         $this->log  = $logging ?? $GLOBALS['logging'];
+        $this->technology = $technology ?? ($GLOBALS['technology'] ?? []);
+        $this->generator  = $generator ?? ($GLOBALS['generator'] ?? null);
+        $this->bidData    = $bidData ?? $GLOBALS; // Assuming bidData is global 'bidX'
 
         $maxConcurrent = BASIC_MAX;
 
@@ -480,7 +486,7 @@ class Building {
 
     // Fallback doar daca trebuie (constructie noua: fieldType == 0)
     if (empty($resRequiredPop)) {
-        $buildarray = $GLOBALS['bid'.$gid];
+        $buildarray = $this->bidData['bid'.$gid];
         $resRequiredPop = $buildarray[1]['pop'];
     }
 
@@ -492,7 +498,7 @@ class Building {
 
         foreach ($jobs as $j) {
 
-            $buildarray = $GLOBALS['bid'.$j['type']];
+    $buildarray = $this->bidData['bid'.$j['type']];
 
             // B-W1: cache pe instanta (era "static" per metoda, nu se reseta
             // la instante noi)
@@ -1193,7 +1199,7 @@ class Building {
 
 	private function checkResource($gid, $fieldId) {
 
-    $dataarray = isset($GLOBALS['bid'.$gid]) ? $GLOBALS['bid'.$gid] : null;
+    $dataarray = isset($this->bidData['bid'.$gid]) ? $this->bidData['bid'.$gid] : null;
 
     $plus = 1;
 
@@ -1269,7 +1275,7 @@ class Building {
 
 	public function isMax($gid, $fieldId, $loop = 0) {
 
-    $dataarray = isset($GLOBALS['bid'.$gid]) ? $GLOBALS['bid'.$gid] : null;
+    $dataarray = isset($this->bidData['bid'.$gid]) ? $this->bidData['bid'.$gid] : null;
 
     $currentLevel = $this->vil->resarray['f'.$fieldId];
 
@@ -1437,7 +1443,7 @@ class Building {
 
 	public function finishAll($redirect_url = '') {
 
-    global $technology;
+    // $technology injected via constructor
 
     $countPlus2Gold  = false;
     $countMasterGold = false;
@@ -1505,7 +1511,7 @@ class Building {
                         );
                     }
 
-                    $buildarray = $GLOBALS['bid'.$jobs['type']];
+                    $buildarray = $this->bidData['bid'.$jobs['type']];
 
                     $buildwood = $buildarray[$jobs['level']]['wood'];
                     $buildclay = $buildarray[$jobs['level']]['clay'];
@@ -1577,7 +1583,7 @@ class Building {
                 if ($jobs['type'] == 18) {
 
                     $owner = $this->db->getVillageField($wid, 'owner');
-                    $max = $GLOBALS['bid18'][$jobs['level']]['attri'];
+                    $max = $this->bidData['bid18'][$jobs['level']]['attri'];
 
                     $this->db->updateAllianceMax($owner, $max);
                 }
@@ -1590,7 +1596,7 @@ class Building {
     }
 
     $demolition = $this->db->finishDemolition($this->vil->wid);
-    $tech = $technology->finishTech();
+    $tech = $this->technology->finishTech();
 
     if ($demolition > 0 || $tech > 0) {
 
@@ -1746,7 +1752,7 @@ class Building {
         return $cpCache[$cacheKey];
     }
 
-    $dataarray = isset($GLOBALS['bid'.$f]) ? $GLOBALS['bid'.$f] : null;
+    $dataarray = isset($this->bidData['bid'.$f]) ? $this->bidData['bid'.$f] : null;
 
     $cp = (
         isset($dataarray[$lvl]['cp'])
@@ -1776,7 +1782,7 @@ class Building {
         return $this->resourceReqCache[$cacheKey];
     }
 
-    $dataarray = isset($GLOBALS['bid'.$gid]) ? $GLOBALS['bid'.$gid] : null;
+    $dataarray = isset($this->bidData['bid'.$gid]) ? $this->bidData['bid'.$gid] : null;
 
     $level = $this->vil->resarray['f'.$fieldId] + $plus;
 
@@ -1852,7 +1858,7 @@ class Building {
 
 	public function calculateAvaliable($fieldId, $gid, $plus = 1) {
 
-    global $generator;
+    // $generator injected via constructor
 
     $uprequire = $this->resourceRequired($fieldId, $gid, $plus);
 

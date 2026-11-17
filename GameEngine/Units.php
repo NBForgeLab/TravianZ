@@ -27,15 +27,22 @@ class Units {
     private $generator;
     private $session;
     private $village;
+    private $technology;
+    private $unitData;
+    private $building;
 
-    public function __construct($database = null, $form = null, $generator = null, $session = null, $village = null) {
-        $this->database = $database ?? $GLOBALS['database'];
-        $this->form = $form ?? $GLOBALS['form'];
-        $this->generator = $generator ?? $GLOBALS['generator'];
-        $this->session = $session ?? $GLOBALS['session'];
-        $this->village = $village ?? $GLOBALS['village'];
+    public function __construct($database = null, $form = null, $generator = null, $session = null, $village = null, $technology = null, $unitData = null, $building = null) {
+        $this->database = $database ?? ($GLOBALS['database'] ?? null);
+        $this->form = $form ?? ($GLOBALS['form'] ?? null);
+        $this->generator = $generator ?? ($GLOBALS['generator'] ?? null);
+        $this->session = $session ?? ($GLOBALS['session'] ?? null);
+        $this->village = $village ?? ($GLOBALS['village'] ?? null);
+        $this->technology = $technology ?? ($GLOBALS['technology'] ?? []);
+        $this->unitData = $unitData ?? ($GLOBALS ?? []);
+        $this->building = $building ?? ($GLOBALS['building'] ?? null);
     }
 
+    public function procUnits($post) {
         if(isset($post['c'])) {
             if (!isset($post['disabled'])) $post['disabled'] = '';
 
@@ -69,7 +76,7 @@ class Units {
     }
     
     private function loadUnits($post) {
-        global $form;
+        $form = $this->form;
         
         if(!empty($error = $this->checkErrors($post))) {
             $form->addError("error", $error);
@@ -101,7 +108,7 @@ class Units {
      * Proprietarul contului primeste mereu "".
      */
     private function sitterMissionError($missionType) {
-        global $session;
+        $session = $this->session;
 
         if (!isset($session) || !is_object($session) || !method_exists($session, 'sitterCan')) {
             return "";
@@ -129,7 +136,9 @@ class Units {
     }
 
     public function checkErrors(&$post){
-        global $database, $generator, $session;
+        $database = $this->database;
+        $generator = $this->generator;
+        $session = $this->session;
 
         if(($error = $this->parseCoordinates($post)) !== "") return $error;
 
@@ -218,7 +227,8 @@ class Units {
      * @param mixed  $isOasis   Out: truthy when the target is an oasis
      */
     private function resolveTarget(&$post, &$disabled, &$disabledr, &$isOasis) {
-        global $database, $session;
+        $database = $this->database;
+        $session = $this->session;
 
         // Search by town name
         // Coordinates and look confirm name people
@@ -264,7 +274,8 @@ class Units {
      * @return string An error message, or "" if the selection is valid
      */
     private function validateTroopSelection($post) {
-        global $village, $session;
+        $village = $this->village;
+        $session = $this->session;
 
         $Gtribe = $session->tribe == 1 ? "" : $session->tribe - 1;
         for($i = 1; $i < 12; $i++){
@@ -309,7 +320,7 @@ class Units {
      * @return bool
      */
     private function isProtectedTarget($ownerId, $missionType) {
-        global $database;
+        $database = $this->database;
 
         if (!defined('PROTECTED_PLAYERS') || trim(PROTECTED_PLAYERS) === '') {
             return false;
@@ -338,7 +349,8 @@ class Units {
     }
 
     private function validateTargetPlayer($id, $isOasis, &$villageInfo) {
-        global $database, $village;
+        $database = $this->database;
+        $village = $this->village;
 
         //check if the attacked village/oasis' owner is under beginners protection
         if($database->hasBeginnerProtection($id) == 1) return "Player is under beginners protection. You can't attack him";
@@ -387,7 +399,7 @@ class Units {
      *     returneaza doar reinforcement-urile din oazele satului
      */
     public function returnTroops($wref, $mode = 0) {
-        global $database;
+        $database = $this->database;
 
         $wref = (int) $wref;
 
@@ -464,7 +476,7 @@ class Units {
      *   B -> nu mai poate duplica nimic
      */
     public function returnOasisTroops($oasisWref) {
-        global $database;
+        $database = $this->database;
 
         $oasisWref = (int)$oasisWref;
 
@@ -524,7 +536,7 @@ class Units {
      * sau reinforcement-ul este procesat dintr-o alta cale.
      */
     private function returnEnforcementRecord($enforceId) {
-        global $database;
+        $database = $this->database;
 
         $enforceId = (int)$enforceId;
 
@@ -575,7 +587,7 @@ class Units {
      * astfel incat sa avem o singura responsabilitate pentru lock.
      */
     private function processReturnTroops($enforce) {
-        global $database;
+        $database = $this->database;
 
         if (empty($enforce['id']) || empty($enforce['from'])) {
             return false;
@@ -718,7 +730,10 @@ class Units {
     }
     
     private function sendTroops($post) {
-        global $form, $database, $village, $session;
+        $form = $this->form;
+        $database = $this->database;
+        $village = $this->village;
+        $session = $this->session;
 
         $data = $database->getA2b($post['timestamp_checksum']);
         $Gtribe = ($session->tribe == 1) ? "" : $session->tribe - 1;
@@ -832,7 +847,9 @@ class Units {
     }
 
     private function resolveCatapultTargets(&$post, $data) {
-        global $database, $village, $session;
+        $database = $this->database;
+        $village = $this->village;
+        $session = $this->session;
 
         // Check if have WW owner have artefact Rivals great confusion or Artefact of the unique fool with that effect
         // If is a WW village you can target on WW , if is not a WW village catapults will target randomly.
@@ -960,7 +977,11 @@ class Units {
     }
 
     private function sendTroopsBack($post) {
-        global $form, $database, $village, $session, $technology;
+        $form = $this->form;
+        $database = $this->database;
+        $village = $this->village;
+        $session = $this->session;
+        $technology = $this->technology;
 
         if (!$database->getEnforceLock($post['ckey'])) return;
         try {
@@ -1090,13 +1111,15 @@ class Units {
     }
     
     public function Settlers($post) {
-        global $form, $database, $village, $session;
+        $form = $this->form;
+        $database = $this->database;
+        $village = $this->village;
+        $session = $this->session;
         // FIX securitate (UM-D1): tablourile de CP (cp0..cpN) sunt globale, definite
-        // in GameEngine/Data/cp.php. Fara aceste "global", ${'cp'.$mode} era null in
-        // scope-ul metodei, deci $need_cps = null si "$cps >= $need_cps" trecea mereu -
+        // in GameEngine/Data/cp.php.
         // verificarea de puncte de cultura la intemeierea satului era ocolita
         // server-side (doar UI-ul o respecta). Importam exact tabloul folosit.
-        global ${'cp'.CP};
+        $cp = $GLOBALS['cp'.CP];
 
         $mode = CP;
         $total = count($database->getProfileVillages($session->uid));
@@ -1125,7 +1148,7 @@ class Units {
     }
 
     public function Hero($uid, $all = 0, $include_dead = false) {
-        global $database;
+        $database = $this->database;
         $heroarray = $database->getHero($uid, $all, $include_dead);
         $herodata = false;
         $singleHeroArrayID = 0;
@@ -1228,7 +1251,8 @@ class Units {
      * never travel back (no owner village to walk to) - releasing kills them.
      */
     public function releaseNatureEnforcement($id){
-        global $village, $database;
+        $database = $this->database;
+        $village = $this->village;
 
         $id = (int) $id;
         if ($id <= 0) {
@@ -1248,7 +1272,12 @@ class Units {
     }
 
     public function deletePrisoners($id){
-        global $village, $database, $session, $building, $bid19, $u99;
+        $village = $this->village;
+        $database = $this->database;
+        $session = $this->session;
+        $building = $this->building;
+        $bid19 = $this->unitData['bid19'];
+        $u99 = $this->unitData['u99'];
         
         $prisoner = $database->getPrisonersByID($id);
         $troops = 0;
@@ -1308,7 +1337,8 @@ class Units {
      */
     
     public function getWalkingTroopsTime($from, $to, $owner, $tribe, $unitArray, $mode, $unit = ""){
-        global $generator, $database;
+        $generator = $this->generator;
+        $database = $this->database;
 
         $fromCoor = $database->getCoor($from);
         $toCoor = $database->getCoor($to);
@@ -1370,7 +1400,9 @@ class Units {
     }
     
     public function startRaidList($post){   
-    	global $database, $generator, $session;
+    	$database = $this->database;
+    	$generator = $this->generator;
+    	$session = $this->session;
 
     	/**
     	 * Lista de ferme trimite raiduri, deci intra tot sub SITTER_PERM_RAID.
