@@ -28,7 +28,7 @@ trait AutomationStarvation {
      */
     
     private function starvation() {
-        $database = $this->database; global $technology;
+        $database = $this->database; $technology = $this->technology;
 
         // Starvation is disabled during the peace period (holidays).
         if(PEACE) return;
@@ -92,7 +92,7 @@ trait AutomationStarvation {
     **/
 	
     private function starvationProcessVillage($starv, $time) {
-        $database = $this->database; global $technology;
+        $database = $this->database; $technology = $this->technology;
 
         $unitarrays = $this->getAllUnits($starv['wref']);
         // Original upkeep formula
@@ -211,7 +211,7 @@ trait AutomationStarvation {
                 $killedUnits[$maxtype] = ($killedUnits[$maxtype] ?? 0) + 1;
                 // Original per-unit crop consumption formula unchanged.
                 $unitIndex = $special ? $maxtype + ($tribe - 1) * 10 : $maxtype;
-                $difcrop -= $GLOBALS['u'.$unitIndex]['crop'];
+                $difcrop -= $this->getGlobal('u'.$unitIndex)['crop'];
             } else break;
         }
 
@@ -226,9 +226,9 @@ trait AutomationStarvation {
             $heroInfo = $database->getHero($heroOwner)[0];
             $database->modifyHero("dead", 1, $heroInfo['heroid']);
             $database->modifyHero("health", 0, $heroInfo['heroid']);
-            $newCrop = $GLOBALS['h'.$heroInfo['unit'].'_full'][min($heroInfo['level'], 60)]['crop'] + $difcrop;
+            $newCrop = $this->getGlobal('h'.$heroInfo['unit'].'_full')[min($heroInfo['level'], 60)]['crop'] + $difcrop;
         } else if($maxtype > 0) {
-            $newCrop = $GLOBALS['u'.$maxtype]['crop'];
+            $newCrop = $this->getGlobal('u'.$maxtype)['crop'];
         }
 
         if($totalKilledUnits > 0) {

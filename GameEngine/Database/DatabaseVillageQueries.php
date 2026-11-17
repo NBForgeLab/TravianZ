@@ -64,9 +64,15 @@ trait DatabaseVillageQueries {
         }
 
 		$q = "UPDATE " . TB_PREFIX . "vdata SET ".implode(', ', $pairs)." WHERE wref = $vid";
-		$result = mysqli_query($this->dblink,$q);
 		return mysqli_query($this->dblink,$q);
 	}
+
+    public function updateVillageCulturePoints($vid, $cp) {
+        $vid = (int) $vid;
+        $cp = (int) $cp;
+        $q = "UPDATE " . TB_PREFIX . "vdata SET cp = $cp WHERE wref = $vid";
+        return mysqli_query($this->dblink, $q);
+    }
     
 	//TODO: Remove this function to use the more general one
 	// no need to cache this method

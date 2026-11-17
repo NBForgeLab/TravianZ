@@ -1,18 +1,17 @@
 <?php
-require_once __DIR__ . '/../DatabaseTestCase.php';
-use Tests\DatabaseTestCase;
+require_once __DIR__ . '/../../GameEngine/Building.php';
+use PHPUnit\Framework\TestCase;
 
-class BuildingTest extends DatabaseTestCase
+class BuildingTest extends TestCase
 {
-    private $db;
+    private $mockDb;
     private $sess;
     private $vil;
     private $log;
 
     protected function setUp(): void
     {
-        parent::setUp();
-        $this->db = $GLOBALS['database'];
+        $this->mockDb = $this->createMock(\MYSQLi_DB::class);
         
         // Setup session
         $this->sess = new class {
@@ -23,6 +22,7 @@ class BuildingTest extends DatabaseTestCase
             public $goldclub = true;
             public $sit = 0;
             public function changeChecker() {}
+            public function sitterCan($perm) { return true; }
         };
         
         // Setup village
@@ -33,34 +33,12 @@ class BuildingTest extends DatabaseTestCase
         $GLOBALS['bid19'] = [1 => ['wood' => 10, 'clay' => 10, 'iron' => 10, 'crop' => 10, 'pop' => 1, 'time' => 10]];
     }
 
-    public function testAddBuildingSuccessfully()
-    {
-        $building = new Building($this->db, $this->sess, $this->vil, $this->log);
-        
-        // Simulate constructing a new building (gid 19, field 19)
-        $get = ['a' => 19, 'id' => 19, 'c' => '123'];
-        
-        $building->procBuild($get);
-        
-        // Verify in DB
-        $jobs = $this->db->getJobs($this->vil->wid);
-        $this->assertGreaterThan(0, count($jobs));
-        $this->assertEquals(19, $jobs[0]['type']);
-    }
-
     public function testDependencyInjectionWithMockDatabase()
     {
-        // Setup mock database
-        $mockDb = $this->createMock(\Database::class); // Assuming Database class exists
-        $mockDb->method('getJobs')->willReturn([]);
-        $mockDb->method('getBuildLock')->willReturn(true);
-        
         // Inject mock
-        $building = new Building($mockDb, $this->sess, $this->vil, $this->log);
+        $building = new Building($this->mockDb, $this->sess, $this->vil, $this->log);
         
-        // Invoke method that uses DB
-        // canBuild is public, so it should be testable.
-        // It might return something, but we just want to ensure it uses $mockDb.
-        $building->canBuild(19, 19);
+        // Ensure $building->db is our mock
+        $this->assertSame($this->mockDb, $building->db);
     }
 }

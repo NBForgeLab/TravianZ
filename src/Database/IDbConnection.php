@@ -70,5 +70,7 @@ interface IDbConnection {
      *                for INSERTs or number of affected rows for anything else.
      */
     public function query_new($statement, ...$params);
+
+    public function updateVillageCulturePoints($vid, $cp);
 }
 

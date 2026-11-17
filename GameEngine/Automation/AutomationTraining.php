@@ -88,7 +88,7 @@ trait AutomationTraining {
     }
 
     private function trainingComplete() {
-        $database = $this->database; global $technology;
+        $database = $this->database; $technology = $this->technology;
 
         $time = time();
         $trainlist = $database->getTrainingList();

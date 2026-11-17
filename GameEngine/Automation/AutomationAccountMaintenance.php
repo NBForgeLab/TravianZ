@@ -134,7 +134,7 @@ trait AutomationAccountMaintenance {
     }
 
     private function procNewClimbers() {
-    	$database = $this->database; global $ranking;
+    	$database = $this->database; $ranking = $this->ranking;
 
         $ranking->procRankArray();
         $climbers = $ranking->getRank();

@@ -1728,13 +1728,7 @@ class Building {
         }
     }
 
-    mysqli_query(
-        $database->dblink,
-        "
-        UPDATE ".TB_PREFIX."vdata
-        SET cp = ".$cpTot."
-        WHERE wref = ".$vid
-    );
+    $database->updateVillageCulturePoints($vid, $cpTot);
 }
 
 	/*****************************************
@@ -1752,7 +1746,13 @@ class Building {
         return $cpCache[$cacheKey];
     }
 
-    $dataarray = isset($this->bidData['bid'.$f]) ? $this->bidData['bid'.$f] : null;
+    static $bidData = null;
+    if ($bidData === null) {
+        $bidData = $GLOBALS;
+    }
+    
+    $dataProvider = new \App\Automation\AutomationDataProvider($bidData);
+    $dataarray = $dataProvider->getBid($f);
 
     $cp = (
         isset($dataarray[$lvl]['cp'])

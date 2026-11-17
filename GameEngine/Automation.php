@@ -134,12 +134,34 @@ class Automation {
     public $technology;
     public $hero_levels;
     public $heroItemCatalog;
+    public $bid0;
+    public $bid1;
+    public $bid2;
+    public $bid3;
+    public $bid4;
+    public $bid5;
+    public $bid6;
+    public $bid7;
+    public $bid8;
+    public $bid9;
+    public $bid10;
+    public $bid11;
     public $bid17;
     public $bid18;
+    public $bid19;
+    public $bid23;
     public $bid28;
+    public $bid34;
+    public $bid38;
+    public $bid39;
+    public $bid40;
+    public $u99;
 
     public function __construct(IDbConnection $database, Artifacts $artifacts = null) {
-        global $ranking, $units, $battle, $technology, $hero_levels, $heroItemCatalog, $bid17, $bid18, $bid28;
+        global $ranking, $units, $battle, $technology, $hero_levels, $heroItemCatalog, 
+               $bid0, $bid1, $bid2, $bid3, $bid4, $bid5, $bid6, $bid7, $bid8, $bid9, 
+               $bid10, $bid11, $bid17, $bid18, $bid19, $bid23, $bid28, $bid34, $bid38, $bid39, $bid40, $u99;
+        
         $this->database = $database;
         $this->ranking = $ranking;
         $this->units = $units;
@@ -147,9 +169,29 @@ class Automation {
         $this->technology = $technology;
         $this->hero_levels = $hero_levels;
         $this->heroItemCatalog = $heroItemCatalog;
+        $this->bid0 = $bid0;
+        $this->bid1 = $bid1;
+        $this->bid2 = $bid2;
+        $this->bid3 = $bid3;
+        $this->bid4 = $bid4;
+        $this->bid5 = $bid5;
+        $this->bid6 = $bid6;
+        $this->bid7 = $bid7;
+        $this->bid8 = $bid8;
+        $this->bid9 = $bid9;
+        $this->bid10 = $bid10;
+        $this->bid11 = $bid11;
         $this->bid17 = $bid17;
         $this->bid18 = $bid18;
+        $this->bid19 = $bid19;
+        $this->bid23 = $bid23;
         $this->bid28 = $bid28;
+        $this->bid34 = $bid34;
+        $this->bid38 = $bid38;
+        $this->bid39 = $bid39;
+        $this->bid40 = $bid40;
+        $this->u99 = $u99;
+        
         $this->artifacts = $artifacts ?: new Artifacts();
     }
 

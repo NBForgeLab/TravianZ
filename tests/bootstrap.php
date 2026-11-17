@@ -15,6 +15,7 @@ namespace {
     if (!defined('PW_MIN_LENGTH')) define('PW_MIN_LENGTH', 6);
     if (!defined('LANG')) define('LANG', 'en');
     if (!defined('TB_PREFIX')) define('TB_PREFIX', 'tz_');
+    if (!defined('SQL_PREFIX')) define('SQL_PREFIX', 'tz_');
     if (!defined('SERVER_NAME')) define('SERVER_NAME', 'Test Server');
     if (!defined('SPEED')) define('SPEED', 1);
     if (!defined('COMMENCE')) define('COMMENCE', 0);
@@ -41,6 +42,9 @@ namespace {
     // Include autoloader
     require_once __DIR__ . '/../vendor/autoload.php';
 
+    // Include language
+    require_once __DIR__ . '/../GameEngine/Lang/en.php';
+
     require_once __DIR__ . '/../GameEngine/Database.php';
     require_once __DIR__ . '/../GameEngine/Ranking.php';
 
@@ -49,15 +53,26 @@ namespace {
     if (!$mysqli->connect_error) {
         $mysqli->query("SET FOREIGN_KEY_CHECKS = 0");
         $result = $mysqli->query("SHOW TABLES");
+        $tables = [];
         while ($row = $result->fetch_array()) {
-            $mysqli->query("DROP TABLE IF EXISTS " . $row[0]);
+            $tables[] = $row[0];
+        }
+        foreach ($tables as $table) {
+            $mysqli->query("DROP TABLE IF EXISTS `" . $table . "`");
         }
         $mysqli->query("SET FOREIGN_KEY_CHECKS = 1");
 
         $sql = file_get_contents(__DIR__ . '/../var/db/struct.sql');
         $sql = str_replace('%PREFIX%', SQL_PREFIX, $sql);
-        $mysqli->multi_query($sql);
-        do { $mysqli->store_result(); } while ($mysqli->more_results() && $mysqli->next_result());
+        
+        // Execute multi_query and consume all results
+        if ($mysqli->multi_query($sql)) {
+            do {
+                if ($result = $mysqli->store_result()) {
+                    $result->free();
+                }
+            } while ($mysqli->more_results() && $mysqli->next_result());
+        }
         $mysqli->close();
     }
 
