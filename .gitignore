@@ -43,3 +43,7 @@ var/log/access.log
 # Docker environment file with sensitive credentials
 .env
 *.lnk
+
+# WorkBuddy / AI development artifacts
+.workbuddy-ai/
+
