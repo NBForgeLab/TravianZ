@@ -32,61 +32,36 @@ namespace {
     }
 
     // Include config (ensure constants defined here don't conflict or are defined if not present)
-    if (!defined('SQL_SERVER')) {
-        require_once __DIR__ . '/../GameEngine/config.php';
-    }
+    require_once __DIR__ . '/../GameEngine/config.test.php';
 
     // Include autoloader
     require_once __DIR__ . '/../vendor/autoload.php';
 
-    // Dummy Globals for refactored code that still relies on them
-    class MockDb implements \App\Database\IDbConnection {
-        public function connect(): bool { return true; }
-        public function disconnect(): bool { return true; }
-        public function reconnect(): bool { return true; }
-        public function is_connected(): bool { return true; }
-        public function query_new($statement, ...$params) { return null; }
-        public function getJobs($wid) { return []; }
-        public function __call($name, $args) { return null; }
-        public function getArtifactsValueInfluence($a, $b, $c, $d, $e) { return 0; }
-        public function getVillageField($a, $b) { return 0; }
-        public function getHero($uid) { return []; }
-        public function getResourceLevel($vid) { return []; }
-        public function getBuildingByType($wid, $type) { return []; }
-        public function getWWConstructionPlans($uid, $ally = 0) { return []; }
-        public function getDemolition($wid) { return []; }
-        public function getMasterJobs($wid) { return []; }
-        public function getFieldLevel($wid, $fieldId) { return 0; }
-        public function addBuilding($wid, $fieldId, $gid, $loop, $time, $master, $level) { return true; }
-        public function getBuildingByField($wid, $fieldId) { return []; }
-        public function getBuildLock($wid) { return true; }
-        public function removeBuilding($d, $tribe, $wid, $resarray) { return true; }
-        public function modifyResource($wid, $wood, $clay, $iron, $crop, $add) { return true; }
-        public function hasBeginnerProtection($id) { return 0; }
-        public function getVillage($id) { return ['owner' => 1, 'name' => 'Test']; }
-        public function getOasisV($id) { return ['owner' => 1, 'name' => 'Test']; }
-        public function getUserField($uid, $field, $default) { return 0; }
-        public function getvacmodexy($id) { return false; }
-        public function getEnforceVillage($wref, $mode, $cache) { return []; }
-        public function getOasisEnforce($wref, $mode, $cache) { return []; }
-        public function getOasisReturnLock($wref) { return true; }
-        public function getOasisEnforceByWref($wref, $cache) { return []; }
-        public function regenerateOasisUnits($wref) { return true; }
-        public function releaseOasisReturnLock($wref) {}
-        public function getEnforceLock($id) { return true; }
-        public function getEnforceArray($id, $mode, $cache) { return []; }
-        public function processReturnTroops($enforce) {}
-        public function releaseEnforceLock($id) {}
-        public function getWalkingTroopsTime($fromWref, $oasisWref, $ownerId, $tribe, $enforce, $mode) { return 100; }
-        public function deleteReinf($id) {}
-        public function addAttack($from, $t1, $t2, $t3, $t4, $t5, $t6, $t7, $t8, $t9, $t10, $hero, $type, $target, $mode, $x, $y) { return 1; }
-        public function addMovement($type, $from, $to, $ref, $start, $end) {}
-        public function getA2b($checksum) { return []; }
-        public function claimA2b($id, $checksum) { return true; }
-        public function modifyUnit($wid, $units, $add) {}
+    require_once __DIR__ . '/../GameEngine/Database.php';
+
+    // Reset database
+    $mysqli = new mysqli(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB);
+    if (!$mysqli->connect_error) {
+        $mysqli->query("SET FOREIGN_KEY_CHECKS = 0");
+        $result = $mysqli->query("SHOW TABLES");
+        while ($row = $result->fetch_array()) {
+            $mysqli->query("DROP TABLE " . $row[0]);
+        }
+        $mysqli->query("SET FOREIGN_KEY_CHECKS = 1");
+
+        $sql = file_get_contents(__DIR__ . '/../var/db/struct.sql');
+        $sql = str_replace('%PREFIX%', SQL_PREFIX, $sql);
+        $mysqli->multi_query($sql);
+        do { $mysqli->store_result(); } while ($mysqli->more_results() && $mysqli->next_result());
+        $mysqli->close();
     }
 
-    $GLOBALS['database'] = new MockDb();
+    // Initialize real database connection
+    $database = new \MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, (defined('SQL_PORT') ? SQL_PORT : 3306));
+    $GLOBALS['database'] = $database;
+    $GLOBALS['db'] = $database;
+    $GLOBALS['link'] = $database->return_link();
+
     $GLOBALS['form'] = new class { public $valuearray = []; public function addError($a, $b) {} public function getErrors() { return []; } public function returnErrors() { return 0; } };
     $GLOBALS['village'] = new class { public $wid = 1; public $resarray = []; public $natar = 0; public $master = 0; public $allcrop = 1000; public $pop = 10; public $unitarray = ['u11' => 10, 'hero' => 1]; };
     $GLOBALS['unitsbytype'] = ['cavalry' => [], 'catapult' => [], 'ram' => []];

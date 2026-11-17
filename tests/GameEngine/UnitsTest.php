@@ -3,8 +3,9 @@ use PHPUnit\Framework\TestCase;
 use App\Database\IDbConnection;
 
 require_once __DIR__ . '/../../GameEngine/Units.php';
+require_once __DIR__ . '/../DatabaseTestCase.php';
 
-class UnitsTest extends TestCase
+class UnitsTest extends \Tests\DatabaseTestCase
 {
     private $database;
     private $form;
@@ -14,7 +15,9 @@ class UnitsTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->database = new MockDb();
+        parent::setUp();
+        global $database;
+        $this->database = $database;
         $this->form = $this->createMock(stdClass::class);
         $this->generator = $this->createMock(stdClass::class);
         $this->session = $this->createMock(Session::class);

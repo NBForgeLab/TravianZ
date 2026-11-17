@@ -3,6 +3,7 @@ use PHPUnit\Framework\TestCase;
 use App\Database\IDbConnection;
 
 require_once __DIR__ . '/../../GameEngine/Battle.php';
+require_once __DIR__ . '/../DatabaseTestCase.php';
 
 interface MockableDb extends IDbConnection {
     public function getVillage($id);
@@ -10,7 +11,7 @@ interface MockableDb extends IDbConnection {
     public function getHero($uid);
 }
 
-class BattleTest extends TestCase
+class BattleTest extends \Tests\DatabaseTestCase
 {
     private $database;
     private $session;
@@ -20,7 +21,9 @@ class BattleTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->database = new MockDb();
+        parent::setUp();
+        global $database;
+        $this->database = $database;
         $this->session = $this->createMock(Session::class);
         $this->form = $this->createMock(stdClass::class);
         $this->village = $this->createMock(stdClass::class);

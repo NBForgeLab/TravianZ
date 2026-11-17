@@ -42,7 +42,9 @@ if (!$autoloader_found) {
     die('Could not find autoloading class.');
 }
 
-include_once("config.php");
+if (!defined('SQL_SERVER')) {
+    include_once("config.php");
+}
 
 // === Phase S1: the MYSQLi_DB class has been split into domain-specific traits (GameEngine/Database/) ===
 // The traits are in the global namespace, so they are included explicitly (the autoloader only maps the App\ namespace).
