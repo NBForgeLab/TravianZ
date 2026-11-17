@@ -22,6 +22,14 @@
 
 class Market
 {
+    private $db;
+    private $village;
+    private $session;
+    private $building;
+    private $bid17;
+    private $bid28;
+    private $generator;
+
     public $onsale = [];
     public $onmarket = [];
     public $sending = [];
@@ -38,6 +46,24 @@ class Market
 	*/
 	
 	private $cache = [];
+
+    public function __construct(
+        $database = null, 
+        $village = null, 
+        $session = null, 
+        $building = null,
+        $bidData = [],
+        $generator = null
+    ) {
+        $this->db = $database ?? ($GLOBALS['database'] ?? null);
+        $this->village = $village ?? ($GLOBALS['village'] ?? null);
+        $this->session = $session ?? ($GLOBALS['session'] ?? null);
+        $this->building = $building ?? ($GLOBALS['building'] ?? null);
+        
+        $this->bid17 = $bidData['bid17'] ?? ($GLOBALS['bid17'] ?? []);
+        $this->bid28 = $bidData['bid28'] ?? ($GLOBALS['bid28'] ?? []);
+        $this->generator = $generator ?? ($GLOBALS['generator'] ?? null);
+    }
 
     /**
      * Main market processor.

@@ -44,30 +44,76 @@ include_once($autoprefix."GameEngine/Lang/en.php");
 
 class Technology {
 
+    private $db;
+    private $village;
+    private $session;
+    private $unitDataService;
+    private $building;
+    private $bid19;
+    private $bid20;
+    private $bid21;
+    private $bid25;
+    private $bid26;
+    private $bid29;
+    private $bid30;
+    private $bid41;
+    private $bid44;
+    private $bid46;
+    private $bid48;
+    private $bid49;
+    private $generator;
+
+    public function __construct(
+        $database = null, 
+        $village = null, 
+        $session = null, 
+        UnitDataService $unitDataService = null,
+        $building = null,
+        $bidData = [],
+        $generator = null
+    ) {
+        $this->db = $database ?? ($GLOBALS['database'] ?? null);
+        $this->village = $village ?? ($GLOBALS['village'] ?? null);
+        $this->session = $session ?? ($GLOBALS['session'] ?? null);
+        $this->unitDataService = $unitDataService ?? new UnitDataService();
+        $this->building = $building ?? ($GLOBALS['building'] ?? null);
+        
+        $this->bid19 = $bidData['bid19'] ?? ($GLOBALS['bid19'] ?? []);
+        $this->bid20 = $bidData['bid20'] ?? ($GLOBALS['bid20'] ?? []);
+        $this->bid21 = $bidData['bid21'] ?? ($GLOBALS['bid21'] ?? []);
+        $this->bid25 = $bidData['bid25'] ?? ($GLOBALS['bid25'] ?? []);
+        $this->bid26 = $bidData['bid26'] ?? ($GLOBALS['bid26'] ?? []);
+        $this->bid29 = $bidData['bid29'] ?? ($GLOBALS['bid29'] ?? []);
+        $this->bid30 = $bidData['bid30'] ?? ($GLOBALS['bid30'] ?? []);
+        $this->bid41 = $bidData['bid41'] ?? ($GLOBALS['bid41'] ?? []);
+        $this->bid44 = $bidData['bid44'] ?? ($GLOBALS['bid44'] ?? []);
+        $this->bid46 = $bidData['bid46'] ?? ($GLOBALS['bid46'] ?? []);
+        $this->bid48 = $bidData['bid48'] ?? ($GLOBALS['bid48'] ?? []);
+        $this->bid49 = $bidData['bid49'] ?? ($GLOBALS['bid49'] ?? []);
+        $this->generator = $generator ?? ($GLOBALS['generator'] ?? null);
+    }
+
 	public $unarray = [1 => U1, U2, U3, U4, U5, U6, U7, U8, U9, U10, U11, U12, U13, U14, U15, U16, U17, U18, U19, U20, U21, U22, U23, U24, U25, U26, U27, U28, U29, U30, U31, U32, U33, U34, U35, U36, U37, U38, U39, U40, U41, U42, U43, U44, U45, U46, U47, U48, U49, U50, U51, U52, U53, U54, U55, U56, U57, U58, U59, U60, U61, U62, U63, U64, U65, U66, U67, U68, U69, U70, U71, U72, U73, U74, U75, U76, U77, U78, U79, U80, U81, U82, U83, U84, U85, U86, U87, U88, U89, U90 , U99, U0];
 
 	public function grabAcademyRes() {
-		global $village;
 		$holder = [];
-		foreach($village->researching as $research) {
+		foreach($this->village->researching as $research) {
 			if(substr($research['tech'], 0, 1) == "t") array_push($holder, $research);
 		}
 		return $holder;
 	}
 
 	public function getABUpgrades($type='a') {
-		global $village;
 		$holder = [];
-		foreach($village->researching as $research) {
+		foreach($this->village->researching as $research) {
 			if(substr($research['tech'], 0, 1) == $type) array_push($holder, $research);
 		}
 		return $holder;
 	}
 
 	public function isResearch($tech, $type) {
-		global $village;
 		
-		if(count($village->researching) == 0) return false;			
+		if(count($this->village->researching) == 0) return false;			
 		else
 		{
 		switch($type) {
@@ -76,7 +122,7 @@ class Technology {
 			case 3: $string = "b"; break;
 		}
 		
-		foreach($village->researching as $research) {
+		foreach($this->village->researching as $research) {
 			if($research['tech'] == $string.$tech) return true;
 		}
 		
@@ -106,8 +152,11 @@ class Technology {
 	 * Timp per unitate: unit_time x attri (1.0 -> 0.1351) / SPEED.
 	 */
 	private function procHeal($post) {
-		global $building, $database, $village;
-		global $bid46, $bid48;
+		$building = $this->building;
+		$database = $this->db;
+		$village = $this->village;
+		$bid46 = $this->bid46;
+		$bid48 = $this->bid48;
 
 		$unit = isset($post['hunit']) ? (int)$post['hunit'] : 0;
 		$amt = isset($post['hamt'][$unit]) ? (int)$post['hamt'][$unit] : 0;
