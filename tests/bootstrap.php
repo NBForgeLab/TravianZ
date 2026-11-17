@@ -49,27 +49,40 @@ namespace {
     require_once __DIR__ . '/../GameEngine/Ranking.php';
 
     // Reset database
-    if (!defined('DB_CLEANED')) {
-        define('DB_CLEANED', true);
-        $mysqli = new mysqli(SQL_SERVER, SQL_USER, SQL_PASS);
-        if (!$mysqli->connect_error) {
-            $mysqli->query("DROP DATABASE IF EXISTS `" . SQL_DB . "`");
-            $mysqli->query("CREATE DATABASE IF NOT EXISTS `" . SQL_DB . "`");
-            $mysqli->select_db(SQL_DB);
-            
-            $sql = file_get_contents(__DIR__ . '/../var/db/struct.sql');
-            $sql = str_replace('%PREFIX%', SQL_PREFIX, $sql);
-            
-            // Execute multi_query and consume all results
-            if ($mysqli->multi_query($sql)) {
-                do {
-                    if ($result = $mysqli->store_result()) {
-                        $result->free();
+    $initializedFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'travianz_test_initialized';
+    
+    if (!file_exists($initializedFile)) {
+        $lockFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'travianz_test.lock';
+        $fp = fopen($lockFile, 'c');
+        
+        if (flock($fp, LOCK_EX)) {
+            // Re-check after acquiring lock
+            if (!file_exists($initializedFile)) {
+                $mysqli = new mysqli(SQL_SERVER, SQL_USER, SQL_PASS);
+                if (!$mysqli->connect_error) {
+                    $mysqli->query("DROP DATABASE IF EXISTS `" . SQL_DB . "`");
+                    $mysqli->query("CREATE DATABASE IF NOT EXISTS `" . SQL_DB . "`");
+                    $mysqli->select_db(SQL_DB);
+                    
+                    $sql = file_get_contents(__DIR__ . '/../var/db/struct.sql');
+                    $sql = str_replace('%PREFIX%', SQL_PREFIX, $sql);
+                    
+                    // Execute multi_query and consume all results
+                    if ($mysqli->multi_query($sql)) {
+                        do {
+                            if ($result = $mysqli->store_result()) {
+                                $result->free();
+                            }
+                        } while ($mysqli->more_results() && $mysqli->next_result());
                     }
-                } while ($mysqli->more_results() && $mysqli->next_result());
+                    $mysqli->close();
+                    
+                    touch($initializedFile);
+                }
             }
-            $mysqli->close();
         }
+        flock($fp, LOCK_UN);
+        fclose($fp);
     }
 
     // Initialize real database connection
