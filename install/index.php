@@ -2,142 +2,140 @@
 // don't let SQL time out when 30-500 seconds (depending on php.ini) is not enough
 @set_time_limit(0);
 
-include("templates/script.tpl");
-
-if(!isset($_GET['s'])) {
-	$_GET['s']=0;
+if (!headers_sent()) {
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
 }
-$tz=(isset($_GET['t']))? (int)$_GET['t'] : 8;
-    switch($tz) {
-        case 1: $t_zone="Africa/Dakar";break;
-        case 2: $t_zone="America/New_York";break;
-        case 3: $t_zone="Antarctica/Casey";break;
-        case 4: $t_zone="Arctic/Longyearbyen";break;
-        case 5: $t_zone="Asia/Kuala_Lumpur";break;
-        case 6: $t_zone="Atlantic/Azores";break;
-        case 7: $t_zone="Australia/Melbourne";break;
-        case 8: $t_zone="Europe/Bucharest";break;
-        case 9: $t_zone="Europe/London";break;
-		case 10: $t_zone="Europe/Bratislava";break;
-		case 11: $t_zone="Indian/Maldives";break;
-		case 12: $t_zone="Pacific/Fiji";break;
-		case 13: $t_zone="America/Sao_Paulo";break;
-		case 14: $t_zone="Europe/Zurich";break;
-		default: $t_zone="America/Sao_Paulo";break;
+
+if (session_status() === PHP_SESSION_NONE) {
+    if (!headers_sent()) {
+        @session_set_cookie_params([
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
     }
+    @session_start();
+}
+if (empty($_SESSION['tz_csrf'])) {
+    try {
+        $_SESSION['tz_csrf'] = bin2hex(random_bytes(32));
+    } catch (Throwable $e) {
+        $_SESSION['tz_csrf'] = bin2hex(pack('N8', mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand(), mt_rand()));
+    }
+}
+
+require_once __DIR__ . '/templates/script.tpl';
+
+if (!isset($_GET['s'])) {
+    $_GET['s'] = 0;
+}
+$tz = (isset($_GET['t'])) ? (int) $_GET['t'] : 8;
+switch ($tz) {
+    case 1: $t_zone = "Africa/Dakar"; break;
+    case 2: $t_zone = "America/New_York"; break;
+    case 3: $t_zone = "Antarctica/Casey"; break;
+    case 4: $t_zone = "Arctic/Longyearbyen"; break;
+    case 5: $t_zone = "Asia/Kuala_Lumpur"; break;
+    case 6: $t_zone = "Atlantic/Azores"; break;
+    case 7: $t_zone = "Australia/Melbourne"; break;
+    case 8: $t_zone = "Europe/Bucharest"; break;
+    case 9: $t_zone = "Europe/London"; break;
+    case 10: $t_zone = "Europe/Bratislava"; break;
+    case 11: $t_zone = "Indian/Maldives"; break;
+    case 12: $t_zone = "Pacific/Fiji"; break;
+    case 13: $t_zone = "America/Sao_Paulo"; break;
+    case 14: $t_zone = "Europe/Zurich"; break;
+    default: $t_zone = "America/Sao_Paulo"; break;
+}
 date_default_timezone_set($t_zone);
+
+$tzStep = max(0, min(5, (int) $_GET['s']));
+$tzSteps = ['Intro', 'Configuration', 'Database', 'World Data', 'Accounts', 'End'];
+$tzPercent = round((($tzStep + 1) / count($tzSteps)) * 100, 2);
+$tzBuild = 'v11.0.0 (Installer Revamped)';
 ?>
-
- <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
 <head>
-	<title>TravianZ Installation</title>
-	<link rel="shortcut icon" href="favicon.ico" />
-	<meta http-equiv="cache-control" content="max-age=0" />
-	<meta http-equiv="pragma" content="no-cache" />
-	<meta http-equiv="expires" content="0" />
-	<meta http-equiv="imagetoolbar" content="no" />
-	<meta http-equiv="content-type" content="text/html; charset=us-ascii" />
-	<script src="mt-full.js?0ac37" type="text/javascript"></script>
-	<script src="unx.js?f4b7h" type="text/javascript"></script>
-	<script src="new.js?0ac37" type="text/javascript"></script>
-	<link href="../gpack/travian_default/lang/en/lang.css?f4b7d" rel="stylesheet" type="text/css" />
-	<link href="../gpack/travian_default/lang/en/compact.css?f4b7i" rel="stylesheet" type="text/css" />
-	<link href="../gpack/travian_default/travian.css?e21d2" rel="stylesheet" type="text/css" />
-	<link href="../gpack/travian_default/lang/en/lang.css?e21d2" rel="stylesheet" type="text/css" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>TravianZ Installation</title>
+<link rel="icon" href="../favicon.ico">
+<?php tz_install_head_assets(); ?>
 </head>
 <body>
-<script LANGUAGE="JavaScript">
-function refresh(tz) {
-     var dt = new Array();
-    dt=tz.split(",");
-    tz=dt[0];
-    location="?s=1&t="+tz;
+<div class="tz-app">
+
+  <header class="tz-header">
+    <span class="tz-logo" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 2 4 7v8c0 7.5 5.2 14.5 12 16.5C22.8 29.5 28 22.5 28 15V7L16 2Z" fill="#22c55e"/>
+        <path d="m11 16 3.5 3.5L21.5 12" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+    <div class="tz-header-text">
+      <h1>TravianZ installation</h1>
+      <p>Setup wizard &middot; <?= htmlspecialchars($tzBuild, ENT_QUOTES, 'UTF-8') ?></p>
+    </div>
+    <div class="tz-header-actions">
+      <button type="button" class="tz-icon-btn" id="tzThemeToggle" aria-pressed="false" title="Toggle theme" aria-label="Toggle colour theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+      <a class="tz-help" href="https://github.com/Shadowss/TravianZ/wiki" target="_blank" rel="noopener noreferrer">Help</a>
+    </div>
+  </header>
+
+  <nav class="tz-steps" aria-label="Installation progress">
+    <?php include __DIR__ . '/templates/menu.tpl'; ?>
+  </nav>
+  <div class="tz-progress" role="progressbar" aria-label="Installation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= (int) $tzPercent ?>">
+    <span style="width:<?= $tzPercent ?>%"></span>
+  </div>
+
+  <main class="tz-main" id="tzMain">
+    <div class="tz-step-head">
+      <h2><?= htmlspecialchars($tzSteps[$tzStep], ENT_QUOTES, 'UTF-8') ?></h2>
+      <p class="tz-eyebrow">Step <?= $tzStep + 1 ?> of <?= count($tzSteps) ?></p>
+    </div>
+
+<?php
+$tzRoot = dirname(__DIR__);
+$tzUnwritable = [];
+if (!is_dir($tzRoot . '/GameEngine') || !is_writable($tzRoot . '/GameEngine')) {
+    $tzUnwritable[] = 'GameEngine/';
 }
-function proceed() {
-	var e = document.getElementById('Submit');
-
-	// if we disable the button right away, we wouldn't be able to submit the form
-    setTimeout(function() {
-        e.disabled = "disabled";
-    }, 200);
-
-    e.value = "Processing...";
-
-    return true;
+if (!is_dir($tzRoot . '/GameEngine/Admin/Mods') || !is_writable($tzRoot . '/GameEngine/Admin/Mods')) {
+    $tzUnwritable[] = 'GameEngine/Admin/Mods/';
 }
-</script>
-	<div class="wrapper">
-		<img class="c1" src="img/x.gif" id="msfilter" alt="" name="msfilter" />
+if (!is_dir($tzRoot . '/var') || !is_writable($tzRoot . '/var')) {
+    $tzUnwritable[] = 'var/';
+}
 
-		<div id="dynamic_header"></div>
+if (!empty($tzUnwritable)) {
+    echo '<div class="tz-alert tz-alert-error"><strong>ERROR!</strong><br>The following directories cannot be written by the web server: <code>' . htmlspecialchars(implode(', ', $tzUnwritable), ENT_QUOTES, 'UTF-8') . '</code>.<br>Grant the web server write access to these directories, then refresh this page.</div>';
+} elseif (file_exists($tzRoot . '/var/installed')) {
+    echo '<div class="tz-alert tz-alert-error"><strong>ERROR!</strong><br>Installation appears to have been completed. If this is a mistake, remove the <code>var/installed</code> file.</div>';
+} else {
+    switch ($tzStep) {
+        case 0: include __DIR__ . '/templates/greet.tpl'; break;
+        case 1: include __DIR__ . '/templates/config.tpl'; break;
+        case 2: include __DIR__ . '/templates/dataform.tpl'; break;
+        case 3: include __DIR__ . '/templates/wdata.tpl'; break;
+        case 4: include __DIR__ . '/templates/accounts.tpl'; break;
+        case 5: include __DIR__ . '/templates/end.tpl'; break;
+    }
+}
+?>
+  </main>
 
-		<div id="header">
-			<div id="mtop"></div>
-		</div>
+  <footer class="tz-footer">
+    <span>&copy; 2010 - 2026 TravianZ &middot; All rights reserved</span>
+    <span>Server build <b><?= htmlspecialchars($tzBuild, ENT_QUOTES, 'UTF-8') ?></b></span>
+  </footer>
 
-		<div id="mid">
-			<div id="side_navi">
-				<?php include("templates/menu.tpl"); ?>
-			</div>
-
-				<div id="content" class="login">
-					<?php
-					IHG_Progressbar::draw_css();
-					$bar = new IHG_Progressbar(6, 'Step %d from %d ');
-					$bar->draw();
-					for($i = 0; $i < ($_GET['s']+1); $i++) {
-						$bar->tick();
-					}
-					?>
-				<div class="headline"><center>
-				<span class="f18 c5">TravianZ Installation Script</span>
-				</center></div>
-
-				<?php
-				if(substr(sprintf('%o', fileperms('../')), -4)<'700'){
-					echo"<span class='f18 c5'>ERROR!</span><br />It's not possible to write the config file. Change the permission to '777'. After that, refresh this page!";
-				} 
-				else if (file_exists("../var/installed")) {
-					echo"<span class='f18 c5'>ERROR!</span><br />Installation appears to have been completed.<br />If this is an error remove /var/installed file in install directory.";
-				}
-				else
-					switch($_GET['s']){
-						case 0:
-						include("templates/greet.tpl");
-						break;
-						case 1:
-						include("templates/config.tpl");
-						break;
-						case 2:
-						include("templates/dataform.tpl");
-						break;
-						case 3:
-						include("templates/wdata.tpl");
-						break;
-						case 4:
-					    include("templates/accounts.tpl");
-					    break;
-						case 5:
-						include("templates/end.tpl");
-						break;
-					}
-				?>
-
-			<div id="side_info" class="outgame"></div>
-
-			<div class="clear"></div>
-		</div>
-
-		<div class="footer-stopper outgame"></div>
-
-		<div class="clear"></div>
-
-<?php include("../Templates/footer.tpl"); ?>
-	</div>
-
-	<div id="ce"></div>
+</div>
+<?php tz_install_body_assets(); ?>
 </body>
 </html>
