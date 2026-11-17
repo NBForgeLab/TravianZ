@@ -192,7 +192,7 @@ class Automation {
         $this->bid40 = $bid40;
         $this->u99 = $u99;
         
-        $this->artifacts = $artifacts ?: new Artifacts();
+        $this->artifacts = $artifacts ?: new Artifacts($this->database);
     }
 
     public function getGlobal($name) {

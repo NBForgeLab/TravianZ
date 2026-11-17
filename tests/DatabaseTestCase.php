@@ -8,10 +8,8 @@ abstract class DatabaseTestCase extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (!isset($GLOBALS['database'])) {
-             require_once __DIR__ . '/../GameEngine/config.test.php';
-             $GLOBALS['database'] = new \MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, 3306);
-        }
+        // Force the use of the real database initialized in bootstrap.php
+        $this->assertNotNull($GLOBALS['database'], "Database not initialized. Ensure bootstrap.php is loaded.");
         $GLOBALS['database']->query("START TRANSACTION");
     }
 

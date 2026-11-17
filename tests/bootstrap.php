@@ -49,31 +49,27 @@ namespace {
     require_once __DIR__ . '/../GameEngine/Ranking.php';
 
     // Reset database
-    $mysqli = new mysqli(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB);
-    if (!$mysqli->connect_error) {
-        $mysqli->query("SET FOREIGN_KEY_CHECKS = 0");
-        $result = $mysqli->query("SHOW TABLES");
-        $tables = [];
-        while ($row = $result->fetch_array()) {
-            $tables[] = $row[0];
+    if (!defined('DB_CLEANED')) {
+        define('DB_CLEANED', true);
+        $mysqli = new mysqli(SQL_SERVER, SQL_USER, SQL_PASS);
+        if (!$mysqli->connect_error) {
+            $mysqli->query("DROP DATABASE IF EXISTS `" . SQL_DB . "`");
+            $mysqli->query("CREATE DATABASE IF NOT EXISTS `" . SQL_DB . "`");
+            $mysqli->select_db(SQL_DB);
+            
+            $sql = file_get_contents(__DIR__ . '/../var/db/struct.sql');
+            $sql = str_replace('%PREFIX%', SQL_PREFIX, $sql);
+            
+            // Execute multi_query and consume all results
+            if ($mysqli->multi_query($sql)) {
+                do {
+                    if ($result = $mysqli->store_result()) {
+                        $result->free();
+                    }
+                } while ($mysqli->more_results() && $mysqli->next_result());
+            }
+            $mysqli->close();
         }
-        foreach ($tables as $table) {
-            $mysqli->query("DROP TABLE IF EXISTS `" . $table . "`");
-        }
-        $mysqli->query("SET FOREIGN_KEY_CHECKS = 1");
-
-        $sql = file_get_contents(__DIR__ . '/../var/db/struct.sql');
-        $sql = str_replace('%PREFIX%', SQL_PREFIX, $sql);
-        
-        // Execute multi_query and consume all results
-        if ($mysqli->multi_query($sql)) {
-            do {
-                if ($result = $mysqli->store_result()) {
-                    $result->free();
-                }
-            } while ($mysqli->more_results() && $mysqli->next_result());
-        }
-        $mysqli->close();
     }
 
     // Initialize real database connection
@@ -81,6 +77,12 @@ namespace {
     $GLOBALS['database'] = $database;
     $GLOBALS['db'] = $database;
     $GLOBALS['link'] = $database->return_link();
+
+    // Define missing constants for tests
+    if (!defined('NATARS_SPAWN_TIME')) define('NATARS_SPAWN_TIME', 86400);
+    if (!defined('NATARS_WW_BUILD_TIME')) define('NATARS_WW_BUILD_TIME', 3600);
+    if (!defined('NATURE_REGTIME')) define('NATURE_REGTIME', 3600);
+    if (!defined('MEDALINTERVAL')) define('MEDALINTERVAL', 86400);
 
     $GLOBALS['form'] = new class { public $valuearray = []; public function addError($a, $b) {} public function getErrors() { return []; } public function returnErrors() { return 0; } };
     $GLOBALS['village'] = new class { public $wid = 1; public $resarray = []; public $natar = 0; public $master = 0; public $allcrop = 1000; public $pop = 10; public $unitarray = ['u11' => 10, 'hero' => 1]; };

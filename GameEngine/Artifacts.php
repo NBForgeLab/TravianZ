@@ -1,5 +1,8 @@
 <?php 
 
+use App\Database\IDbConnection;
+use App\GameEngine\IConfig;
+
 #################################################################################
 ##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
 ## --------------------------------------------------------------------------- ##
@@ -22,6 +25,16 @@
 
 class Artifacts
 {
+
+    /**
+     * @var IDbConnection
+     */
+    private IDbConnection $database;
+
+    /**
+     * @var IConfig
+     */
+    private IConfig $config;
 
     const 
     
@@ -89,24 +102,24 @@ class Artifacts
                                                   ["type" => 2, "size" => 2, "name" => HASTE_LARGE, "vname" => HASTE_LARGEVILLAGE, "effect" => "(1.5x)", "quantity" => 4, "img" => 4],
                                                   ["type" => 2, "size" => 3, "name" => HASTE_UNIQUE, "vname" => HASTE_UNIQUEVILLAGE, "effect" => "(3x)", "quantity" => 1, "img" => 4]],
         
-                                EYESIGHT_DESC => [["type" => 3, "size" => 1, "name" => EYESIGHT_SMALL, "vname" => EYESIGHT_SMALLVILLAGE, "effect" => "(5x)", "quantity" => 6, "img" => 5],
+                                 EYESIGHT_DESC => [["type" => 3, "size" => 1, "name" => EYESIGHT_SMALL, "vname" => EYESIGHT_SMALLVILLAGE, "effect" => "(5x)", "quantity" => 6, "img" => 5],
                                                   ["type" => 3, "size" => 2, "name" => EYESIGHT_LARGE, "vname" => EYESIGHT_LARGEVILLAGE, "effect" => "(3x)", "quantity" => 4, "img" => 5],
                                                   ["type" => 3, "size" => 3, "name" => EYESIGHT_UNIQUE, "vname" => EYESIGHT_UNIQUEVILLAGE, "effect" => "(10x)", "quantity" => 1, "img" => 5]],
         
-                                    DIET_DESC => [["type" => 4, "size" => 1, "name" => DIET_SMALL, "vname" => DIET_SMALLVILLAGE, "effect" => "(50%)", "quantity" => 6, "img" => 6],
+                                     DIET_DESC => [["type" => 4, "size" => 1, "name" => DIET_SMALL, "vname" => DIET_SMALLVILLAGE, "effect" => "(50%)", "quantity" => 6, "img" => 6],
                                                   ["type" => 4, "size" => 2, "name" => DIET_LARGE, "vname" => DIET_LARGEVILLAGE, "effect" => "(25%)", "quantity" => 4, "img" => 6],
                                                   ["type" => 4, "size" => 3, "name" => DIET_UNIQUE, "vname" => DIET_UNIQUEVILLAGE, "effect" => "(50%)", "quantity" => 1, "img" => 6]],
         
-                                ACADEMIC_DESC => [["type" => 5, "size" => 1, "name" => ACADEMIC_SMALL, "vname" => ACADEMIC_SMALLVILLAGE, "effect" => "(50%)", "quantity" => 6, "img" => 8],
+                                 ACADEMIC_DESC => [["type" => 5, "size" => 1, "name" => ACADEMIC_SMALL, "vname" => ACADEMIC_SMALLVILLAGE, "effect" => "(50%)", "quantity" => 6, "img" => 8],
                                                   ["type" => 5, "size" => 2, "name" => ACADEMIC_LARGE, "vname" => ACADEMIC_LARGEVILLAGE, "effect" => "(25%)", "quantity" => 4, "img" => 8],
                                                   ["type" => 5, "size" => 3, "name" => ACADEMIC_UNIQUE, "vname" => ACADEMIC_UNIQUEVILLAGE, "effect" => "(50%)", "quantity" => 1, "img" => 8]],
         
-                                 STORAGE_DESC => [["type" => 6, "size" => 1, "name" => STORAGE_SMALL, "vname" => STORAGE_SMALLVILLAGE, "effect" => "(50%)", "quantity" => 6, "img" => 9],
+                                  STORAGE_DESC => [["type" => 6, "size" => 1, "name" => STORAGE_SMALL, "vname" => STORAGE_SMALLVILLAGE, "effect" => "(50%)", "quantity" => 6, "img" => 9],
                                                   ["type" => 6, "size" => 2, "name" => STORAGE_LARGE, "vname" => STORAGE_LARGEVILLAGE, "effect" => "(25%)", "quantity" => 4, "img" => 9]],
         
-                               CONFUSION_DESC => [["type" => 7, "size" => 1, "name" => CONFUSION_SMALL, "vname" => CONFUSION_SMALLVILLAGE, "effect" => "(200)", "quantity" => 6, "img" => 10],
-                                                  ["type" => 7, "size" => 2, "name" => CONFUSION_LARGE, "vname" => CONFUSION_LARGEVILLAGE, "effect" => "(100)", "quantity" => 4, "img" => 10],
-                                                  ["type" => 7, "size" => 3, "name" => CONFUSION_UNIQUE, "vname" => CONFUSION_UNIQUEVILLAGE, "effect" => "(500)", "quantity" => 1, "img" => 10]],
+                                CONFUSION_DESC => [["type" => 7, "size" => 1, "name" => CONFUSION_SMALL, "vname" => CONFUSION_SMALLVILLAGE, "effect" => "(200)", "quantity" => 6, "img" => 10],
+                                                   ["type" => 7, "size" => 2, "name" => CONFUSION_LARGE, "vname" => CONFUSION_LARGEVILLAGE, "effect" => "(100)", "quantity" => 4, "img" => 10],
+                                                   ["type" => 7, "size" => 3, "name" => CONFUSION_UNIQUE, "vname" => CONFUSION_UNIQUEVILLAGE, "effect" => "(500)", "quantity" => 1, "img" => 10]],
         
                                     FOOL_DESC => [["type" => 8, "size" => 1, "name" => FOOL_SMALL, "vname" => FOOL_SMALLVILLAGE, "effect" => "", "quantity" => 10, "img" => "fool"],
                                                   2 => ["type" => 8, "size" => 3, "name" => FOOL_UNIQUE, "vname" => FOOL_UNIQUEVILLAGE, "effect" => "", "quantity" => 1, "img" => "fool"]]],
@@ -238,7 +251,9 @@ class Artifacts
     
     $natarsWWVillagesUnits;
     
-    public function __construct(){
+    public function __construct(IDbConnection $database, IConfig $config){
+        $this->database = $database;
+        $this->config = $config;
         
         $this->natarsArtifactsUnits = function($multiplier){
             return [41 => rand(1000 * $multiplier, 2000 * $multiplier) * NATARS_UNITS,
@@ -274,7 +289,7 @@ class Artifacts
      */
     
     public function createNatars(){
-        global $database;
+        $database = $this->database;
         
         //Register the Natars account, the Natars' password is the same as the MH's one
         //NOTE: pre-existing anomaly, left untouched - this call passes 8 args
@@ -342,7 +357,7 @@ class Artifacts
      */
     
     public function scoutAllPlayers($wid){
-        global $database;
+        $database = $this->database;
         
         $array = $database->getProfileVillages(0, 1);
         $refs = [];
@@ -397,7 +412,7 @@ class Artifacts
      */
     
     public function addArtifactVillages($artifactArrays, $uid = self::NATARS_UID, $addTroops = true) {
-        global $database;
+        $database = $this->database;
 
         //Variables initialization
         $artifactNumber = 0;
@@ -446,7 +461,7 @@ class Artifacts
      */
     
     public function createWWVillages($numberOfVillages = self::NATARS_BASE_WW_VILLAGES, $uid = self::NATARS_UID, $addTroops = true){
-        global $database;
+        $database = $this->database;
         
         $villageArrays = $troopArrays = $buildingArrays = $wids = [];
         for($i = 1; $i <= $numberOfVillages; $i++){
@@ -478,7 +493,7 @@ class Artifacts
      */
     
     public function activateArtifacts(){
-        global $database;
+        $database = $this->database;
         
         //Get all inactive artifacts that have to be activated --> (24 hours / Speed of the server)
         $time = time();
@@ -542,7 +557,7 @@ class Artifacts
      */
      
     public function returnArtifactToNatars($artifactArray){
-        global $database;
+        $database = $this->database;
         
         //Set the village arrays
         $artifactArrays = array_merge(self::NATARS_ARTIFACTS, self::NATARS_WW_BUILDING_PLANS);
@@ -651,5 +666,3 @@ class Artifacts
                 "nextEffect" => $nextEffect];
     }
 }
-
-?>
