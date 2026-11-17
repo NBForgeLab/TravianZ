@@ -60,7 +60,8 @@ class Alliance {
     }
     
     public function procAlliance(array $get): void {
-        global $session, $database;
+        $session = $this->session;
+        $database = $this->database;
 		// ==================== SANITIZARE GET ====================
         $get['a'] = isset($get['a']) ? (int)$get['a'] : 0;
         $get['o'] = isset($get['o']) ? (int)$get['o'] : 0;
@@ -91,7 +92,7 @@ class Alliance {
     }
 
     public function isForumAccessible(int $forumID): bool {
-        global $session;
+        $session = $this->session;
 		 // Căutăm forumul în lista de forumuri partajate
         foreach ($session->sharedForums as $forums) {
             foreach ($forums as $forum) {
@@ -103,8 +104,9 @@ class Alliance {
         return false;
     }
 
-    public static function canAct(array $datas, int $mode = 0): bool {
-        global $database, $session;
+    public function canAct(array $datas, int $mode = 0): bool {
+        $database = $this->database;
+        $session = $this->session;
         $hasSwitchedToAdmin = isset($datas['admin']) && !empty($datas['admin']) && $datas['admin'] === "switch_admin";
 		// ==================== CONDIȚII DE ACCES ====================
         $isAllianceOwner = $database->isAllianceOwner($session->uid) == $datas['alliance'];
@@ -116,7 +118,8 @@ class Alliance {
     }
         
     public function createForumVisiblity(array $alliancesID, array $alliancesName, array $usersID, array $usersName): array {
-        global $database, $session;
+        $database = $this->database;
+        $session = $this->session;
         $visibleAlliances = [];
         $visibleUsers = [];
 		// ==================== ALIANȚE VIZIBILE ====================
@@ -254,7 +257,9 @@ class Alliance {
 	*****************************************/
 
     public function sendInvite(array $post): void {
-        global $form, $database, $session;
+        $form = $this->form;
+        $database = $this->database;
+        $session = $this->session;
 		// ==================== DATE DE INTRARE ====================
         $invitedUsername = stripslashes($post['a_name'] ?? '');
 		// Obținem datele utilizatorului invitat (comportament exact ca în original)
@@ -301,7 +306,8 @@ class Alliance {
 	*****************************************/
 
     private function rejectInvite(array $get): void {
-        global $database, $session;
+        $database = $this->database;
+        $session = $this->session;
         $inviteID = $get['d'] ?? 0;
 		// ==================== CĂUTARE ȘI RESPINGERE INVITAȚIE ====================
         foreach ($this->inviteArray as $invite) {
@@ -325,7 +331,8 @@ class Alliance {
 	*****************************************/
 	
     private function delInvite(array $get): void {
-        global $database, $session;
+        $database = $this->database;
+        $session = $this->session;
         $inviteID = $get['d'] ?? 0;
 		// Încărcăm lista de invitații trimise de alianța curentă
         $inviteArray = $database->getAliInvitations($session->alliance);
@@ -353,7 +360,9 @@ class Alliance {
 	*****************************************/
 
     private function acceptInvite(array $get): void {
-        global $form, $database, $session;
+        $form = $this->form;
+        $database = $this->database;
+        $session = $this->session;
         $inviteID = $get['d'] ?? 0;
         $acceptError = false;
         $maxMembers = 0;
@@ -403,7 +412,11 @@ class Alliance {
 	*****************************************/
 
     private function createAlliance(array $post): void {
-        global $form, $database, $session, $bid18, $building;
+        $form = $this->form;
+        $database = $this->database;
+        $session = $this->session;
+        $bid18 = $this->bid18;
+        $building = $this->building;
         $tag = $post['ally1'] ?? '';
         $name = $post['ally2'] ?? '';
 		// ==================== VALIDĂRI ====================
@@ -457,7 +470,9 @@ class Alliance {
 	*****************************************/
 
     private function changeAliName(array $get): void {
-        global $form, $database, $session;
+        $form = $this->form;
+        $database = $this->database;
+        $session = $this->session;
         $newTag = $get['ally1'] ?? '';
         $newName = $get['ally2'] ?? '';
         $userAlly = $database->getAlliance($session->alliance);
@@ -485,7 +500,9 @@ class Alliance {
 	*****************************************/
 
     private function updateAlliProfile(array $post): void {
-        global $database, $session, $form;
+        $database = $this->database;
+        $session = $this->session;
+        $form = $this->form;
 		// ==================== VERIFICARE PERMISIUNI ====================
         if ($this->userPermArray['opt3'] == 0) $form->addError("perm", NO_PERMISSION);
 		// ==================== REZULTAT ====================
@@ -506,7 +523,9 @@ class Alliance {
     MODIFICAT - permite liderului sa-si editeze rank-ul
     *****************************************/
     private function changeUserPermissions(array $post): void {
-        global $database, $session, $form;
+        $database = $this->database;
+        $session = $this->session;
+        $form = $this->form;
 
         $targetUID = (int)($post['a_user'] ?? 0);
         $rankTitle = $post['a_titel'] ?? '';
@@ -564,7 +583,9 @@ class Alliance {
 	*****************************************/
 
     private function kickAlliUser(array $post): void {
-        global $database, $session, $form;
+        $database = $this->database;
+        $session = $this->session;
+        $form = $this->form;
         $targetUID = (int)($post['a_user'] ?? 0);
         $UserData = $database->getUserArray($targetUID, 1);
         $allyId = (int)$session->alliance;
@@ -596,7 +617,9 @@ class Alliance {
 	*****************************************/
         
     public function setForumLink(array $post): void {
-        global $database, $session, $form;
+        $database = $this->database;
+        $session = $this->session;
+        $form = $this->form;
         if ($this->userPermArray['opt5'] == 0) {
             $form->addError("perm", NO_PERMISSION);
         } else {
@@ -606,7 +629,8 @@ class Alliance {
     }
         
     public function Vote(array $post): void {
-        global $database, $session;
+        $database = $this->database;
+        $session = $this->session;
         $surveyID = (int)($post['tid'] ?? 0);
         $voteOption = (int)($post['vote'] ?? 0);
         $fid2 = (int)($post['fid2'] ?? 0);
@@ -625,7 +649,9 @@ class Alliance {
 	*****************************************/   
 	
     private function quitally(array $post): void {
-        global $database, $session, $form;
+        $database = $this->database;
+        $session = $this->session;
+        $form = $this->form;
 		// ==================== VERIFICARE PAROLĂ ====================
         if (!isset($post['pw']) || $post['pw'] === '') { $form->addError("pw", PW_EMPTY); return; }
         if (!password_verify($post['pw'], $session->userinfo['password'])) { $form->addError("pw", LOGIN_PW_ERROR); return; }
@@ -670,7 +696,9 @@ class Alliance {
 	*****************************************/
 
     private function changediplomacy(array $post): void {
-        global $database, $session, $form;
+        $database = $this->database;
+        $session = $this->session;
+        $form = $this->form;
         if ($this->userPermArray['opt6'] == 0) { $form->addError("name", NO_PERMISSION); return; }
         $targetAllianceName = $post['a_name'] ?? '';
         $diplType = (int)($post['dipl'] ?? 0);

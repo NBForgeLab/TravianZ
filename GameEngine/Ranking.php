@@ -20,10 +20,21 @@
 ## --------------------------------------------------------------------------- ##
 #################################################################################
 
-	class Ranking {
+    class Ranking {
 
-		public $rankarray = [];
-		private $rlastupdate;
+        public $rankarray = [];
+        private $rlastupdate;
+        private $database;
+        private $session;
+        private $village;
+        private $multisort;
+
+        public function __construct($database = null, $session = null, $village = null, $multisort = null) {
+            $this->database = $database ?? $GLOBALS['database'] ?? null;
+            $this->session = $session ?? $GLOBALS['session'] ?? null;
+            $this->village = $village ?? $GLOBALS['village'] ?? null;
+            $this->multisort = $multisort ?? $GLOBALS['multisort'] ?? null;
+        }
 
 	/*****************************************
 	Function to get rank
@@ -75,7 +86,8 @@
 	*****************************************/
 
 		public function procRankReq($get) {
-			global $village, $session;
+            $village = $this->village;
+            $session = $this->session;
 			if(isset($get['id'])) {
 			switch($get['id']) {
         case 1:
@@ -272,9 +284,11 @@
 	*****************************************/		
 
 		public function procRankArray() {
-				global $multisort, $database;
+				$multisort = $this->multisort;
+				$database = $this->database;
+                $db = $this->database;
 				
-				if($GLOBALS['db']->countUser() > 0){
+				if($db->countUser() > 0){
 				$holder = array();
 				$tribeCondition = SHOW_NATARS ? "(u.tribe <= 9) AND (u.id > 5 OR u.id = 3)" : "u.tribe IN (1,2,3,6,7,8,9) AND u.id > 5";
 				// BUG REPARAT: access<8/10 excludea Multihunter(8)/Admin(9) dar nu si
@@ -327,7 +341,8 @@
 	*****************************************/	
 
 		public function procRankRaceArray($race) {
-				global $multisort, $database;
+				$multisort = $this->multisort;
+				$database = $this->database;
 				$race = $database->escape((int) $race);
 				$holder = array();
 				// BUG REPARAT: vezi comentariul din procRankArray() de mai sus (access>0 adaugat).
@@ -367,7 +382,8 @@
 	*****************************************/		
 
 		public function procAttRankArray() {
-				global $multisort, $database;
+				$multisort = $this->multisort;
+				$database = $this->database;
 				$holder = array();
 			// BUG REPARAT: vezi comentariul din procRankArray() mai sus (access>0 adaugat).
 			$q = "SELECT u.id AS userid, u.username, u.apall, COUNT(CASE WHEN v.type != 99 THEN v.wref END) AS totalvillages, COALESCE(SUM(v.pop),0) AS pop
@@ -396,7 +412,7 @@
 	*****************************************/		
 
 		public function procDefRankArray() {
-			    global $database;
+			    $database = $this->database;
 				$holder = array();
 			// BUG REPARAT: vezi comentariul din procRankArray() mai sus (access>0 adaugat).
 			$q = "SELECT u.id AS userid, u.username, u.dpall, COUNT(CASE WHEN v.type != 99 THEN v.wref END) AS totalvillages, COALESCE(SUM(v.pop),0) AS pop
@@ -425,14 +441,15 @@
 	*****************************************/		
 
 		public function procVRankArray() {
-				global $multisort;
-				$array = $GLOBALS['db']->getVRanking();
+				$multisort = $this->multisort;
+                $db = $this->database;
+				$array = $db->getVRanking();
 				$holder = array();
 				foreach($array as $value) {
-					$coor = $GLOBALS['db']->getCoor($value['wref']);
+					$coor = $db->getCoor($value['wref']);
 					$value['x'] = $coor['x'];
 					$value['y'] = $coor['y'];
-					$value['user'] = $GLOBALS['db']->getUserField($value['owner'], "username", 0);
+					$value['user'] = $db->getUserField($value['owner'], "username", 0);
 					$holder[] = $value;
 				}
 				/**
@@ -454,17 +471,18 @@
 	*****************************************/		
 
 		public function procARankArray() {
-				global $multisort, $database;
-				$array = $GLOBALS['db']->getARanking();
+				$multisort = $this->multisort;
+				$db = $this->database;
+				$array = $db->getARanking();
 				$holder = array();
 				foreach($array as $value) {
-					$memberlist = $GLOBALS['db']->getAllMember($value['id']);
+					$memberlist = $db->getAllMember($value['id']);
 					$totalpop = 0;
                     $memberIDs = [];
                     foreach($memberlist as $member) {
                         $memberIDs[] = $member['id'];
                     }
-                    $data = $database->getVSumField($memberIDs,"pop");
+                    $data = $db->getVSumField($memberIDs,"pop");
                     if (count($data)) {
                         foreach ($data as $row) {
                             $totalpop += $row['Total'];
@@ -488,11 +506,12 @@
 	*****************************************/		
 
 		public function procHeroRankArray() {
-				global $multisort;
-				$array = $GLOBALS['db']->getHeroRanking();
+				$multisort = $this->multisort;
+                $db = $this->database;
+				$array = $db->getHeroRanking();
 				$holder = array();
 				foreach($array as $value) {
-					$value['owner'] = $GLOBALS['db']->getUserField($value['uid'], "username", 0);
+					$value['owner'] = $db->getUserField($value['uid'], "username", 0);
 					$value['level'];
 					$value['name'];
 					$value['uid'];
@@ -507,11 +526,12 @@
 	*****************************************/		
 
 		public function procAAttRankArray() {
-				global $multisort;
-				$array = $GLOBALS['db']->getARanking();
+				$multisort = $this->multisort;
+                $db = $this->database;
+				$array = $db->getARanking();
 				$holder = array();
 				foreach($array as $value) {
-					$memberlist = $GLOBALS['db']->getAllMember($value['id']);
+					$memberlist = $db->getAllMember($value['id']);
 					$totalap = 0;
 					foreach($memberlist as $member) {
 						$totalap += $member['ap'];
@@ -537,11 +557,12 @@
 	*****************************************/		
 
 		public function procADefRankArray() {
-				global $multisort;
-				$array = $GLOBALS['db']->getARanking();
+				$multisort = $this->multisort;
+                $db = $this->database;
+				$array = $db->getARanking();
 				$holder = array();
 				foreach($array as $value) {
-					$memberlist = $GLOBALS['db']->getAllMember($value['id']);
+					$memberlist = $db->getAllMember($value['id']);
 					$totaldp = 0;
 					foreach($memberlist as $member) {
 						$totaldp += $member['dp'];
