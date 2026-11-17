@@ -2,6 +2,7 @@
 namespace Tests;
 
 require_once __DIR__ . '/../DatabaseTestCase.php';
+require_once __DIR__ . '/../../GameEngine/Technology.php';
 
 class TechnologyTest extends DatabaseTestCase
 {
@@ -11,8 +12,11 @@ class TechnologyTest extends DatabaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        if (!defined('U1')) define('U1', 'Unit1');
+        if (!defined('SPEED')) define('SPEED', 1);
+        
         $this->db = $GLOBALS['database'];
-        $village = (object) ['wid' => 1, 'researching' => [['tech' => 'a1'], ['tech' => 't1']]];
+        $village = (object) ['wid' => 1, 'researching' => [['tech' => 'a1'], ['tech' => 't1']], 'awood' => 100, 'aclay' => 100, 'airon' => 100, 'acrop' => 100];
         $this->tech = new \Technology($this->db, $village);
     }
 
