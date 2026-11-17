@@ -511,6 +511,7 @@ class MYSQLi_DB implements IDbConnection {
 // database is not needed if we're displaying static pages
 $req_file = basename($_SERVER['PHP_SELF']);
 if (!in_array($req_file, ['tutorial.php', 'anleitung.php'])) {
+    if (!defined('TRAVIANZ_TEST_MODE')) {
     $database = new MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, (defined('SQL_PORT') ? SQL_PORT : 3306));
     $link = $database->return_link();
     $GLOBALS['db'] = $database;
@@ -522,5 +523,6 @@ if (!in_array($req_file, ['tutorial.php', 'anleitung.php'])) {
         global $database;
         $database->sendPendingMessages();
     });
+}
 }
 ?>

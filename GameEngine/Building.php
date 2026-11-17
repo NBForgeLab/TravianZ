@@ -34,6 +34,8 @@
 #################################################################################
 
 
+use App\Utils\Response;
+
 class Building {
 
     public $NewBuilding = false;
@@ -129,14 +131,12 @@ class Building {
         50 => array('tribe' => array(9), 'unique' => false),                       // Barricade (Vikingi)
     );
 
-    public function __construct() {
+    public function __construct($database = null, $session = null, $village = null, $logging = null) {
 
-        global $database, $session, $village, $logging;
-
-        $this->db   = $database;
-        $this->sess = $session;
-        $this->vil  = $village;
-        $this->log  = $logging;
+        $this->db   = $database ?? $GLOBALS['database'];
+        $this->sess = $session ?? $GLOBALS['session'];
+        $this->vil  = $village ?? $GLOBALS['village'];
+        $this->log  = $logging ?? $GLOBALS['logging'];
 
         $maxConcurrent = BASIC_MAX;
 
@@ -277,8 +277,7 @@ class Building {
         !$isValidFieldType ||
         !$isValidWall
     ) {
-        header('Location: '.$_SERVER['SCRIPT_NAME']);
-        exit;
+        Response::redirect($_SERVER['SCRIPT_NAME']);
     }
 
     if (!isset($_GET['master'])) {
@@ -311,8 +310,7 @@ class Building {
 	*****************************************/
 
 	private function redirect($fieldId) {
-    header('Location: '.($fieldId >= 19 ? 'dorf2.php' : 'dorf1.php'));
-    exit;
+    Response::redirect(($fieldId >= 19 ? 'dorf2.php' : 'dorf1.php'));
 }
 
 	/*****************************************

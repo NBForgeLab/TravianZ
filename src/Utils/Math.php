@@ -24,7 +24,9 @@ namespace App\Utils;
 class Math {
 
     public static function isInt($val) {
-        return (is_numeric($val) && intval($val) === $val);
+        if (!is_numeric($val)) return false;
+        $val = (string)$val;
+        return (string)(int)$val === $val;
     }
 
     public static function isFloat($val) {

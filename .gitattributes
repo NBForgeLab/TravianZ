@@ -1,7 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-
 # Files which should be always normalized
 *.php text
 *.js text
@@ -9,6 +8,7 @@
 *.htaccess text
 *.tpl text
 *.html text
+*.sh text eol=lf
 
 # Binaries
 *.png binary

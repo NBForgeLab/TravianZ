@@ -26,6 +26,7 @@ lint_php()
 
 run_php_tests()
 {
+    echo "Running legacy PHP tests..."
 	local file
 	local tested=0
 
@@ -42,8 +43,11 @@ run_php_tests()
 	if [[ "$tested" -eq 0 ]]; then
 		echo "No zero-dependency PHP tests found."
 	else
-		echo "PHP tests passed for ${tested} files."
+		echo "Legacy PHP tests passed for ${tested} files."
 	fi
+
+    echo "Running PHPUnit tests..."
+    ./vendor/bin/phpunit
 }
 
 run_shell_tests()

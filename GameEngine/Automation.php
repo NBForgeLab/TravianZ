@@ -36,7 +36,9 @@ if ( !defined('AUTOMATION_MANUAL_RUN') ) {
                 @unlink( AUTOMATION_LOCK_FILE_NAME );
             } else {
                 // automation file exists and is valid, don't run another automation
-                exit;
+                if (!defined('TRAVIANZ_TEST_MODE')) {
+                    exit;
+                }
             }
         } else {
             // create automation lock file

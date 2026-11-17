@@ -33,6 +33,7 @@ if (!defined('SITTER_PERM_ALL'))    define('SITTER_PERM_ALL',   31);
 #################################################################################
 
 use App\Entity\User;
+use App\Utils\Response;
 
 ob_start();
 mb_internal_encoding("UTF-8");
@@ -51,8 +52,7 @@ for ($i = 0; $i < 5; $i++) {
 }
 
 if (!file_exists($autoprefix . 'GameEngine/config.php')) {
-    header("Location: install/");
-    exit;
+    Response::redirect('install/');
 }
 
 $script_name = ($_SERVER['REQUEST_URI'] == 'karte.php') ? 'karte' : $_SERVER['REQUEST_URI'];
@@ -152,7 +152,9 @@ function __construct() {
             ));
         }
 
-        session_start();
+        if (!defined('TRAVIANZ_TEST_MODE')) {
+            session_start();
+        }
     }
 
     $this->logged_in = $this->checkLogin();
@@ -182,8 +184,7 @@ function __construct() {
     if($maint['active'] == 1 && $this->access < 9) {
         // evita loop infinit
         if(strpos($_SERVER['PHP_SELF'], 'maintenance.php') === false) {
-            header('Location: maintenance.php');
-            exit;
+            Response::redirect('maintenance.php');
         }
     }
 
@@ -277,17 +278,14 @@ function __construct() {
         // result either way (isWinner() still covers every other entry point),
         // just without the extra redirect hop for the single most common one.
         if ($database->isThereAWinner()) {
-            header("Location: winner.php");
-            exit;
+            Response::redirect("winner.php");
         }
 
         if ($dbarray['id'] == 1) {
-            header("Location: nachrichten.php");
-            exit;
+            Response::redirect("nachrichten.php");
         }
 
-        header("Location: dorf1.php");
-        exit;
+        Response::redirect("dorf1.php");
     }
 
     /**
@@ -351,8 +349,7 @@ function __construct() {
                     'nachrichten.php', 'logout.php', 'statistiken.php',
                     'rules.php', 'karte.php', 'karte2.php', 'spieler.php'
                 ])) {
-                    header('Location: nachrichten.php');
-                    exit;
+                    Response::redirect('nachrichten.php');
                 }
             }
 
@@ -373,8 +370,7 @@ function __construct() {
         if ($this->access == BANNED &&
             !in_array(basename($_SERVER['PHP_SELF']), ['banned.php', 'nachrichten.php', 'rules.php'])) {
 
-            header('Location: banned.php');
-            exit;
+            Response::redirect('banned.php');
         }
     }
 
@@ -382,8 +378,7 @@ function __construct() {
         if (($_SESSION['ok'] ?? null) == 2 &&
             basename($_SERVER['PHP_SELF']) != 'maintenance.php') {
 
-            header('Location: maintenance.php');
-            exit;
+            Response::redirect('maintenance.php');
         }
     }
 
@@ -429,8 +424,7 @@ function __construct() {
             in_array($requiredPage, ['build.php', 'plus1.php', 'a2b.php', 'allianz.php'], true) ||
             ($requiredPage === 'plus.php' && $idParam >= 7)
         ) {
-            header('Location: winner.php');
-            exit;
+            Response::redirect('winner.php');
         }
     }
 
@@ -444,8 +438,7 @@ function __construct() {
 
         if (!count($this->villages)) {
             $this->Logout();
-            header('Location: login.php');
-            exit;
+            Response::redirect('login.php');
         }
 
         // Constantele de miscare pentru aventuri sunt definite in
@@ -704,19 +697,16 @@ function __construct() {
 
         if (!$this->logged_in) {
             if (!in_array($page, $pagearray) || $page == "logout.php") {
-                header("Location: login.php");
-                exit;
+                Response::redirect('login.php');
             }
         } else {
             if (in_array($page, $pagearray)) {
 
                 if (($this->uid ?? 0) == 1) {
-                    header("Location: nachrichten.php");
-                    exit;
+                    Response::redirect('nachrichten.php');
                 }
 
-                header("Location: dorf1.php");
-                exit;
+                Response::redirect('dorf1.php');
             }
         }
     }

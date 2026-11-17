@@ -22,8 +22,20 @@
 
 class Units {
     public $sending, $recieving, $return = [];
+    private $database;
+    private $form;
+    private $generator;
+    private $session;
+    private $village;
 
-    public function procUnits($post) {
+    public function __construct($database = null, $form = null, $generator = null, $session = null, $village = null) {
+        $this->database = $database ?? $GLOBALS['database'];
+        $this->form = $form ?? $GLOBALS['form'];
+        $this->generator = $generator ?? $GLOBALS['generator'];
+        $this->session = $session ?? $GLOBALS['session'];
+        $this->village = $village ?? $GLOBALS['village'];
+    }
+
         if(isset($post['c'])) {
             if (!isset($post['disabled'])) $post['disabled'] = '';
 
@@ -63,8 +75,7 @@ class Units {
             $form->addError("error", $error);
             $_SESSION['errorarray'] = $form->getErrors();
             $_SESSION['valuearray'] = $_POST;
-            header("Location: a2b.php");
-            exit;
+            \App\Utils\Response::redirect("a2b.php");
         }
         else return $post;
     }
@@ -724,8 +735,7 @@ class Units {
             $form->addError("error", $sitterError);
             $_SESSION['errorarray'] = $form->getErrors();
             $_SESSION['valuearray'] = $_POST;
-            header("Location: a2b.php");
-            exit;
+            \App\Utils\Response::redirect("a2b.php");
         }
 
         for ($i = 1; $i < 10; $i++) {
@@ -749,15 +759,13 @@ class Units {
         if($form->returnErrors() > 0){
             $_SESSION['errorarray'] = $form->getErrors();
             $_SESSION['valuearray'] = $_POST;
-            header( "Location: a2b.php" );
-            exit;
+            \App\Utils\Response::redirect("a2b.php");
         }else{
             if (empty($data['id']) || !$database->claimA2b((int)$data['id'], $post['timestamp_checksum'])) {
                 $form->addError("error", "This troop send request was already processed. Please try again.");
                 $_SESSION['errorarray'] = $form->getErrors();
                 $_SESSION['valuearray'] = $_POST;
-                header("Location: a2b.php");
-                exit;
+                \App\Utils\Response::redirect("a2b.php");
             }
 
             $u = ($session->tribe == 1) ? "" : $session->tribe - 1;

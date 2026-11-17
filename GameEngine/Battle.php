@@ -22,13 +22,24 @@
 
 
 class Battle {
+    private $database;
+    private $form;
+    private $village;
+    private $unitsbytype;
+
+    public function __construct($database = null, $form = null, $village = null, $unitsbytype = null) {
+        $this->database = $database ?? $GLOBALS['database'];
+        $this->form = $form ?? $GLOBALS['form'];
+        $this->village = $village ?? $GLOBALS['village'];
+        $this->unitsbytype = $unitsbytype ?? $GLOBALS['unitsbytype'];
+    }
 
 	/*****************************************
 	Function sigma
 	*****************************************/
     
 	private function sigma($x) {
-    return ($x > 1 ? 2 - pow($x, -1.5) : pow($x, 1.5)) / 2;
+    return \App\Utils\BattleMath::sigma($x);
 	}
 		
 	/*****************************************
@@ -36,7 +47,7 @@ class Battle {
 	*****************************************/
         
 	public function procSim($post) {
-    global $form;
+    $form = $this->form;
 
     /******************************************************************
      * BASIC VALIDATION
@@ -158,7 +169,7 @@ class Battle {
 		
 	private function getBattleHero($uid) {
 
-    global $database;
+    $database = $this->database;
     $heroarray = $database->getHero($uid);
     if (empty($heroarray) || empty($heroarray[0])) {
         // ob/db sunt MULTIPLICATORI: 0 ar anula toata puterea armatei ($ap *= ob).
@@ -232,6 +243,7 @@ class Battle {
             : 0
     ];
 }
+
 
 	/*****************************************
 	Function to battle Hero Sim
@@ -407,8 +419,7 @@ class Battle {
 
 	public function getTypeLevel($tid, $vid) {
 
-    global $village, $database;
-    $resourcearray = $database->getResourceLevel($vid);
+    $resourcearray = $this->database->getResourceLevel($vid);
     if (empty($resourcearray)) {
         return 0;
     }
@@ -508,14 +519,12 @@ class Battle {
 		$defReinforcements = null,
 		$previousHeroOutcome = null) {
 
-    global $database, $unitsbytype;
-
     /******************************************************************
      * UNIT GROUP DEFINITIONS
      ******************************************************************/
-    $calvaryLookup  = array_flip($unitsbytype['cavalry']);
-    $catapultLookup = array_flip($unitsbytype['catapult']);
-    $ramsLookup     = array_flip($unitsbytype['ram']);
+    $calvaryLookup  = array_flip($this->unitsbytype['cavalry']);
+    $catapultLookup = array_flip($this->unitsbytype['catapult']);
+    $ramsLookup     = array_flip($this->unitsbytype['ram']);
 
     /******************************************************************
      * BASE VARIABLES
@@ -1344,64 +1353,7 @@ class Battle {
 	*****************************************/
 
 	private function applyWallAndResidence($dp, $cdp, $def_wall, $def_tribe, $residence, $type) {
-
-    $residenceBonus = (2 * ($residence * $residence)) + 10;
-
-    if ($def_wall > 0) {
-
-        // Factori de zid per trib: 1 City Wall, 2 Earth Wall, 3 Palisade,
-        // 6 Makeshift Wall, 7 Stone Wall, 8 Defensive Wall, 9 Barricade
-        $wallFactors = array(1 => 1.030, 2 => 1.020, 3 => 1.025, 6 => 1.015, 7 => 1.030, 8 => 1.028, 9 => 1.022);
-        $factor = isset($wallFactors[$def_tribe]) ? $wallFactors[$def_tribe] : 1.025;
-
-        $wallMultiplier = round(pow($factor, $def_wall), 3);
-
-        if ($dp > 0 || $cdp > 0) {
-
-            if ($type == 1) {
-
-                $dp *= $wallMultiplier;
-                $dp += 10;
-
-            } else {
-
-                $dp  *= $wallMultiplier;
-                $cdp *= $wallMultiplier;
-
-                $resBonus = $residenceBonus * $wallMultiplier;
-
-                $dp  += $resBonus;
-                $cdp += $resBonus;
-            }
-
-        } else {
-
-            $baseWall = 10 * $wallMultiplier * $def_wall;
-
-            $dp  = $baseWall;
-            $cdp = $baseWall;
-
-            if ($type != 1) {
-
-                $resBonus = $residenceBonus * $wallMultiplier;
-
-                $dp  += $resBonus;
-                $cdp += $resBonus;
-
-            } else {
-
-                $dp += 10;
-                $cdp = 0;
-            }
-        }
-
-    } elseif ($type != 1) {
-
-        $dp  += $residenceBonus;
-        $cdp += $residenceBonus;
-    }
-
-    return ['dp' => $dp, 'cdp' => $cdp];
+    return \App\Utils\BattleMath::applyWallAndResidence($dp, $cdp, $def_wall, $def_tribe, $residence, $type);
 }
 
 	/*****************************************
@@ -1474,26 +1426,7 @@ class Battle {
 	*****************************************/
 
 	private function computeMorale($attpop, $defpop, $isWWVillage, $rap, $rdp) {
-
-    if ($attpop > $defpop && !$isWWVillage) {
-
-        $moralbonus = 1 / round(
-            max(
-                0.667,
-                pow(
-                    $defpop / $attpop,
-                    0.2 * min(1, $rap / max($rdp, 1))
-                )
-            ),
-            3
-        );
-
-    } else {
-
-        $moralbonus = 1.0;
-    }
-
-    return $moralbonus;
+    return \App\Utils\BattleMath::computeMorale($attpop, $defpop, $isWWVillage, $rap, $rdp);
 }
 
 	/*****************************************
@@ -2044,20 +1977,7 @@ class Battle {
     $strongerBuildings,
     $moraleBonus
 ) {
-
-    $divider = $durability * $strongerBuildings;
-    if ($divider <= 0) {
-        $divider = 1;
-    }
-    $catapultsEfficiency = floor($catapultsQuantity / $divider);
-    $sigma = $this->sigma($ADRatio);
-    return (
-        4
-        * $sigma
-        * $catapultsEfficiency
-        * $catapultsUpgrade
-        / $moraleBonus
-    );
+    return \App\Utils\BattleMath::calculateCatapultsDamage($catapultsQuantity, $catapultsUpgrade, $durability, $ADRatio, $strongerBuildings, $moraleBonus);
 }
 };
 

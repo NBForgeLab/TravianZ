@@ -31,6 +31,9 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
+      - name: Install dependencies
+        run: composer install
+
       - name: Check PHP syntax and regression tests
         run: ./scripts/check.sh php
 
