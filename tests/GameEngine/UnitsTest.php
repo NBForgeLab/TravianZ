@@ -1,32 +1,39 @@
 <?php
-use PHPUnit\Framework\TestCase;
-use App\Database\IDbConnection;
-
-require_once __DIR__ . '/../../GameEngine/Units.php';
 require_once __DIR__ . '/../DatabaseTestCase.php';
+use Tests\DatabaseTestCase;
 
-class UnitsTest extends \Tests\DatabaseTestCase
+class UnitsTest extends DatabaseTestCase
 {
-    private $database;
+    private $db;
     private $form;
     private $generator;
-    private $session;
-    private $village;
+    private $sess;
+    private $vil;
 
     protected function setUp(): void
     {
         parent::setUp();
-        global $database;
-        $this->database = $database;
-        $this->form = $this->createMock(stdClass::class);
+        $this->db = $GLOBALS['database'];
+        
+        // Setup mocks
+        $this->form = new class { 
+            public function addError($a, $b) {} 
+            public function getErrors() { return []; } 
+        };
         $this->generator = $this->createMock(stdClass::class);
-        $this->session = $this->createMock(Session::class);
-        $this->village = $this->createMock(stdClass::class);
+        $this->sess = (object) ['checker' => '123', 'tribe' => 1, 'uid' => 1, 'sit' => 0];
+        $this->vil = (object) ['wid' => 1, 'unitarray' => ['u11' => 10, 'u12' => 0, 'hero' => 0], 'wid' => 1];
     }
 
-    public function testConstructor()
+    public function testProcUnitsInvalidType()
     {
-        $units = new Units($this->database, $this->form, $this->generator, $this->session, $this->village);
-        $this->assertInstanceOf(Units::class, $units);
+        $units = new Units($this->db, $this->form, $this->generator, $this->sess, $this->vil);
+        
+        // Invalid type (c=99)
+        $post = ['c' => 99];
+        
+        // This should not throw exception, it should just return
+        $result = $units->procUnits($post);
+        $this->assertNull($result);
     }
 }

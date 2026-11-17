@@ -6,6 +6,10 @@ namespace App\Utils {
 }
 
 namespace {
+    if (!defined('USER')) define('USER', 2);
+    if (!defined('START_DATE')) define('START_DATE', date('d.m.Y'));
+    if (!defined('START_TIME')) define('START_TIME', date('H:i:s'));
+    if (!defined('PROTECTION')) define('PROTECTION', 3600);
     if (!defined('TRAVIANZ_TEST_MODE')) define('TRAVIANZ_TEST_MODE', true);
     if (!defined('USRNM_MIN_LENGTH')) define('USRNM_MIN_LENGTH', 3);
     if (!defined('PW_MIN_LENGTH')) define('PW_MIN_LENGTH', 6);
@@ -45,7 +49,7 @@ namespace {
         $mysqli->query("SET FOREIGN_KEY_CHECKS = 0");
         $result = $mysqli->query("SHOW TABLES");
         while ($row = $result->fetch_array()) {
-            $mysqli->query("DROP TABLE " . $row[0]);
+            $mysqli->query("DROP TABLE IF EXISTS " . $row[0]);
         }
         $mysqli->query("SET FOREIGN_KEY_CHECKS = 1");
 
