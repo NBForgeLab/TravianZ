@@ -60,6 +60,8 @@ class Village {
 	private $sess;
 	private $tech;
 	private $bids = [];
+    private $log;
+    private $generator;
 
 	// W1 #4: index of the f1..f38 fields, built lazily, once per load
 	private $fieldIndex = null;
@@ -78,27 +80,18 @@ class Village {
 	];
 
 	/**
-	 * W2 #7: the constructor ONLY loads. No DB writes, no redirect,
-	 * no production tick. "new Village" is safe to call anywhere
-	 * (multiple instances, admin switch). The static loadedWid /
-	 * cacheCleared guards were removed (W2 #10) - they are no longer
-	 * needed now that side effects are explicit.
+	 * W2 #7: the constructor now uses DI.
 	 */
-	function __construct() {
-		global $database, $session, $technology,
-			$bid1, $bid2, $bid3, $bid4, $bid5, $bid6, $bid7, $bid8, $bid9, $bid45;
-
+	function __construct($database, $session, $technology, array $bids, $logging, $generator, $sessionWid = null) {
 		$this->db   = $database;
 		$this->sess = $session;
 		$this->tech = $technology;
-		$this->bids = [
-			1 => $bid1, 2 => $bid2, 3 => $bid3, 4 => $bid4,
-			5 => $bid5, 6 => $bid6, 7 => $bid7, 8 => $bid8, 9 => $bid9,
-			45 => $bid45, // Waterworks (Egyptians) - used by getOasisBonusFactor()
-		];
+		$this->bids = $bids;
+        $this->log  = $logging;
+        $this->generator = $generator;
 
 		// set village id
-		if (isset($_SESSION['wid'])) $this->wid = $_SESSION['wid'];
+		if ($sessionWid !== null) $this->wid = $sessionWid;
 		else $this->wid = $this->sess->villages[0];
 
 		// preload caches (safe warmup)
@@ -107,7 +100,7 @@ class Village {
 		// validate existence
 		if (!$this->db->checkVilExist($this->wid)) {
 			$this->wid = $this->db->getVillageID($this->sess->uid);
-			$_SESSION['wid'] = $this->wid;
+			if ($sessionWid !== null) $_SESSION['wid'] = $this->wid;
 		}
 
 		$this->LoadTown();
@@ -157,13 +150,11 @@ class Village {
 	 * anywhere; getResearching always received use_cache = true).
 	 */
 	private function LoadTown(): void {
-		global $logging;
-
 		$this->infoarray = $this->db->getVillage($this->wid);
 
 		if ($this->infoarray['owner'] != $this->sess->uid && !$this->sess->isAdmin) {
 			unset($_SESSION['wid']);
-			$logging->addIllegal($this->sess->uid, $this->wid, 1);
+			$this->log->addIllegal($this->sess->uid, $this->wid, 1);
 
 			$this->wid = $this->sess->villages[0];
 			$this->infoarray = $this->db->getVillage($this->wid);
@@ -464,10 +455,25 @@ class Village {
 // constructor (load -> production tick -> ActionControl). Village.php is
 // include_once-d, so this block runs only once per request.
 // "new Village" stays safe for additional instances (admin switch).
-$village = new Village;
+// W2: bootstrap with EXPLICIT side effects, in the same order as the old
+// constructor (load -> production tick -> ActionControl). Village.php is
+// include_once-d, so this block runs only once per request.
+// "new Village" stays safe for additional instances (admin switch).
+
+if (!isset($village)) {
+    global $database, $session, $technology, $logging, $generator,
+           $bid1, $bid2, $bid3, $bid4, $bid5, $bid6, $bid7, $bid8, $bid9, $bid45;
+    $bids = [
+        1 => $bid1, 2 => $bid2, 3 => $bid3, 4 => $bid4,
+        5 => $bid5, 6 => $bid6, 7 => $bid7, 8 => $bid8, 9 => $bid9,
+        45 => $bid45,
+    ];
+    $village = new Village($database, $session, $technology, $bids, $logging, $generator, $_SESSION['wid'] ?? null);
+}
+
 $village->tick();
 $village->ActionControl();
-$building = new Building;
+$building = new Building($database, $session, $village, $logging, $technology, $generator, $bids);
 
 // automation
 // P2: if a dedicated cron is running (cron.php), we no longer trigger automation

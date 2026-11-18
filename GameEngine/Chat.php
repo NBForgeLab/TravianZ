@@ -363,38 +363,15 @@ if (!isset($SAJAX_INCLUDED)) {
 }
 
 	function add_data($data) {
-		global $session,$database;
-
-		//$data = explode("|",$data);
-		if (is_array($data)){$msg = htmlspecialchars($data[1]);}else{$msg = htmlspecialchars($data);};
-		$msg = $database->escape($msg);
-//		$msg=htmlspecialchars($msg);
-		$name = addslashes($session->username);
-
-		if ($msg != ""){
-		    $id_user = (int) $session->uid;
-			$alliance = $database->escape($session->alliance);
-			$now = time();
-				$q = "INSERT into ".TB_PREFIX."chat (id_user,name,alli,date,msg) values ($id_user,'$name','$alliance','$now','$msg')";
-				mysqli_query($database->dblink,$q);
-		}
+        global $session, $database;
+        $chat = new \App\GameEngine\ChatService($session, $database);
+        $chat->addData($data);
 	}
 
 	function get_data() {
-		global $session,$database;
-
-		// FIX: $data initializat inainte de concatenare - fara asta, PHP 8+
-		// arunca "Warning: Undefined variable $data" la fiecare refresh de chat
-		// (umple error log-ul; pe PHP 9 devine mai strict).
-		$data = '';
-
-		$alliance = $database->escape($session->alliance);
-		$query = mysqli_query($database->dblink,"select id_user, name, date, msg from ".TB_PREFIX."chat where alli='$alliance' order by id desc limit 0,13");
-			while ($r = mysqli_fetch_array($query)) {
-			$dates = date("g:i",$r['date']);
-			$data .= "[{$dates}] <a href='spieler.php?uid={$r['id_user']}'>{$r['name']}</a>: {$r['msg']} <br>";
-			}
-		return $data;
+        global $session, $database;
+        $chat = new \App\GameEngine\ChatService($session, $database);
+        return $chat->getData();
 	}
 
 	$sajax_request_type = "GET";

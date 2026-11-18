@@ -17,7 +17,15 @@ class TechnologyTest extends DatabaseTestCase
         
         $this->db = $GLOBALS['database'];
         $village = (object) ['wid' => 1, 'researching' => [['tech' => 'a1'], ['tech' => 't1']], 'awood' => 100, 'aclay' => 100, 'airon' => 100, 'acrop' => 100];
-        $this->tech = new \Technology($this->db, $village);
+        $this->tech = new \Technology(
+            $this->db, 
+            $village, 
+            $this->createMock(\Session::class), 
+            $this->createMock(\UnitDataService::class),
+            $this->createMock(\Building::class),
+            [],
+            null // Generator is final, cannot mock it
+        );
     }
 
     public function testGetABUpgrades()
@@ -30,7 +38,15 @@ class TechnologyTest extends DatabaseTestCase
     public function testIsResearch()
     {
         $village = (object) ['wid' => 1, 'researching' => [['tech' => 't1'], ['tech' => 't2']]];
-        $this->tech = new \Technology($this->db, $village);
+        $this->tech = new \Technology(
+            $this->db, 
+            $village, 
+            $this->createMock(\Session::class), 
+            $this->createMock(\UnitDataService::class),
+            $this->createMock(\Building::class),
+            [],
+            null
+        );
         
         $this->assertTrue($this->tech->isResearch(1, 1));
         $this->assertFalse($this->tech->isResearch(3, 1));

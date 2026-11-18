@@ -49,48 +49,29 @@ class Technology {
     private $session;
     private $unitDataService;
     private $building;
-    private $bid19;
-    private $bid20;
-    private $bid21;
-    private $bid25;
-    private $bid26;
-    private $bid29;
-    private $bid30;
-    private $bid41;
-    private $bid44;
-    private $bid46;
-    private $bid48;
-    private $bid49;
+    private $bidData;
     private $generator;
 
     public function __construct(
-        $database = null, 
-        $village = null, 
-        $session = null, 
-        UnitDataService $unitDataService = null,
-        $building = null,
-        $bidData = [],
-        $generator = null
+        $database, 
+        $village, 
+        $session, 
+        UnitDataService $unitDataService,
+        $building,
+        array $bidData,
+        $generator
     ) {
-        $this->db = $database ?? ($GLOBALS['database'] ?? null);
-        $this->village = $village ?? ($GLOBALS['village'] ?? null);
-        $this->session = $session ?? ($GLOBALS['session'] ?? null);
-        $this->unitDataService = $unitDataService ?? new UnitDataService();
-        $this->building = $building ?? ($GLOBALS['building'] ?? null);
-        
-        $this->bid19 = $bidData['bid19'] ?? ($GLOBALS['bid19'] ?? []);
-        $this->bid20 = $bidData['bid20'] ?? ($GLOBALS['bid20'] ?? []);
-        $this->bid21 = $bidData['bid21'] ?? ($GLOBALS['bid21'] ?? []);
-        $this->bid25 = $bidData['bid25'] ?? ($GLOBALS['bid25'] ?? []);
-        $this->bid26 = $bidData['bid26'] ?? ($GLOBALS['bid26'] ?? []);
-        $this->bid29 = $bidData['bid29'] ?? ($GLOBALS['bid29'] ?? []);
-        $this->bid30 = $bidData['bid30'] ?? ($GLOBALS['bid30'] ?? []);
-        $this->bid41 = $bidData['bid41'] ?? ($GLOBALS['bid41'] ?? []);
-        $this->bid44 = $bidData['bid44'] ?? ($GLOBALS['bid44'] ?? []);
-        $this->bid46 = $bidData['bid46'] ?? ($GLOBALS['bid46'] ?? []);
-        $this->bid48 = $bidData['bid48'] ?? ($GLOBALS['bid48'] ?? []);
-        $this->bid49 = $bidData['bid49'] ?? ($GLOBALS['bid49'] ?? []);
-        $this->generator = $generator ?? ($GLOBALS['generator'] ?? null);
+        $this->db = $database;
+        $this->village = $village;
+        $this->session = $session;
+        $this->unitDataService = $unitDataService;
+        $this->building = $building;
+        $this->bidData = $bidData;
+        $this->generator = $generator;
+    }
+
+    private function getBid($key) {
+        return $this->bidData[$key] ?? [];
     }
 
 	public $unarray = [1 => U1, U2, U3, U4, U5, U6, U7, U8, U9, U10, U11, U12, U13, U14, U15, U16, U17, U18, U19, U20, U21, U22, U23, U24, U25, U26, U27, U28, U29, U30, U31, U32, U33, U34, U35, U36, U37, U38, U39, U40, U41, U42, U43, U44, U45, U46, U47, U48, U49, U50, U51, U52, U53, U54, U55, U56, U57, U58, U59, U60, U61, U62, U63, U64, U65, U66, U67, U68, U69, U70, U71, U72, U73, U74, U75, U76, U77, U78, U79, U80, U81, U82, U83, U84, U85, U86, U87, U88, U89, U90 , U99, U0];
@@ -155,8 +136,8 @@ class Technology {
 		$building = $this->building;
 		$database = $this->db;
 		$village = $this->village;
-		$bid46 = $this->bid46;
-		$bid48 = $this->bid48;
+		$bid46 = $this->getBid('bid46');
+		$bid48 = $this->getBid('bid48');
 
 		$unit = isset($post['hunit']) ? (int)$post['hunit'] : 0;
 		$amt = isset($post['hamt'][$unit]) ? (int)$post['hamt'][$unit] : 0;
@@ -293,7 +274,7 @@ class Technology {
 
 	public function maxUnit($unit,$great=false) {
 		$unit = "u" . $unit;
-		global $village, $$unit, $database;
+		global $village, $database;
 		
 		$unitarray = $$unit;
 		$res = $database->getVillage($village->wid, 0, false);
@@ -318,7 +299,7 @@ class Technology {
 
 	public function maxUnitPlus($unit,$great=false) {
 		$unit = "u" . $unit;	
-		global $village, $$unit, $database;
+		global $village, $database;
 		
 		$unitarray = $$unit;
 		$res = $database->getVillage($village->wid);
@@ -605,7 +586,8 @@ class Technology {
 	}
 
     private function trainUnit($unit, $amt, $great = false) {
-		global $database, ${'u'.$unit}, $village;
+		$database = $this->db;
+		$village = $this->village;
 		
 		if (!$database->getTrainingLock($village->wid)) return;
 		try {
@@ -615,13 +597,14 @@ class Technology {
 			$each = $this->getTrainingTime($unit, $great);
 			$amt = $this->getMaxTrainable($unit, $amt, $great);
 			
-			$wood = ${'u'.$unit}['wood'] * $amt * ($great ? 3 : 1);
-			$clay = ${'u'.$unit}['clay'] * $amt * ($great ? 3 : 1);
-			$iron = ${'u'.$unit}['iron'] * $amt * ($great ? 3 : 1);
-			$crop = ${'u'.$unit}['crop'] * $amt * ($great ? 3 : 1);
+			$uData = $this->unitDataService->getUnitData($unit);
+			$wood = $uData['wood'] * $amt * ($great ? 3 : 1);
+			$clay = $uData['clay'] * $amt * ($great ? 3 : 1);
+			$iron = $uData['iron'] * $amt * ($great ? 3 : 1);
+			$crop = $uData['crop'] * $amt * ($great ? 3 : 1);
 
 			if($database->modifyResource($village->wid, $wood , $clay, $iron, $crop, 0) && $amt > 0) {
-				$database->trainUnit($village->wid, $unit + ($great ? 1000 : 0), $amt, ${'u'.$unit}['pop'], $each, 0);
+				$database->trainUnit($village->wid, $unit + ($great ? 1000 : 0), $amt, $uData['pop'], $each, 0);
 			}
 		}
 		} finally {
@@ -650,7 +633,9 @@ class Technology {
 	}
 
 	private function getTrainingTime($unit, $great) {
-		global $building, ${'u'.$unit}, $bid19, $bid20, $bid21, $bid25, $bid26, $bid29, $bid30, $bid41, $bid44, $bid49;
+		$building = $this->building;
+		$uData = $this->unitDataService->getUnitData($unit);
+		
 		
 		$footies = [1, 2, 3, 11, 12, 13, 14, 21, 22, 31, 32, 33, 34, 41, 42, 43, 44, 51, 52, 61, 62, 63, 71, 72, 73, 74, 81, 82, 83, 84];
 		$calvary = [4, 5, 6, 15, 16, 23, 24, 25, 26, 35, 36, 45, 46, 53, 54, 55, 56, 64, 65, 66, 75, 76, 85, 86];
@@ -660,38 +645,38 @@ class Technology {
 		
 		if(in_array($unit, $footies)) {		    
 			if($great) {
-				$each = round(($bid29[$building->getTypeLevel(29)]['attri'] / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($this->getBid('bid29')[$building->getTypeLevel(29)]['attri'] / 100) * $uData['time'] / SPEED);
 			} else {
-				$each = round(($bid19[$building->getTypeLevel(19)]['attri'] / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid19[$building->getTypeLevel(19)]['attri'] / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 			}
 		}
 		if(in_array($unit, $calvary)) {		    
 			if($great) {
-				$each = round(($bid30[$building->getTypeLevel(30)]['attri'] * ($building->getTypeLevel(41)>=1?(1/$bid41[$building->getTypeLevel(41)]['attri']):1) / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid30[$building->getTypeLevel(30)]['attri'] * ($building->getTypeLevel(41)>=1?(1/$bid41[$building->getTypeLevel(41)]['attri']):1) / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 			} else {
-				$each = round(($bid20[$building->getTypeLevel(20)]['attri'] * ($building->getTypeLevel(41)>=1?(1/$bid41[$building->getTypeLevel(41)]['attri']):1) / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid20[$building->getTypeLevel(20)]['attri'] * ($building->getTypeLevel(41)>=1?(1/$bid41[$building->getTypeLevel(41)]['attri']):1) / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 			}
 		}
 		if(in_array($unit, $workshop)) {	    
 			if($great) {
-				$each = round(($bid49[$building->getTypeLevel(49)]['attri'] / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid49[$building->getTypeLevel(49)]['attri'] / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 			} else {
-				$each = round(($bid21[$building->getTypeLevel(21)]['attri'] / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid21[$building->getTypeLevel(21)]['attri'] / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 			}
 		}
 		if(in_array($unit, $special)) {			    
 			if($building->getTypeLevel(25) > 0){
-				$each = round(($bid25[$building->getTypeLevel(25)]['attri'] / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid25[$building->getTypeLevel(25)]['attri'] / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 			} elseif($building->getTypeLevel(26) > 0) {
-				$each = round(($bid26[$building->getTypeLevel(26)]['attri'] / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid26[$building->getTypeLevel(26)]['attri'] / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 			} else {
 				// Command Center (Huni) - alternativa la Residence/Palace
-				$each = round(($bid44[$building->getTypeLevel(44)]['attri'] / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid44[$building->getTypeLevel(44)]['attri'] / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 			}
 		}
 		if(in_array($unit, $trapper)) {
 		    
-				$each = round(($bid19[$building->getTypeLevel(36)]['attri'] / 100) * ${'u'.$unit}['time'] / SPEED);
+				$each = round(($bid19[$building->getTypeLevel(36)]['attri'] / 100) * $this->unitDataService->getUnitData($unit)['time'] / SPEED);
 		}	
 		
 		// FIX: bonusurile de instruire ale eroului (coifuri) nu erau aplicate
@@ -1280,5 +1265,6 @@ class Technology {
 	}
 
 }
-$technology = new Technology;
+// Backward compatibility for scripts still relying on global instantiation
+// $technology = new Technology(); // Removed as it requires DI
 ?>

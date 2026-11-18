@@ -32,16 +32,16 @@ class Battle {
     private $bid35;
     private $unitsData;
 
-    public function __construct($database = null, $form = null, $village = null, $unitsbytype = null, $heroData = null, $session = null, $bid34 = null, $bid35 = null, $unitsData = null) {
+    public function __construct($database = null, $form = null, $village = null, $unitsbytype = null, $heroData = null, $session = null, $bid34 = [], $bid35 = [], $unitsData = []) {
         $this->database = $database ?? $GLOBALS['database'];
         $this->form = $form ?? $GLOBALS['form'];
         $this->village = $village ?? $GLOBALS['village'];
         $this->unitsbytype = $unitsbytype ?? $GLOBALS['unitsbytype'];
         $this->heroData = $heroData ?? $GLOBALS;
         $this->session = $session ?? $GLOBALS['session'];
-        $this->bid34 = $bid34 ?? $GLOBALS['bid34'] ?? [];
-        $this->bid35 = $bid35 ?? $GLOBALS['bid35'] ?? [];
-        $this->unitsData = $unitsData ?? $GLOBALS;
+        $this->bid34 = $bid34;
+        $this->bid35 = $bid35;
+        $this->unitsData = $unitsData;
     }
 
 	/*****************************************

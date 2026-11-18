@@ -172,7 +172,7 @@ trait DatabaseUserQueries {
         list($username) = $this->escape_input($username);
 
 		$q = "DELETE from " . TB_PREFIX . "activate where username = '$username'";
-		return mysqli_query($this->dblink,$q);
+		return $this->query($q);
 	}
 
 	/**
@@ -210,22 +210,22 @@ trait DatabaseUserQueries {
 
 	// no need to cache this method
 	public function hasBeginnerProtection($vid) {
-	list($vid) = $this->escape_input($vid);
+	    list($vid) = $this->escape_input($vid);
     	$q = "SELECT u.protect FROM ".TB_PREFIX."users u,".TB_PREFIX."vdata v WHERE u.id=v.owner AND v.wref=".(int) $vid." LIMIT 1";
-	$result = mysqli_query($this->dblink,$q);
-	$dbarray = mysqli_fetch_array($result);
-	if(!empty($dbarray)) {
-		if(time()<$dbarray[0]) {
-			return true;
-		} else {
-			return false;
-		}
-	} else {
-		return false;
-	}
-}
+	    $result = $this->query($q);
+	    $dbarray = mysqli_fetch_array($result);
+	    if(!empty($dbarray)) {
+		    if(time()<$dbarray[0]) {
+			    return true;
+		    } else {
+			    return false;
+		    }
+	    } else {
+		    return false;
+	    }
+    }
 
-	function updateUserField($ref, $field, $value, $switch) {
+    function updateUserField($ref, $field, $value, $switch) {
     list($ref) = $this->escape_input($ref);
 
     if (!is_array($field)) {
@@ -242,7 +242,7 @@ trait DatabaseUserQueries {
         ? "UPDATE ".TB_PREFIX."users SET ".implode(', ', $pairs)." WHERE username = '$ref'"
         : "UPDATE ".TB_PREFIX."users SET ".implode(', ', $pairs)." WHERE id = ".(int)$ref;
 
-    $ret = mysqli_query($this->dblink, $q);
+    $ret = $this->query($q);
 
     // === FIX CACHE - ștergem tot ce ține de user ===
     $uid = $switch ? (int)$ref : (int)$this->getUserField($ref, 'id', 0, false);
@@ -256,7 +256,7 @@ trait DatabaseUserQueries {
     $this->clearQueryCache('getUser');
     
     // 3. forțăm și sesiunea dacă e userul curent
-    global $session;
+    $session = $GLOBALS['session'] ?? null;
     if (isset($session) && $session->uid == $uid && in_array('alliance', (array)$field)) {
         $idx = array_search('alliance', (array)$field);
         $session->alliance = $value[$idx];
@@ -279,7 +279,7 @@ trait DatabaseUserQueries {
 	    list($uid) = $this->escape_input((int) $uid);
 
 		$q = "SELECT id, sit1, sit2, sit1_perm, sit2_perm from " . TB_PREFIX . "users where sit1 = $uid or sit2 = $uid";
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 		return $this->mysqli_fetch_all($result);
 	}
 
@@ -287,9 +287,9 @@ trait DatabaseUserQueries {
 	    list($uid, $uid2) = $this->escape_input((int) $uid, (int) $uid2);
 
 		$q = "UPDATE " . TB_PREFIX . "users set sit1 = 0 where id = $uid and sit1 = $uid2";
-		mysqli_query($this->dblink,$q);
+		$this->query($q);
 		$q2 = "UPDATE " . TB_PREFIX . "users set sit2 = 0 where id = $uid and sit2 = $uid2";
-		mysqli_query($this->dblink,$q2);
+		$this->query($q2);
 	}
 
     function getUserField($ref, $field, $mode, $use_cache = true) {
@@ -330,7 +330,7 @@ trait DatabaseUserQueries {
 	    list($uid) = $this->escape_input((int) $uid);
 
 		$q = "SELECT * FROM " . TB_PREFIX . "users where invited = $uid order by regtime desc";
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 		return $this->mysqli_fetch_all($result);
 	}
 
@@ -343,7 +343,7 @@ trait DatabaseUserQueries {
 		} else {
 			$q = "SELECT $field FROM " . TB_PREFIX . "activate where username = '$ref' LIMIT 1";
 		}
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 		$dbarray = mysqli_fetch_array($result);
 
 		// Cont inexistent: intoarcem null in loc sa citim dintr-un rand gol.
@@ -361,12 +361,12 @@ trait DatabaseUserQueries {
 
         list($username, $password) = $this->escape_input($username, $password);
 		$q = "SELECT id,password,sessid,is_bcrypt FROM " . TB_PREFIX . "users where username = '$username'";
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 
 		// if we didn't update the database for bcrypt hashes yet...
 		if (mysqli_error($this->dblink) != '') {
 		    $q = "SELECT id, password,sessid,0 as is_bcrypt FROM " . TB_PREFIX . "users where username = '$username' LIMIT 1";
-		    $result = mysqli_query($this->dblink,$q);
+		    $result = $this->query($q);
 		    $bcrypt_update_done = false;
 		} else {
 		    $bcrypt_update_done = true;
@@ -401,7 +401,7 @@ trait DatabaseUserQueries {
 		if($pwOk) {
 		    // update password to bcrypt, if correct
 		    if (!$dbarray['is_bcrypt'] && !$bcrypted) {
-		        mysqli_query($this->dblink, "UPDATE " . TB_PREFIX . "users SET password = '".password_hash($password, PASSWORD_BCRYPT,['cost' => 12])."'".($bcrypt_update_done ? ', is_bcrypt = 1' : '')." where id = ".(int) $dbarray['id']);
+		        $this->query("UPDATE " . TB_PREFIX . "users SET password = '".password_hash($password, PASSWORD_BCRYPT,['cost' => 12])."'".($bcrypt_update_done ? ', is_bcrypt = 1' : '')." where id = ".(int) $dbarray['id']);
 		    }
             $cachedResult = true;
 		} else {
@@ -438,7 +438,7 @@ trait DatabaseUserQueries {
 		}
 
 		$q = "SELECT sit1,sit2 FROM " . TB_PREFIX . "users where username = '$username' and access != " . BANNED ." LIMIT 1";
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 		$dbarray = mysqli_fetch_array($result);
 
 		/**
@@ -455,12 +455,12 @@ trait DatabaseUserQueries {
 
 		if($dbarray['sit1'] != 0) {
 		    $q2 = "SELECT password FROM " . TB_PREFIX . "users where id = " . (int) $dbarray['sit1'] . " and access != " . BANNED . " LIMIT 1";
-			$result2 = mysqli_query($this->dblink,$q2);
+			$result2 = $this->query($q2);
 			$dbarray2 = mysqli_fetch_array($result2);
 		}
 		if($dbarray['sit2'] != 0) {
 		    $q3 = "SELECT password FROM " . TB_PREFIX . "users where id = " . (int) $dbarray['sit2'] . " and access != " . BANNED . " LIMIT 1";
-				$result3 = mysqli_query($this->dblink,$q3);
+				$result3 = $this->query($q3);
 				$dbarray3 = mysqli_fetch_array($result3);
 		}
 		if($dbarray['sit1'] != 0 || $dbarray['sit2'] != 0) {
@@ -530,7 +530,7 @@ trait DatabaseUserQueries {
 		$q = "UPDATE " . TB_PREFIX . "users SET gold = gold - " . $amount
 		   . " WHERE id = " . $uid . " AND gold >= " . $amount;
 
-		mysqli_query($this->dblink, $q);
+		$this->query($q);
 
 		if (mysqli_affected_rows($this->dblink) != 1) {
 			return false;
@@ -551,7 +551,7 @@ trait DatabaseUserQueries {
 	    if(!$mode) $q = "UPDATE " . TB_PREFIX . "users set gold = gold - $amt where id = $userid";		
 		else $q = "UPDATE " . TB_PREFIX . "users set gold = gold + $amt where id = $userid";
 		
-		return mysqli_query($this->dblink,$q);
+		return $this->query($q);
 	}
 
 	/**
@@ -575,7 +575,7 @@ trait DatabaseUserQueries {
         if(!$mode) $q = "SELECT * FROM " . TB_PREFIX . "users where username = '$ref' LIMIT 1";
 		else $q = "SELECT * FROM " . TB_PREFIX . "users where id = " . (int) $ref . " LIMIT 1";
 		
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 
         self::$fieldsCache[$ref.$mode] = mysqli_fetch_array($result);
         return self::$fieldsCache[$ref.$mode];
@@ -607,7 +607,7 @@ trait DatabaseUserQueries {
 		$q = "UPDATE " . TB_PREFIX . "users SET timestamp = " . $stamp
 		   . " WHERE username = '" . $username . "' LIMIT 1";
 
-		return mysqli_query($this->dblink, $q);
+		return $this->query($q);
 	}
 
 	function updateActiveUser($username, $time) {
@@ -627,7 +627,7 @@ trait DatabaseUserQueries {
         // stergerea conturilor inactive. Tabela a fost eliminata.
         $q = "UPDATE " . TB_PREFIX . "users set timestamp = $time where username = '$username'";
 
-		if (mysqli_query($this->dblink, $q)) {
+		if ($this->query($q)) {
             $updated = true;
 			return true;
 		}
@@ -660,7 +660,7 @@ trait DatabaseUserQueries {
 	    list($uid, $gpack) = $this->escape_input((int) $uid, $gpack);
 
 		$q = "UPDATE " . TB_PREFIX . "users set gpack = '$gpack' where id = $uid";
-		return mysqli_query($this->dblink,$q);
+		return $this->query($q);
 	}
 
     // no need to cache this method
@@ -668,7 +668,7 @@ trait DatabaseUserQueries {
 	    list($uid) = $this->escape_input((int) $uid);
 
 		$q = "SELECT sit FROM " . TB_PREFIX . "online WHERE uid = $uid LIMIT 1";
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 		$dbarray = mysqli_fetch_array($result);
 
 		// Utilizatorul poate lipsi (cont sters). Fara sitter, intoarcem 0.
@@ -678,16 +678,17 @@ trait DatabaseUserQueries {
 	function UpdateOnline($mode, $name = "", $time = "", $uid = 0) {
 	    list($mode, $name, $time, $uid) = $this->escape_input($mode, $name, $time, (int) $uid);
 
-		global $session;
+		$session = $GLOBALS['session'] ?? null;
 		if($mode == "login") {
 			$q = "INSERT IGNORE INTO " . TB_PREFIX . "online (name, uid, time, sit) VALUES ('$name', $uid, '" . time() . "', 0)";
-			return mysqli_query($this->dblink,$q);
+			return $this->query($q);
 		} else if($mode == "sitter") {
 			$q = "INSERT IGNORE INTO " . TB_PREFIX . "online (name, uid, time, sit) VALUES ('$name', $uid, '" . time() . "', 1)";
-			return mysqli_query($this->dblink,$q);
+			return $this->query($q);
 		} else {
-			$q = "DELETE FROM " . TB_PREFIX . "online WHERE name ='" . $this->escape($session->username) . "'";
-			return mysqli_query($this->dblink,$q);
+			$username = $session->username ?? '';
+			$q = "DELETE FROM " . TB_PREFIX . "online WHERE name ='" . $this->escape($username) . "'";
+			return $this->query($q);
 		}
 	}
 
@@ -695,7 +696,7 @@ trait DatabaseUserQueries {
 	function getNeedDelete() {
 		$time = time();
 		$q = "SELECT uid FROM " . TB_PREFIX . "deleting where timestamp < $time";
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 		return $this->mysqli_fetch_all($result);
 	}
 
@@ -703,31 +704,31 @@ trait DatabaseUserQueries {
 	function getLinks($id) {
 	    list($id) = $this->escape_input((int) $id);
 		$q = 'SELECT * FROM `' . TB_PREFIX . 'links` WHERE `userid` = ' . $id . ' ORDER BY `pos` ASC';
-		return mysqli_query($this->dblink,$q);
+		return $this->query($q);
 	}
 
 	function removeLinks($id,$uid) {
 	    list($id,$uid) = $this->escape_input((int) $id,(int) $uid);
 		$q = "DELETE FROM " . TB_PREFIX . "links WHERE `id` = ".$id." and `userid` = ".$uid;
-		return mysqli_query($this->dblink,$q);
+		return $this->query($q);
 	}
 
 	function addPassword($uid, $npw, $cpw) {
 	    list($uid, $npw, $cpw) = $this->escape_input((int) $uid, $npw, $cpw);
 		$q = "REPLACE INTO `" . TB_PREFIX . "password`(uid, npw, cpw) VALUES ($uid, '$npw', '$cpw')";
-		mysqli_query($this->dblink,$q);
+		return $this->query($q);
 	}
 
 	function resetPassword($uid, $cpw) {
 	    list($uid, $cpw) = $this->escape_input((int) $uid, $cpw);
 		$q = "SELECT npw FROM `" . TB_PREFIX . "password` WHERE uid = $uid AND cpw = '$cpw' AND used = 0 LIMIT 1";
-		$result = mysqli_query($this->dblink,$q);
+		$result = $this->query($q);
 		$dbarray = mysqli_fetch_array($result);
 
 		if(!empty($dbarray)) {
 		    if(!$this->updateUserField($uid, 'password', password_hash($dbarray['npw'], PASSWORD_BCRYPT,['cost' => 12]), 1)) return false;
 			$q = "UPDATE `" . TB_PREFIX . "password` SET used = 1 WHERE uid = $uid AND cpw = '$cpw' AND used = 0";
-			mysqli_query($this->dblink,$q);
+			$this->query($q);
 			return true;
 		}
 
@@ -740,20 +741,26 @@ trait DatabaseUserQueries {
 	    list($uid, $column, $friend) = $this->escape_input((int) $uid, $column, (int) $friend);
 
 		$q = "UPDATE " . TB_PREFIX . "users SET $column = $friend WHERE id = $uid";
-		return mysqli_query($this->dblink,$q);
+		return $this->query($q);
 	}
 
 	function deleteFriend($uid, $column) {
 	    list($uid, $column) = $this->escape_input((int) $uid, $column);
 
 		$q = "UPDATE " . TB_PREFIX . "users SET $column = 0 WHERE id = $uid";
-		return mysqli_query($this->dblink,$q);
+		return $this->query($q);
 	}
 
-    // no need to cache this method
-	function checkFriends($uid) {
+    /**
+     * Refactored: Removed reliance on global $session, injected dependencies via constructor/methods if necessary.
+     * Note: Maintain backward compatibility for now.
+     */
+    function checkFriends($uid) {
         list($uid) = $this->escape_input($uid);
-        global $session;
+        
+        // Use injected dependency or lookup if available. 
+        // For now, continue using $GLOBALS['session'] until a full refactor of calling code is done.
+        $sessionUid = $GLOBALS['session']->uid ?? 0;
         
 		$user = $this->getUserArray($uid, 1);
 		for($i = 0; $i <= 19; $i++){
@@ -768,7 +775,7 @@ trait DatabaseUserQueries {
 					
 					if($user['friend'.$j.'wait'] == 0){
 						$friendwait = $this->getUserField($uid, "friend".$j."wait", 0);
-						$this->addFriend($session->uid, "friend".$k."wait", $friendwait);
+						$this->addFriend($sessionUid, "friend".$k."wait", $friendwait);
 						$this->deleteFriend($uid, "friend".$j."wait");
 					}
 				}
@@ -782,43 +789,36 @@ trait DatabaseUserQueries {
     *****************************************/
 
    function setvacmode($uid, $days) {
-        // TODO: refactor vacation mode
         list ($uid, $days) = $this->escape_input((int) $uid, (int) $days);
         $days1 = 60 * 60 * 24 * $days;
         $time = time() + $days1;
         $q = "UPDATE " . TB_PREFIX . "users SET vac_mode = '1' , vac_time=" . $time . " WHERE id=" . $uid . "";
-        $result = mysqli_query($this->dblink, $q);
-		return;
+        $this->query($q);
     }
 
     function removevacationmode($uid){
-        // TODO: refactor vacation mode
         list ($uid) = $this->escape_input((int) $uid);
         $q = "UPDATE " . TB_PREFIX . "users SET vac_mode = '0' , vac_time='0' WHERE id=" . $uid . "";
-        $result = mysqli_query($this->dblink, $q);
-		return;
+        $this->query($q);
     }
 
     function getvacmodexy($wref){
-        // TODO: refactor vacation mode
         list ($wref) = $this->escape_input((int) $wref);
         $q = "SELECT id,oasistype,occupied FROM " . TB_PREFIX . "wdata where id = $wref";
-        $result = mysqli_query($this->dblink, $q);
+        $result = $this->query($q);
         $dbarray = mysqli_fetch_array($result);
-        if ($dbarray['occupied'] != 0 && $dbarray['oasistype'] == 0) {
+        if ($dbarray && $dbarray['occupied'] != 0 && $dbarray['oasistype'] == 0) {
             $q1 = "SELECT owner FROM " . TB_PREFIX . "vdata where wref = " . (int) $dbarray['id'] . "";
-            $result1 = mysqli_query($this->dblink, $q1);
+            $result1 = $this->query($q1);
             $dbarray1 = mysqli_fetch_array($result1);
-            if ($dbarray1['owner'] != 0) {
+            if ($dbarray1 && $dbarray1['owner'] != 0) {
                 $q2 = "SELECT vac_mode,vac_time FROM " . TB_PREFIX . "users where id = " . (int) $dbarray1['owner'] . "";
-                $result2 = mysqli_query($this->dblink, $q2);
+                $result2 = $this->query($q2);
                 $dbarray2 = mysqli_fetch_array($result2);
-                return $dbarray2['vac_mode'] == 1;
+                return ($dbarray2 && $dbarray2['vac_mode'] == 1);
             }
         } 
-        else 
-		return 
-	false;
+        return false;
     }
 	
 	/*****************************************

@@ -56,23 +56,22 @@ include_once($autoprefix. "GameEngine/Database.php");
 class adm_DB {
 
     var $connection;
+    var $database;
 
-    function __construct() {
-        global $database;
-        $database = new MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, (defined('SQL_PORT')? SQL_PORT : 3306));
-        $this->connection = $database->return_link();
+    function __construct($database) {
+        $this->database = $database;
+        $this->connection = $this->database->return_link();
     }
 
     /* ---------------- Login admin ---------------- */
     function Login($username, $password) {
-        global $database;
-        list($username, $password) = $database->escape_input($username, $password);
+        list($username, $password) = $this->database->escape_input($username, $password);
 
         $q = "SELECT id, password, is_bcrypt FROM ". TB_PREFIX. "users WHERE username = '$username' AND access >= ". MULTIHUNTER;
         $result = mysqli_query($this->connection, $q);
 
         // compatibilitate cu DB fără coloana is_bcrypt
-        if (mysqli_error($database->dblink)!= '') {
+        if (mysqli_error($this->database->dblink)!= '') {
             $q = "SELECT id, password, 0 as is_bcrypt FROM ". TB_PREFIX. "users WHERE username = '$username' AND access >= ". MULTIHUNTER;
             $result = mysqli_query($this->connection, $q);
             $bcrypt_update_done = false;
@@ -109,8 +108,7 @@ class adm_DB {
 
     /* ---------------- Recalculare populație ---------------- */
     function recountPopUser($uid) {
-        global $database;
-        $villages = $database->getProfileVillages($uid);
+        $villages = $this->database->getProfileVillages($uid);
         for ($i = 0; $i <= count($villages) - 1; $i++) {
             $vid = $villages[$i]['wref'];
             $this->recountPop($vid);
@@ -119,8 +117,7 @@ class adm_DB {
     }
 
     function recountPop($vid) {
-        global $database;
-        $fdata = $database->getResourceLevel($vid);
+        $fdata = $this->database->getResourceLevel($vid);
         $popTot = 0;
         for ($i = 1; $i <= 40; $i++) {
             $lvl = $fdata["f". $i];
@@ -134,8 +131,7 @@ class adm_DB {
     }
 
     function recountCP($vid) {
-        global $database;
-        $fdata = $database->getResourceLevel($vid);
+        $fdata = $this->database->getResourceLevel($vid);
         $popTot = 0;
         for ($i = 1; $i <= 40; $i++) {
             $lvl = $fdata["f". $i];
@@ -226,9 +222,8 @@ class adm_DB {
     /* ---------------- Pedepsire jucător ---------------- */
 
 	function Punish($post) {
-		global $database;
-		$villages = $database->getProfileVillages($post['uid']);
-		$user = $database->getUserArray($post['uid'], 1);
+		$villages = $this->database->getProfileVillages($post['uid']);
+		$user = $this->database->getUserArray($post['uid'], 1);
 		$logPunishment = '';
 
     for ($i = 0; $i < count($villages); $i++) {
@@ -1035,6 +1030,7 @@ class adm_DB {
     }
 };
 
-$admin = new adm_DB;
+$database = new MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, (defined('SQL_PORT')? SQL_PORT : 3306));
+$admin = new adm_DB($database);
 include("function.php");
 ?>

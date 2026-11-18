@@ -6,7 +6,15 @@ class TechnologyTestRefactored extends TestCase {
         $village = new stdClass();
         $village->researching = [['tech' => 't1'], ['tech' => 'a1']];
         
-        $tech = new Technology(null, $village);
+        $tech = new Technology(
+            null, 
+            $village, 
+            $this->createMock(\Session::class), 
+            $this->createMock(\UnitDataService::class),
+            $this->createMock(\Building::class),
+            [],
+            null
+        );
         $result = $tech->grabAcademyRes();
         
         $this->assertCount(1, $result);

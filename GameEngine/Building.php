@@ -134,15 +134,22 @@ class Building {
         50 => array('tribe' => array(9), 'unique' => false),                       // Barricade (Vikingi)
     );
 
-    public function __construct($database = null, $session = null, $village = null, $logging = null, $technology = null, $generator = null, $bidData = null) {
-
-        $this->db   = $database ?? $GLOBALS['database'];
-        $this->sess = $session ?? $GLOBALS['session'];
-        $this->vil  = $village ?? $GLOBALS['village'];
-        $this->log  = $logging ?? $GLOBALS['logging'];
-        $this->technology = $technology ?? ($GLOBALS['technology'] ?? []);
-        $this->generator  = $generator ?? ($GLOBALS['generator'] ?? null);
-        $this->bidData    = $bidData ?? $GLOBALS; // Assuming bidData is global 'bidX'
+    public function __construct(
+        $database,
+        $session,
+        $village,
+        $logging,
+        $technology,
+        $generator,
+        $bidData
+    ) {
+        $this->db   = $database;
+        $this->sess = $session;
+        $this->vil  = $village;
+        $this->log  = $logging;
+        $this->technology = $technology;
+        $this->generator  = $generator;
+        $this->bidData    = $bidData;
 
         $maxConcurrent = BASIC_MAX;
 

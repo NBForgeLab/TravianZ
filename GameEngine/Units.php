@@ -31,7 +31,7 @@ class Units {
     private $unitData;
     private $building;
 
-    public function __construct($database = null, $form = null, $generator = null, $session = null, $village = null, $technology = null, $unitData = null, $building = null) {
+    public function __construct($database = null, $form = null, $generator = null, $session = null, $village = null, $technology = [], $unitData = [], $building = null) {
         $this->database = $database ?? ($GLOBALS['database'] ?? null);
         $this->form = $form ?? ($GLOBALS['form'] ?? null);
         $this->generator = $generator ?? ($GLOBALS['generator'] ?? null);

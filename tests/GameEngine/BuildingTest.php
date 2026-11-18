@@ -48,7 +48,7 @@ class BuildingTest extends TestCase
         
         // Inject mock - constructor calls loadBuilding() which calls getJobs()
         // If it uses the injected mock, this will pass.
-        $building = new Building($this->mockDb, $this->sess, $this->vil, $this->log);
+        $building = new Building($this->mockDb, $this->sess, $this->vil, $this->log, [], null, []);
         
         // If we reach here, the mock was used and the expectation was met
         $this->assertTrue(true);
