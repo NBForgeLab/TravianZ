@@ -26,19 +26,27 @@ lint_php()
 
 run_php_tests()
 {
-    echo "Running legacy PHP tests..."
+	echo "Running legacy zero-dependency PHP tests..."
 	local file
 	local tested=0
+	local legacy_files=(
+		tests/InstallerImprovementsTest.php
+		tests/InstallerRenderTest.php
+		tests/LanguageLoaderTest.php
+	)
 
 	while IFS= read -r -d '' file; do
-		if [[ "$file" != *Test.php ]]; then
+		legacy_files+=("$file")
+	done < <(git ls-files -z -- 'tests/regression/*Test.php')
+
+	for file in "${legacy_files[@]}"; do
+		if [[ ! -f "$file" ]]; then
 			continue
 		fi
-
 		echo "Running ${file}"
 		php "$file"
 		tested=$((tested + 1))
-	done < <(git ls-files -z -- 'tests/*.php' 'tests/**/*.php')
+	done
 
 	if [[ "$tested" -eq 0 ]]; then
 		echo "No zero-dependency PHP tests found."
@@ -46,8 +54,8 @@ run_php_tests()
 		echo "Legacy PHP tests passed for ${tested} files."
 	fi
 
-    echo "Running PHPUnit tests..."
-    ./vendor/bin/phpunit
+	echo "Running PHPUnit tests..."
+	./vendor/bin/phpunit
 }
 
 run_shell_tests()

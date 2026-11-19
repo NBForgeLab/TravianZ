@@ -9,6 +9,10 @@
     <testsuites>
         <testsuite name="Application Test Suite">
             <directory>tests</directory>
+            <exclude>tests/InstallerImprovementsTest.php</exclude>
+            <exclude>tests/InstallerRenderTest.php</exclude>
+            <exclude>tests/LanguageLoaderTest.php</exclude>
+            <exclude>tests/regression</exclude>
         </testsuite>
     </testsuites>
 </phpunit>

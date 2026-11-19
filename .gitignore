@@ -47,3 +47,10 @@ var/log/access.log
 # WorkBuddy / AI development artifacts
 .workbuddy-ai/
 
+
+# Composer & PHPUnit
+/vendor/
+.phpunit.result.cache
+vendor/bin/.phpunit.result.cache
+.phpunit.cache/
+/coverage/

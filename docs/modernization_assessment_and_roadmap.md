@@ -151,7 +151,7 @@ As a result, **406 individual `.php` scripts** and **716 `.tpl` files** reside d
 
 ```
 CURRENT VULNERABLE MONOLITHIC DIRECTORY LAYOUT:
-c:\Users\batah\Documents\GitHub\TravianZ\
+TravianZ/
 ├── .env.example             <-- Exposed if web server allows dotfiles
 ├── Dockerfile               <-- Directly accessible via HTTP GET /Dockerfile
 ├── docker-compose.yml       <-- Directly accessible via HTTP GET /docker-compose.yml

@@ -49,8 +49,9 @@
     }
 
     if (!$class_found) {
-        throw new Exception('Unable to find class ' . $clazz . '.');
+        return false;
     }
+    return true;
 }
 
     spl_autoload_register('autoloadClass');

@@ -13,6 +13,21 @@ jobs:
   php:
     name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mariadb:10.11
+        env:
+          MARIADB_ROOT_PASSWORD: root_password
+          MARIADB_DATABASE: travianz_test
+          MARIADB_USER: travianz_tester
+          MARIADB_PASSWORD: tester_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     strategy:
       fail-fast: false
       matrix:
@@ -29,15 +44,19 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: mysqli
           coverage: none
+
+      - name: Grant test DB privileges
+        run: |
+          mysql -h 127.0.0.1 -u root -proot_password -e "GRANT ALL PRIVILEGES ON *.* TO 'travianz_tester'@'%'; FLUSH PRIVILEGES;"
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Run PHPUnit tests
-        run: vendor/bin/phpunit
-
-      - name: Check PHP syntax and regression tests
+      - name: Check PHP syntax, legacy tests, and PHPUnit suite
+        env:
+          SQL_SERVER: 127.0.0.1
         run: ./scripts/check.sh php
 
   compose:
