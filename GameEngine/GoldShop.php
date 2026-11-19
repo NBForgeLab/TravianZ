@@ -31,8 +31,22 @@
  */
 class GoldShop
 {
+    /** @var mysqli|null Optional test seam connection override. */
+    private static ?mysqli $linkOverride = null;
+
+    /**
+     * Test seam: inject or clear a mysqli connection without modifying globals.
+     */
+    public static function setLink(?mysqli $link): void
+    {
+        self::$linkOverride = $link;
+    }
+
     private static function link()
     {
+        if (self::$linkOverride !== null) {
+            return self::$linkOverride;
+        }
         if (isset($GLOBALS['link']) && $GLOBALS['link']) {
             return $GLOBALS['link'];
         }
@@ -46,6 +60,19 @@ class GoldShop
     {
         $link = self::link();
         if (!$link) {
+            return;
+        }
+        $chk1 = @mysqli_query($link, "SHOW TABLES LIKE '" . TB_PREFIX . "gold_promo'");
+        $chk2 = @mysqli_query($link, "SHOW TABLES LIKE '" . TB_PREFIX . "gold_promo_redeem'");
+        $has1 = $chk1 && mysqli_num_rows($chk1) > 0;
+        $has2 = $chk2 && mysqli_num_rows($chk2) > 0;
+        if ($chk1 instanceof \mysqli_result) {
+            mysqli_free_result($chk1);
+        }
+        if ($chk2 instanceof \mysqli_result) {
+            mysqli_free_result($chk2);
+        }
+        if ($has1 && $has2) {
             return;
         }
         @mysqli_query($link, "CREATE TABLE IF NOT EXISTS `" . TB_PREFIX . "gold_promo` (

@@ -251,9 +251,9 @@ class Artifacts
     
     $natarsWWVillagesUnits;
     
-    public function __construct(IDbConnection $database, IConfig $config){
-        $this->database = $database;
-        $this->config = $config;
+    public function __construct(?IDbConnection $database = null, ?IConfig $config = null){
+        $this->database = $database ?? $GLOBALS['database'];
+        $this->config = $config ?? new \App\GameEngine\Config();
         
         $this->natarsArtifactsUnits = function($multiplier){
             return [41 => rand(1000 * $multiplier, 2000 * $multiplier) * NATARS_UNITS,

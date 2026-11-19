@@ -24,13 +24,25 @@ namespace App\Utils;
 class Math {
 
     public static function isInt($val) {
-        if (!is_numeric($val)) return false;
+        if (is_bool($val) || is_float($val) || !is_scalar($val) || !is_numeric($val)) {
+            return false;
+        }
         $val = (string)$val;
         return (string)(int)$val === $val;
     }
 
     public static function isFloat($val) {
-        return (is_numeric($val) && floatval($val) === $val);
+        if (is_bool($val) || !is_scalar($val) || !is_numeric($val)) {
+            return false;
+        }
+        $f = (float)$val;
+        if (!is_finite($f)) {
+            return false;
+        }
+        if (is_float($val)) {
+            return true;
+        }
+        return is_string($val) && strpos($val, '.') !== false && (string)$f === trim($val);
     }
 
 }

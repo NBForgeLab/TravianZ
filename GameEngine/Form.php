@@ -26,15 +26,18 @@ class Form {
 	public $valuearray = array();
 	private $errorcount = 0;
 
-	public function __construct() {
+	public function __construct(?array $sessionData = null) {
 
-		if (isset($_SESSION['errorarray']) && isset($_SESSION['valuearray'])) {
-
-			$this->errorarray = $_SESSION['errorarray'];
-			$this->valuearray = $_SESSION['valuearray'];
-			$this->errorcount = count($this->errorarray);
-
+		if ($sessionData === null) {
+			$sessionData = $_SESSION;
 			unset($_SESSION['errorarray'], $_SESSION['valuearray']);
+		}
+
+		if (isset($sessionData['errorarray']) && isset($sessionData['valuearray'])) {
+
+			$this->errorarray = $sessionData['errorarray'];
+			$this->valuearray = $sessionData['valuearray'];
+			$this->errorcount = count($this->errorarray);
 		} else {
 			$this->errorcount = 0;
 		}

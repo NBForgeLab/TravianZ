@@ -27,12 +27,35 @@ class MyGenerator
     private $session;
     private $config; // For bid28, bid14
 
-    public function __construct($database = null, $village = null, $session = null, $config = [])
+    public function __construct($database = null, $village = null, $session = null, $config = null)
     {
-        $this->database = $database ?? $GLOBALS['database'] ?? null;
-        $this->village = $village ?? $GLOBALS['village'] ?? null;
-        $this->session = $session ?? $GLOBALS['session'] ?? null;
+        $this->database = $database;
+        $this->village = $village;
+        $this->session = $session;
         $this->config = $config;
+    }
+
+    private function getDatabase()
+    {
+        return $this->database ?? ($GLOBALS['database'] ?? null);
+    }
+
+    private function getVillage()
+    {
+        return $this->village ?? ($GLOBALS['village'] ?? null);
+    }
+
+    private function getSession()
+    {
+        return $this->session ?? ($GLOBALS['session'] ?? null);
+    }
+
+    private function getConfig($key)
+    {
+        if (is_array($this->config) && array_key_exists($key, $this->config)) {
+            return $this->config[$key];
+        }
+        return $GLOBALS[$key] ?? [];
     }
 
     /**
@@ -79,7 +102,8 @@ class MyGenerator
      */
     public function procDistanceTime($coor, $thiscoor, $ref, $mode, $vid = 0)
     {
-        $vid = ($vid == 0) ? $this->village->wid : $vid;
+        $village = $this->getVillage();
+        $vid = ($vid == 0 && $village !== null) ? $village->wid : $vid;
 
         $xdistance = abs($thiscoor['x'] - $coor['x']);
         if ($xdistance > WORLD_MAX) {
@@ -105,10 +129,10 @@ class MyGenerator
             else $speed = 1;
         } else {
             $speed = $ref;
-            $tSquareLevel = $this->database->getFieldLevelInVillage($vid, 14);
-            $bid14 = $this->config['bid14'] ?? [];
+            $tSquareLevel = $this->getDatabase()->getFieldLevelInVillage($vid, 14);
+            $bid14 = $this->getConfig('bid14');
 
-            if ($tSquareLevel > 0 && $distance >= TS_THRESHOLD && $speed > 0) {
+            if ($tSquareLevel > 0 && $distance >= TS_THRESHOLD && $speed > 0 && !empty($bid14[$tSquareLevel]['attri'])) {
                 $boostedSpeed = $speed * ($bid14[$tSquareLevel]['attri'] / 100);
                 $time = (TS_THRESHOLD / $speed) + (($distance - TS_THRESHOLD) / $boostedSpeed);
 
@@ -175,10 +199,11 @@ class MyGenerator
     public function procMtime($time, $pref = 3)
     {
         $time = (int) $time;
-        $tzPref = (isset($this->session) && isset($this->session->userinfo['timezone']))
-            ? $this->session->userinfo['timezone'] : null;
-        $tformat = (isset($this->session) && isset($this->session->userinfo['tformat']))
-            ? (int) $this->session->userinfo['tformat'] : 0;
+        $session = $this->getSession();
+        $tzPref = (isset($session) && isset($session->userinfo['timezone']))
+            ? $session->userinfo['timezone'] : null;
+        $tformat = (isset($session) && isset($session->userinfo['tformat']))
+            ? (int) $session->userinfo['tformat'] : 0;
 
         $zone = $this->resolveUserTimeZone($tzPref);
         $dt = new DateTime('@' . $time);
@@ -211,8 +236,9 @@ class MyGenerator
 
     private function currentPlayerZone()
     {
-        $tzPref = (isset($this->session) && isset($this->session->userinfo['timezone']))
-            ? $this->session->userinfo['timezone'] : null;
+        $session = $this->getSession();
+        $tzPref = (isset($session) && isset($session->userinfo['timezone']))
+            ? $session->userinfo['timezone'] : null;
         return $this->resolveUserTimeZone($tzPref);
     }
 

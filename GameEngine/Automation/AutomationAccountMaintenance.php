@@ -304,8 +304,9 @@ trait AutomationAccountMaintenance {
                         b.`end` > 0");
     }
 
-    public static function updateMax($leader) {
-        global $bid18; $database = $this->database;
+    public static function updateMax($leader, ?\App\Database\IDbConnection $database = null) {
+        global $bid18;
+        $database = $database ?? ($GLOBALS['database'] ?? null);
         
         $q = mysqli_fetch_array(mysqli_query($database->dblink,"SELECT Count(*) as Total FROM " . TB_PREFIX . "alidata where leader = ". (int) $leader), MYSQLI_ASSOC);
         if ($q['Total'] > 0) {

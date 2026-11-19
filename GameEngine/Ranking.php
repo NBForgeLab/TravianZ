@@ -30,10 +30,25 @@
         private $multisort;
 
         public function __construct($database = null, $session = null, $village = null, $multisort = null) {
-            $this->database = $database ?? $GLOBALS['database'] ?? null;
-            $this->session = $session ?? $GLOBALS['session'] ?? null;
-            $this->village = $village ?? $GLOBALS['village'] ?? null;
-            $this->multisort = $multisort ?? $GLOBALS['multisort'] ?? null;
+            $dbVal = $database ?? ($GLOBALS['database'] ?? null);
+            if ($dbVal !== null) { $this->database = $dbVal; } else { unset($this->database); }
+            $sessVal = $session ?? ($GLOBALS['session'] ?? null);
+            if ($sessVal !== null) { $this->session = $sessVal; } else { unset($this->session); }
+            $vilVal = $village ?? ($GLOBALS['village'] ?? null);
+            if ($vilVal !== null) { $this->village = $vilVal; } else { unset($this->village); }
+            $msVal = $multisort ?? ($GLOBALS['multisort'] ?? null);
+            if ($msVal !== null) { $this->multisort = $msVal; } else { unset($this->multisort); }
+        }
+
+        public function __get(string $name) {
+            return match ($name) {
+                'database', 'session', 'village', 'multisort' => $GLOBALS[$name] ?? null,
+                default => null,
+            };
+        }
+
+        public function __isset(string $name): bool {
+            return $this->__get($name) !== null;
         }
 
 	/*****************************************

@@ -31,15 +31,34 @@ class Units {
     private $unitData;
     private $building;
 
-    public function __construct($database = null, $form = null, $generator = null, $session = null, $village = null, $technology = [], $unitData = [], $building = null) {
-        $this->database = $database ?? ($GLOBALS['database'] ?? null);
-        $this->form = $form ?? ($GLOBALS['form'] ?? null);
-        $this->generator = $generator ?? ($GLOBALS['generator'] ?? null);
-        $this->session = $session ?? ($GLOBALS['session'] ?? null);
-        $this->village = $village ?? ($GLOBALS['village'] ?? null);
-        $this->technology = $technology ?? ($GLOBALS['technology'] ?? []);
-        $this->unitData = $unitData ?? ($GLOBALS ?? []);
-        $this->building = $building ?? ($GLOBALS['building'] ?? null);
+    public function __construct($database = null, $form = null, $generator = null, $session = null, $village = null, $technology = null, $unitData = null, $building = null) {
+        $dbVal = $database ?? ($GLOBALS['database'] ?? null);
+        if ($dbVal !== null) { $this->database = $dbVal; } else { unset($this->database); }
+        $formVal = $form ?? ($GLOBALS['form'] ?? null);
+        if ($formVal !== null) { $this->form = $formVal; } else { unset($this->form); }
+        $genVal = $generator ?? ($GLOBALS['generator'] ?? null);
+        if ($genVal !== null) { $this->generator = $genVal; } else { unset($this->generator); }
+        $sessVal = $session ?? ($GLOBALS['session'] ?? null);
+        if ($sessVal !== null) { $this->session = $sessVal; } else { unset($this->session); }
+        $vilVal = $village ?? ($GLOBALS['village'] ?? null);
+        if ($vilVal !== null) { $this->village = $vilVal; } else { unset($this->village); }
+        $techVal = $technology ?? ($GLOBALS['technology'] ?? null);
+        if ($techVal !== null) { $this->technology = $techVal; } else { unset($this->technology); }
+        if ($unitData !== null) { $this->unitData = $unitData; } else { unset($this->unitData); }
+        $bldVal = $building ?? ($GLOBALS['building'] ?? null);
+        if ($bldVal !== null) { $this->building = $bldVal; } else { unset($this->building); }
+    }
+
+    public function __get(string $name) {
+        return match ($name) {
+            'database', 'form', 'generator', 'session', 'village', 'technology', 'building' => $GLOBALS[$name] ?? null,
+            'unitData' => $GLOBALS,
+            default => null,
+        };
+    }
+
+    public function __isset(string $name): bool {
+        return $this->__get($name) !== null;
     }
 
     public function procUnits($post) {
@@ -736,6 +755,13 @@ class Units {
         $session = $this->session;
 
         $data = $database->getA2b($post['timestamp_checksum']);
+        if (!is_array($data) || empty($data['id'])) {
+            $form->addError("error", "This troop send request was already processed. Please try again.");
+            $_SESSION['errorarray'] = $form->getErrors();
+            $_SESSION['valuearray'] = $_POST;
+            \App\Utils\Response::redirect("a2b.php");
+            return;
+        }
         $Gtribe = ($session->tribe == 1) ? "" : $session->tribe - 1;
 
         /**
@@ -751,6 +777,7 @@ class Units {
             $_SESSION['errorarray'] = $form->getErrors();
             $_SESSION['valuearray'] = $_POST;
             \App\Utils\Response::redirect("a2b.php");
+            return;
         }
 
         for ($i = 1; $i < 10; $i++) {
@@ -767,20 +794,22 @@ class Units {
             }
         }
 
-		if($data['u11'] > $village->unitarray['hero']) $form->addError("error", "You can't send more units than you have");
-		if($data['u11'] < 0) $form->addError("error", "You can't send negative units.");   
-		if($data['type'] != 1) $post['spy'] = 0; else $post['spy'] = $post['spy']?? 0;
+		if(($data['u11'] ?? 0) > $village->unitarray['hero']) $form->addError("error", "You can't send more units than you have");
+		if(($data['u11'] ?? 0) < 0) $form->addError("error", "You can't send negative units.");   
+		if(($data['type'] ?? 0) != 1) $post['spy'] = 0; else $post['spy'] = $post['spy']?? 0;
         
         if($form->returnErrors() > 0){
             $_SESSION['errorarray'] = $form->getErrors();
             $_SESSION['valuearray'] = $_POST;
             \App\Utils\Response::redirect("a2b.php");
+            return;
         }else{
             if (empty($data['id']) || !$database->claimA2b((int)$data['id'], $post['timestamp_checksum'])) {
                 $form->addError("error", "This troop send request was already processed. Please try again.");
                 $_SESSION['errorarray'] = $form->getErrors();
                 $_SESSION['valuearray'] = $_POST;
                 \App\Utils\Response::redirect("a2b.php");
+                return;
             }
 
             $u = ($session->tribe == 1) ? "" : $session->tribe - 1;
@@ -837,12 +866,10 @@ class Units {
             if($form->returnErrors() > 0) {
                 $_SESSION['errorarray'] = $form->getErrors();
                 $_SESSION['valuearray'] = $_POST;
-                header("Location: a2b.php" );
-                exit;
+                \App\Utils\Response::redirect("a2b.php");
+            } else {
+                \App\Utils\Response::redirect("build.php?id=39");
             }
-            
-            header("Location: build.php?id=39");
-            exit;
         }
     }
 
@@ -984,6 +1011,7 @@ class Units {
         $technology = $this->technology;
 
         if (!$database->getEnforceLock($post['ckey'])) return;
+        $lockReleased = false;
         try {
             // Re-fetch after lock to prevent TOCTOU race condition
             $enforce      = $database->getEnforceArray( $post['ckey'], 0 );
@@ -1040,8 +1068,9 @@ class Units {
                     $_SESSION['errorarray'] = $form->getErrors();
                     $_SESSION['valuearray'] = $_POST;
                     $database->releaseEnforceLock($post['ckey']);
-                    header( "Location: a2b.php" );
-                    exit;
+                    $lockReleased = true;
+                    \App\Utils\Response::redirect("a2b.php");
+                    return;
                 } else {
 
                     /**
@@ -1092,8 +1121,9 @@ class Units {
                     $technology->checkReinf($post['ckey'], false);
 
                     $database->releaseEnforceLock($post['ckey']);
-                    header("Location: build.php?id=39&refresh=1");
-                    exit();
+                    $lockReleased = true;
+                    \App\Utils\Response::redirect("build.php?id=39&refresh=1");
+                    return;
                 }
             }else{
                 $form->addError("error", "You cant change someones troops.");
@@ -1101,12 +1131,15 @@ class Units {
                     $_SESSION['errorarray'] = $form->getErrors();
                     $_SESSION['valuearray'] = $_POST;
                     $database->releaseEnforceLock($post['ckey']);
-                    header("Location: a2b.php");
-                    exit();
+                    $lockReleased = true;
+                    \App\Utils\Response::redirect("a2b.php");
+                    return;
                 }
             }
         } finally {
-            $database->releaseEnforceLock($post['ckey']);
+            if (!$lockReleased) {
+                $database->releaseEnforceLock($post['ckey']);
+            }
         }
     }
     
@@ -1119,11 +1152,11 @@ class Units {
         // in GameEngine/Data/cp.php.
         // verificarea de puncte de cultura la intemeierea satului era ocolita
         // server-side (doar UI-ul o respecta). Importam exact tabloul folosit.
-        $cp = $this->unitData['cp'.CP];
-
         $mode = CP;
+        $cp = $this->unitData['cp' . $mode] ?? ($GLOBALS['cp' . $mode] ?? []);
+
         $total = count($database->getProfileVillages($session->uid));
-        $need_cps = isset(${'cp'.$mode}[$total + 1]) ? ${'cp'.$mode}[$total + 1] : PHP_INT_MAX;
+        $need_cps = isset($cp[$total + 1]) ? $cp[$total + 1] : PHP_INT_MAX;
         $cps = $session->cp;
         $rallypoint = $database->getResourceLevel($village->wid);
         
@@ -1139,11 +1172,11 @@ class Units {
                 $database->modifyUnit($village->wid, [$unit], [3], [0]);
                 $database->addMovement(5, $village->wid, $post['s'], 0, time(), time() + $time);
             }
-            header("Location: build.php?id=39");
-            exit;
+            \App\Utils\Response::redirect("build.php?id=39");
+            return;
         } else {
-            header("Location: dorf1.php");
-            exit;
+            \App\Utils\Response::redirect("dorf1.php");
+            return;
         }
     }
 
@@ -1320,8 +1353,7 @@ class Units {
             $database->deletePrisoners($prisoner['id']);
         }
         
-        header("Location: build.php?id=39");
-        exit;
+        \App\Utils\Response::redirect("build.php?id=39");
     }
     
     /**
@@ -1411,14 +1443,14 @@ class Units {
     	 */
     	if (($sitterError = $this->sitterMissionError(4)) !== "") {
     		$_SESSION['errorarray'] = array($sitterError);
-    		header("Location: build.php?id=39&t=99");
-    		exit();
+    		\App\Utils\Response::redirect("build.php?id=39&t=99");
+    		return;
     	}
 
     	$slots = $post['slot'] ?? [];
     	if(empty($slots)){
-    		header("Location: build.php?id=39&t=99");
-    		exit();
+    		\App\Utils\Response::redirect("build.php?id=39&t=99");
+    		return;
     	}
     	
 		$tribe = $session->tribe;
@@ -1490,8 +1522,7 @@ class Units {
 				}
 			}
 		}
-		header("Location: build.php?id=39&t=99");
-		exit();
+		\App\Utils\Response::redirect("build.php?id=39&t=99");
     }
 };
 $units = new Units;

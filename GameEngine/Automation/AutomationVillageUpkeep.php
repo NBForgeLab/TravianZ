@@ -29,42 +29,12 @@ trait AutomationVillageUpkeep {
     }
 
     function recountPop($vid, $use_cache = true){
-        $database = $this->database;
-        
-        $vid = (int) $vid;
-        $fdata = $database->getResourceLevel($vid, $use_cache);
-        $popTot = 0;
-
-        for ($i = 1; $i <= 40; $i++) {
-            $lvl = $fdata["f".$i];
-            $building = $fdata["f".$i."t"];
-			if($building) $popTot += $this->buildingPOP($building, $lvl);
-        }
-        
-        Building::recountCP($database, $vid);
-		$q = "UPDATE ".TB_PREFIX."vdata set pop = $popTot where wref = $vid";
-		mysqli_query($database->dblink, $q);
-		$owner = $database->getVillageField($vid, "owner");
-
-		// Milestone: first player ever to reach 1000 total population,
-		// summed across all their villages. recountPop() is the single
-		// funnel every population-changing event (building, demolishing,
-		// founding/conquering a village) already passes through, so this
-		// is the one place that's guaranteed to catch the threshold being
-		// crossed regardless of which village/action caused it.
-		// Excludes owner 3 (Natars) — see Artifacts::NATARS_UID — same
-		// convention already used elsewhere in this file (e.g. the
-		// "fix natar report by ronix" check a few hundred lines below).
-		if (defined('NEW_FUNCTIONS_MILESTONES') && NEW_FUNCTIONS_MILESTONES && $owner > 0 && $owner != 3) {
-			$totalPop = (int) $database->getVSumField($owner, 'pop', false);
-			if ($totalPop >= 1000) {
-				$database->recordMilestoneIfFirst('population_1000', $owner, $vid);
-			}
-		}
-		
-		$this->procClimbers($owner);
-
-        return $popTot;
+        $service = new \App\Automation\AutomationVillageUpkeepService(
+            $this->database,
+            new \App\Automation\AutomationDataProvider($GLOBALS),
+            $this
+        );
+        return $service->recountPop($vid, $use_cache);
     }
 
     function buildingPOP($f, $lvl){

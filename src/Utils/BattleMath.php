@@ -6,6 +6,9 @@ class BattleMath
 {
     public static function sigma($x)
     {
+        if ($x <= 0) {
+            return 0.0;
+        }
         return ($x > 1 ? 2 - pow($x, -1.5) : pow($x, 1.5)) / 2;
     }
 
@@ -81,6 +84,9 @@ class BattleMath
         $divider = $durability * $strongerBuildings;
         if ($divider <= 0) {
             $divider = 1;
+        }
+        if ($moraleBonus <= 0) {
+            $moraleBonus = 1;
         }
         $catapultsEfficiency = floor($catapultsQuantity / $divider);
         $sigma = self::sigma($ADRatio);

@@ -1538,13 +1538,13 @@ class Message
     private function checkUnread()
     {
         global $database, $session;
-        return $database->getUnreadMessagesCount($session->uid);
+        return $database ? $database->getUnreadMessagesCount($session->uid ?? 0) : 0;
     }
 
     private function checkNUnread()
     {
         global $database, $session;
-        return $database->getUnreadNoticesCount($session->uid);
+        return $database ? $database->getUnreadNoticesCount($session->uid ?? 0) : 0;
     }
 
     private function findInbox($id)

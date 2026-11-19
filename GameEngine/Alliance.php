@@ -52,11 +52,28 @@ class Alliance {
     private $building;
 
     public function __construct($database = null, $session = null, $form = null, $bid18 = null, $building = null) {
-        $this->database = $database ?? $GLOBALS['database'] ?? null;
-        $this->session = $session ?? $GLOBALS['session'] ?? null;
-        $this->form = $form ?? $GLOBALS['form'] ?? null;
-        $this->bid18 = $bid18 ?? $GLOBALS['bid18'] ?? null;
-        $this->building = $building ?? $GLOBALS['building'] ?? null;
+        $dbVal = $database ?? ($GLOBALS['database'] ?? null);
+        if ($dbVal !== null) { $this->database = $dbVal; } else { unset($this->database); }
+        $sessVal = $session ?? ($GLOBALS['session'] ?? null);
+        if ($sessVal !== null) { $this->session = $sessVal; } else { unset($this->session); }
+        $formVal = $form ?? ($GLOBALS['form'] ?? null);
+        if ($formVal !== null) { $this->form = $formVal; } else { unset($this->form); }
+        $b18Val = $bid18 ?? ($GLOBALS['bid18'] ?? null);
+        if (!empty($b18Val)) { $this->bid18 = $b18Val; } else { unset($this->bid18); }
+        $bldVal = $building ?? ($GLOBALS['building'] ?? null);
+        if ($bldVal !== null) { $this->building = $bldVal; } else { unset($this->building); }
+    }
+
+    public function __get(string $name) {
+        return match ($name) {
+            'database', 'session', 'form', 'building' => $GLOBALS[$name] ?? null,
+            'bid18' => $GLOBALS['bid18'] ?? [],
+            default => null,
+        };
+    }
+
+    public function __isset(string $name): bool {
+        return $this->__get($name) !== null;
     }
     
     public function procAlliance(array $get): void {
@@ -104,9 +121,12 @@ class Alliance {
         return false;
     }
 
-    public function canAct(array $datas, int $mode = 0): bool {
-        $database = $this->database;
-        $session = $this->session;
+    public static function canAct(array $datas, int $mode = 0, $database = null, $session = null): bool {
+        $database = $database ?? ($GLOBALS['database'] ?? null);
+        $session = $session ?? ($GLOBALS['session'] ?? null);
+        if (!$database || !$session) {
+            return false;
+        }
         $hasSwitchedToAdmin = isset($datas['admin']) && !empty($datas['admin']) && $datas['admin'] === "switch_admin";
 		// ==================== CONDIȚII DE ACCES ====================
         $isAllianceOwner = $database->isAllianceOwner($session->uid) == $datas['alliance'];
@@ -208,8 +228,7 @@ class Alliance {
         if (isset($get['admin']) && !empty($get['admin'])) {
             $url .= "&admin=switch_admin";
         }
-        header("Location: " . $url);
-        exit;
+        \App\Utils\Response::redirect($url);
     }
 	
 	/*****************************************
@@ -322,8 +341,7 @@ class Alliance {
         }
 		// ==================== REDIRECȚIONARE ====================
 		// (întotdeauna se face redirect, chiar dacă invitația nu a fost găsită)
-        header("Location: build.php?gid=18");
-        exit;
+        \App\Utils\Response::redirect("build.php?gid=18");
     }
 	
 	/*****************************************
@@ -351,8 +369,7 @@ class Alliance {
         }
 		// ==================== REDIRECȚIONARE ====================
 		// (întotdeauna se face redirect, chiar dacă invitația nu a fost găsită)
-        header("Location: allianz.php?delinvite");
-        exit;
+        \App\Utils\Response::redirect("allianz.php?delinvite");
     }
 	
 	/*****************************************
@@ -401,8 +418,7 @@ class Alliance {
         if ($acceptError) {
             $form->addError("ally_accept", "The alliance can contain only " . $maxMembers . " members at this moment.");
         } else {
-            header("Location: build.php?gid=18");
-            exit;
+            \App\Utils\Response::redirect("build.php?gid=18");
         }
     }
 
@@ -431,8 +447,8 @@ class Alliance {
             $_SESSION['errorarray'] = $form->getErrors();
             $_SESSION['valuearray'] = $post;
 			// Redirect în funcție de existența ambasadei (comportament original)
-            header("Location: " . ($building->getTypeLevel(18) > 0 ? "build.php?gid=18" : "dorf2.php"));
-            exit;
+            \App\Utils\Response::redirect($building->getTypeLevel(18) > 0 ? "build.php?gid=18" : "dorf2.php");
+            return;
         }
         $maxMembers = $bid18[$building->getTypeLevel(18)]['attri'];
         $aid = $database->createAlliance($tag, $name, $session->uid, $maxMembers);
@@ -461,8 +477,7 @@ class Alliance {
         $_SESSION['alliance_user'] = $aid;
         $notice = rc_tok('MSG_ALLIANCE_FOUNDED', '<a href="spieler.php?uid=' . $session->uid . '">' . addslashes($session->username) . '</a>');
         $database->insertAlliNotice($aid, $notice);
-        header("Location: build.php?gid=18");
-        exit;
+        \App\Utils\Response::redirect("build.php?gid=18");
     }
 	
 	/*****************************************
@@ -490,8 +505,8 @@ class Alliance {
             $form->addError("perm", NAME_OR_TAG_CHANGED);
             $_SESSION['errorarray'] = $form->getErrors();
             $_SESSION['valuearray'] = $get;
-            header("Location: allianz.php?s=5");
-            exit;
+            \App\Utils\Response::redirect("allianz.php?s=5");
+            return;
         }
     }
 	
@@ -572,8 +587,8 @@ class Alliance {
         if ($form->returnErrors() > 0) {
             $_SESSION['errorarray'] = $form->getErrors();
             $_SESSION['valuearray'] = $post;
-            header("Location: allianz.php?s=5");
-            exit;
+            \App\Utils\Response::redirect("allianz.php?s=5");
+            return;
         }
     }
 	
@@ -639,8 +654,7 @@ class Alliance {
             $votedText = $survey['voted'] . ',' . $session->uid . ',';
             $database->Vote($surveyID, $voteOption, $votedText);
         }
-        header("Location: allianz.php?s=2&fid2=" . $fid2 . "&tid=" . $surveyID);
-        exit;
+        \App\Utils\Response::redirect("allianz.php?s=2&fid2=" . $fid2 . "&tid=" . $surveyID);
     }
        
 	/*****************************************
@@ -687,8 +701,7 @@ class Alliance {
         $_SESSION['alliance_user'] = 0;
         $notice = rc_tok('MSG_NEWS_QUIT', '<a href="spieler.php?uid=' . $uid . '">' . addslashes($session->username) . '</a>');
         $database->insertAlliNotice($allyId, $notice);
-        header("Location: spieler.php?uid=" . $uid);
-        exit;
+        \App\Utils\Response::redirect("spieler.php?uid=" . $uid);
     }
 	
 	/*****************************************

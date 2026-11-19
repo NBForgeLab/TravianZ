@@ -40,11 +40,11 @@ class HeroItems
     /** @var mysqli */
     private $db;
 
-    public function __construct()
+    public function __construct($database = null, ?mysqli $link = null)
     {
-        global $database;
-        // Reuse the game's single mysqli link.
-        $this->db = $database->dblink;
+        $database = $database ?? ($GLOBALS['database'] ?? null);
+        // Reuse the game's single mysqli link or injected link.
+        $this->db = $link ?? ($database->dblink ?? ($GLOBALS['link'] ?? null));
 
         // Catalog is idempotent to include (guarded defines).
         global $heroItemCatalog, $heroAdventureConfig, $heroSlotIndex;

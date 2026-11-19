@@ -47,12 +47,14 @@ $autoprefix = '';
 for ($i = 0; $i < 5; $i++) {
     $autoprefix = str_repeat('../', $i);
     if (file_exists($autoprefix . 'autoloader.php')) {
+        include_once($autoprefix . 'autoloader.php');
         break;
     }
 }
 
 if (!file_exists($autoprefix . 'GameEngine/config.php')) {
     Response::redirect('install/');
+    return;
 }
 
 $script_name = ($_SERVER['REQUEST_URI'] == 'karte.php') ? 'karte' : $_SERVER['REQUEST_URI'];
@@ -65,7 +67,9 @@ include_once("Data/festival.php");
 include_once("Data/resdata.php");
 include_once("Data/unitdata.php");
 include_once("Data/hero_full.php");
-include_once("config.php");
+if (!defined('SQL_SERVER')) {
+    include_once("config.php");
+}
 if (!defined('LANG')) define('LANG', 'en');
 if (!defined('TB_PREFIX')) define('TB_PREFIX', 'tz_');
 include_once("Database.php");
@@ -187,6 +191,7 @@ function __construct() {
         // evita loop infinit
         if(strpos($_SERVER['PHP_SELF'], 'maintenance.php') === false) {
             Response::redirect('maintenance.php');
+            return;
         }
     }
 
@@ -281,13 +286,16 @@ function __construct() {
         // just without the extra redirect hop for the single most common one.
         if ($database->isThereAWinner()) {
             Response::redirect("winner.php");
+            return;
         }
 
         if ($dbarray['id'] == 1) {
             Response::redirect("nachrichten.php");
+            return;
         }
 
         Response::redirect("dorf1.php");
+        return;
     }
 
     /**
@@ -352,6 +360,7 @@ function __construct() {
                     'rules.php', 'karte.php', 'karte2.php', 'spieler.php'
                 ])) {
                     Response::redirect('nachrichten.php');
+                    return false;
                 }
             }
 
@@ -373,6 +382,7 @@ function __construct() {
             !in_array(basename($_SERVER['PHP_SELF']), ['banned.php', 'nachrichten.php', 'rules.php'])) {
 
             Response::redirect('banned.php');
+            return;
         }
     }
 
@@ -381,6 +391,7 @@ function __construct() {
             basename($_SERVER['PHP_SELF']) != 'maintenance.php') {
 
             Response::redirect('maintenance.php');
+            return;
         }
     }
 
@@ -427,6 +438,7 @@ function __construct() {
             ($requiredPage === 'plus.php' && $idParam >= 7)
         ) {
             Response::redirect('winner.php');
+            return;
         }
     }
 
@@ -441,6 +453,7 @@ function __construct() {
         if (!count($this->villages)) {
             $this->Logout();
             Response::redirect('login.php');
+            return;
         }
 
         // Constantele de miscare pentru aventuri sunt definite in
@@ -700,15 +713,18 @@ function __construct() {
         if (!$this->logged_in) {
             if (!in_array($page, $pagearray) || $page == "logout.php") {
                 Response::redirect('login.php');
+                return;
             }
         } else {
             if (in_array($page, $pagearray)) {
 
                 if (($this->uid ?? 0) == 1) {
                     Response::redirect('nachrichten.php');
+                    return;
                 }
 
                 Response::redirect('dorf1.php');
+                return;
             }
         }
     }

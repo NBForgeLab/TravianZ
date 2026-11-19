@@ -33,7 +33,9 @@ for ($i = 0; $i < 5; $i++) {
     }
 }
 
-include_once($autoprefix."GameEngine/Session.php");
+if (!class_exists('Session', false)) {
+    include_once($autoprefix."GameEngine/Session.php");
+}
 
 class Account {
     private $database;
@@ -43,15 +45,13 @@ class Account {
     private $generator;
     private $message;
 
-    function __construct($database, $session, $form, $mailer, $generator, $message) {
-        $this->database = $database;
-        $this->session = $session;
-        $this->form = $form;
-        $this->mailer = $mailer;
-        $this->generator = $generator;
-        $this->message = $message;
-
-
+    function __construct($database = null, $session = null, $form = null, $mailer = null, $generator = null, $message = null) {
+        $this->database = $database ?? ($GLOBALS['database'] ?? null);
+        $this->session = $session ?? ($GLOBALS['session'] ?? null);
+        $this->form = $form ?? ($GLOBALS['form'] ?? null);
+        $this->mailer = $mailer ?? ($GLOBALS['mailer'] ?? null);
+        $this->generator = $generator ?? ($GLOBALS['generator'] ?? null);
+        $this->message = $message ?? ($GLOBALS['message'] ?? null);
 
         if(isset($_POST['ft'])) {
             $_POST['ft'] = preg_replace('/[^a-z0-9]/i', '', $_POST['ft']);
@@ -73,10 +73,19 @@ class Account {
             $_POST['id'] = $_GET['code']; $this->Activate();
         }
         else {
-            if($this->session->logged_in && in_array("logout.php",explode("/",$_SERVER['PHP_SELF']))) {
+            if($this->session && !empty($this->session->logged_in) && isset($_SERVER['PHP_SELF']) && in_array("logout.php",explode("/",$_SERVER['PHP_SELF']))) {
                 $this->Logout();
             }
         }
+    }
+
+    private function redirectTo($url) {
+        if (class_exists(\App\Utils\Response::class)) {
+            \App\Utils\Response::redirect($url);
+            return;
+        }
+        header("Location: " . $url);
+        exit;
     }
 
     private function Signup() {
@@ -160,8 +169,8 @@ class Account {
             $tmp = $_POST;
             unset($tmp['pw']); // nu salva parola
             $_SESSION['valuearray'] = $tmp;
-            header("Location: anmelden.php");
-            exit;
+            $this->redirectTo("anmelden.php");
+            return;
         }
 
         // ==================== PROCESARE ÎNREGISTRARE ====================
@@ -188,8 +197,8 @@ class Account {
                 }
 
                 $this->mailer->sendActivate($_POST['email'], $_POST['name'], $_POST['pw'], $act);
-                header("Location: activate.php?id=$uid&q=$act2");
-                exit;
+                $this->redirectTo("activate.php?id=$uid&q=$act2");
+                return;
             }
         } else {
             $act = '';
@@ -220,8 +229,8 @@ class Account {
 
                 $this->generateBase($_POST['kid'], $uid, $_POST['name']);
 
-                header("Location: login.php");
-                exit;
+                $this->redirectTo("login.php");
+                return;
             }
         }
     }
@@ -257,21 +266,21 @@ class Account {
                     $this->database->unreg($dbarray['username']);
                     $this->generateBase($dbarray['location'], $uid, $dbarray['username']);
                     
-                    header("Location: activate.php?e=2");
-                    exit;
+                    $this->redirectTo("activate.php?e=2");
+                    return;
                 }
                 // dacă register eșuează → comportamentul original (fără redirect)
                 
             } else {
                 // Cod de activare invalid sau inexistent
-                header("Location: activate.php?e=3");
-                exit;
+                $this->redirectTo("activate.php?e=3");
+                return;
             }
             
         } else {
             // Serverul nu a început încă
-            header("Location: activate.php");
-            exit;
+            $this->redirectTo("activate.php");
+            return;
         }
     }
 
@@ -296,13 +305,12 @@ class Account {
         if ($dbarray && password_verify($_POST['pw'] ?? '', $dbarray['password'])) {
             $this->database->unreg($dbarray['username']);
 
-            header("Location: anmelden.php");
-            exit;
+            $this->redirectTo("anmelden.php");
+            return;
         }
 
         // Parolă greșită sau ID inexistent → comportamentul original
-        header("Location: activate.php?e=3");
-        exit;
+        $this->redirectTo("activate.php?e=3");
     }
 
     private function Login() {
@@ -353,8 +361,8 @@ class Account {
         if ($this->form->returnErrors() > 0) {
             $_SESSION['errorarray'] = $this->form->getErrors();
             $_SESSION['valuearray'] = $_POST;
-            header("Location: login.php");
-            exit();
+            $this->redirectTo("login.php");
+            return;
         }
 
         // ==================== LOGIN CU SUCCES ====================
@@ -420,7 +428,13 @@ class Account {
             $uid,
             $username
         );
-        $this->message->sendWelcome($uid, $username);
+        $message = $this->message ?? ($GLOBALS['message'] ?? (class_exists('Message') ? new \Message() : null));
+        if ($message) {
+            $message->sendWelcome($uid, $username);
+        }
     }
 };
+if (!isset($account) && isset($GLOBALS['database'], $GLOBALS['session'], $GLOBALS['form'], $GLOBALS['mailer'], $GLOBALS['generator'])) {
+    $account = new Account;
+}
 ?>

@@ -277,7 +277,7 @@ while ($loopSeconds > 0) {
     cron_reset_db_caches();
     @file_put_contents($cronMarkerPath, (string) time(), LOCK_EX);
 
-    new Automation();
+    (new Automation($database))->run();
     $ticks++;
 }
 

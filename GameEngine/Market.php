@@ -55,14 +55,39 @@ class Market
         $bidData = [],
         $generator = null
     ) {
-        $this->db = $database ?? ($GLOBALS['database'] ?? null);
-        $this->village = $village ?? ($GLOBALS['village'] ?? null);
-        $this->session = $session ?? ($GLOBALS['session'] ?? null);
-        $this->building = $building ?? ($GLOBALS['building'] ?? null);
-        
-        $this->bid17 = $bidData['bid17'] ?? ($GLOBALS['bid17'] ?? []);
-        $this->bid28 = $bidData['bid28'] ?? ($GLOBALS['bid28'] ?? []);
-        $this->generator = $generator ?? ($GLOBALS['generator'] ?? null);
+        $dbVal = $database ?? ($GLOBALS['database'] ?? null);
+        if ($dbVal !== null) { $this->db = $dbVal; } else { unset($this->db); }
+        $vilVal = $village ?? ($GLOBALS['village'] ?? null);
+        if ($vilVal !== null) { $this->village = $vilVal; } else { unset($this->village); }
+        $sessVal = $session ?? ($GLOBALS['session'] ?? null);
+        if ($sessVal !== null) { $this->session = $sessVal; } else { unset($this->session); }
+        $bldVal = $building ?? ($GLOBALS['building'] ?? null);
+        if ($bldVal !== null) { $this->building = $bldVal; } else { unset($this->building); }
+        $b17Val = $bidData['bid17'] ?? ($GLOBALS['bid17'] ?? null);
+        if (!empty($b17Val)) { $this->bid17 = $b17Val; } else { unset($this->bid17); }
+        $b28Val = $bidData['bid28'] ?? ($GLOBALS['bid28'] ?? null);
+        if (!empty($b28Val)) { $this->bid28 = $b28Val; } else { unset($this->bid28); }
+        $genVal = $generator ?? ($GLOBALS['generator'] ?? null);
+        if ($genVal !== null) { $this->generator = $genVal; } else { unset($this->generator); }
+    }
+
+    public function __get(string $name)
+    {
+        return match ($name) {
+            'db' => $GLOBALS['database'] ?? null,
+            'village' => $GLOBALS['village'] ?? null,
+            'session' => $GLOBALS['session'] ?? null,
+            'building' => $GLOBALS['building'] ?? null,
+            'bid17' => $GLOBALS['bid17'] ?? [],
+            'bid28' => $GLOBALS['bid28'] ?? [],
+            'generator' => $GLOBALS['generator'] ?? null,
+            default => null,
+        };
+    }
+
+    public function __isset(string $name): bool
+    {
+        return $this->__get($name) !== null;
     }
 
     /**
@@ -101,7 +126,9 @@ class Market
      */
     public function procRemove($get)
     {
-        global $database, $village, $session;
+        $database = $this->db;
+        $village = $this->village;
+        $session = $this->session;
 
         if (isset($get['t']) && $get['t'] == 1) {
             $this->filterNeed($get);
@@ -172,7 +199,12 @@ class Market
      */
     private function loadMarket()
     {
-        global $session, $building, $bid28, $bid17, $database, $village;
+        $session = $this->session;
+        $building = $this->building;
+        $bid28 = $this->bid28;
+        $bid17 = $this->bid17;
+        $database = $this->db;
+        $village = $this->village;
 
         $this->recieving = $database->getMovement(0, $village->wid, 1);
         $this->sending   = $database->getMovement(0, $village->wid, 0);
@@ -270,7 +302,11 @@ class Market
 
     private function sendResource($post)
     {
-        global $database, $village, $session, $generator, $logging, $form;
+        global $logging, $form;
+        $database = $this->db;
+        $village = $this->village;
+        $session = $this->session;
+        $generator = $this->generator;
 
         $wtrans  = (isset($post['r1']) && !empty($post['r1'])) ? $post['r1'] : 0;
         $ctrans  = (isset($post['r2']) && !empty($post['r2'])) ? $post['r2'] : 0;
@@ -487,7 +523,9 @@ class Market
      */
     private function addOffer($post)
     {
-        global $database, $village, $session;
+        $database = $this->db;
+        $village = $this->village;
+        $session = $this->session;
 
         // Invalid: same resource type
         if ($post['rid1'] == $post['rid2']) {
@@ -653,7 +691,11 @@ class Market
      */
     private function acceptOffer($get)
     {
-        global $database, $village, $session, $logging, $generator;
+        global $logging;
+        $database = $this->db;
+        $village = $this->village;
+        $session = $this->session;
+        $generator = $this->generator;
 
         $infoarray = $database->getMarketInfo($get['g']);
 
@@ -827,7 +869,11 @@ class Market
      */
     private function loadOnsale()
     {
-        global $database, $village, $session, $multisort, $generator;
+        global $multisort;
+        $database = $this->db;
+        $village = $this->village;
+        $session = $this->session;
+        $generator = $this->generator;
 
         $displayarray = $database->getMarket($village->wid, 1);
 
@@ -929,7 +975,9 @@ class Market
      */
     private function tradeResource($post)
     {
-        global $session, $database, $village;
+        $session = $this->session;
+        $database = $this->db;
+        $village = $this->village;
 
         $wwvillage = $database->getResourceLevel($village->wid);
 

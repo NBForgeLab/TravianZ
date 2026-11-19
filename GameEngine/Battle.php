@@ -32,16 +32,36 @@ class Battle {
     private $bid35;
     private $unitsData;
 
-    public function __construct($database = null, $form = null, $village = null, $unitsbytype = null, $heroData = null, $session = null, $bid34 = [], $bid35 = [], $unitsData = []) {
-        $this->database = $database ?? $GLOBALS['database'];
-        $this->form = $form ?? $GLOBALS['form'];
-        $this->village = $village ?? $GLOBALS['village'];
-        $this->unitsbytype = $unitsbytype ?? $GLOBALS['unitsbytype'];
-        $this->heroData = $heroData ?? $GLOBALS;
-        $this->session = $session ?? $GLOBALS['session'];
-        $this->bid34 = $bid34;
-        $this->bid35 = $bid35;
-        $this->unitsData = $unitsData;
+    public function __construct($database = null, $form = null, $village = null, $unitsbytype = null, $heroData = null, $session = null, $bid34 = null, $bid35 = null, $unitsData = null) {
+        $dbVal = $database ?? ($GLOBALS['database'] ?? null);
+        if ($dbVal !== null) { $this->database = $dbVal; } else { unset($this->database); }
+        $formVal = $form ?? ($GLOBALS['form'] ?? null);
+        if ($formVal !== null) { $this->form = $formVal; } else { unset($this->form); }
+        $vilVal = $village ?? ($GLOBALS['village'] ?? null);
+        if ($vilVal !== null) { $this->village = $vilVal; } else { unset($this->village); }
+        $ubtVal = $unitsbytype ?? ($GLOBALS['unitsbytype'] ?? null);
+        if (!empty($ubtVal)) { $this->unitsbytype = $ubtVal; } else { unset($this->unitsbytype); }
+        if ($heroData !== null) { $this->heroData = $heroData; } else { unset($this->heroData); }
+        $sessVal = $session ?? ($GLOBALS['session'] ?? null);
+        if ($sessVal !== null) { $this->session = $sessVal; } else { unset($this->session); }
+        $b34Val = $bid34 ?? ($GLOBALS['bid34'] ?? null);
+        if (!empty($b34Val)) { $this->bid34 = $b34Val; } else { unset($this->bid34); }
+        $b35Val = $bid35 ?? ($GLOBALS['bid35'] ?? null);
+        if (!empty($b35Val)) { $this->bid35 = $b35Val; } else { unset($this->bid35); }
+        if ($unitsData !== null) { $this->unitsData = $unitsData; } else { unset($this->unitsData); }
+    }
+
+    public function __get(string $name) {
+        return match ($name) {
+            'database', 'form', 'village', 'session' => $GLOBALS[$name] ?? null,
+            'unitsbytype', 'bid34', 'bid35' => $GLOBALS[$name] ?? [],
+            'heroData', 'unitsData' => $GLOBALS,
+            default => null,
+        };
+    }
+
+    public function __isset(string $name): bool {
+        return $this->__get($name) !== null;
     }
 
 	/*****************************************

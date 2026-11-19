@@ -20,7 +20,9 @@
 ## --------------------------------------------------------------------------- ##
 #################################################################################
 
-include_once("config.php");
+if (!defined('SQL_SERVER')) {
+    include_once("config.php");
+}
 require_once __DIR__ . "/Lang/loader.php";
 tz_load_language(LANG);
 

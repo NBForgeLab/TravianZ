@@ -35,7 +35,7 @@ class AutomationVillageUpkeepService {
         
         \Building::recountCP($database, $vid);
         $q = "UPDATE ".TB_PREFIX."vdata set pop = $popTot where wref = $vid";
-        mysqli_query($database->dblink, $q);
+        $database->query($q);
         $owner = $database->getVillageField($vid, "owner");
 
         if (defined('NEW_FUNCTIONS_MILESTONES') && NEW_FUNCTIONS_MILESTONES && $owner > 0 && $owner != 3) {

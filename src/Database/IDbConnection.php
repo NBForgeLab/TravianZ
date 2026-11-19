@@ -71,6 +71,16 @@ interface IDbConnection {
      */
     public function query_new($statement, ...$params);
 
+    public function query($query);
+
+    public function escape($value);
+
+    public function updateUserField($ref, $field, $value, $switch);
+
+    public function affected_rows();
+
+    public function num_rows($result);
+
     public function updateVillageCulturePoints($vid, $cp);
 }
 

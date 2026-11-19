@@ -26,7 +26,9 @@
 ##                   ActionControl() in bootstrap; static guards removed       ##
 #################################################################################
 
-include_once("Session.php");
+if (!class_exists('Session', false)) {
+	include_once("Session.php");
+}
 include_once("Building.php");
 include_once("Market.php");
 include_once("GameEngine/Units.php");
@@ -80,18 +82,34 @@ class Village {
 	];
 
 	/**
-	 * W2 #7: the constructor now uses DI.
+	 * W2 #7: the constructor now uses DI, with safe global fallbacks for 0-arg legacy callers.
 	 */
-	function __construct($database, $session, $technology, array $bids, $logging, $generator, $sessionWid = null) {
-		$this->db   = $database;
-		$this->sess = $session;
-		$this->tech = $technology;
-		$this->bids = $bids;
-        $this->log  = $logging;
-        $this->generator = $generator;
+	function __construct($database = null, $session = null, $technology = null, ?array $bids = null, $logging = null, $generator = null, $sessionWid = null) {
+		$this->db        = $database ?? ($GLOBALS['database'] ?? null);
+		$this->sess      = $session ?? ($GLOBALS['session'] ?? null);
+		$this->tech      = $technology ?? ($GLOBALS['technology'] ?? null);
+		if ($bids !== null) {
+			$this->bids = $bids;
+		} else {
+			$this->bids = [
+				1  => $GLOBALS['bid1'] ?? [],
+				2  => $GLOBALS['bid2'] ?? [],
+				3  => $GLOBALS['bid3'] ?? [],
+				4  => $GLOBALS['bid4'] ?? [],
+				5  => $GLOBALS['bid5'] ?? [],
+				6  => $GLOBALS['bid6'] ?? [],
+				7  => $GLOBALS['bid7'] ?? [],
+				8  => $GLOBALS['bid8'] ?? [],
+				9  => $GLOBALS['bid9'] ?? [],
+				45 => $GLOBALS['bid45'] ?? [],
+			];
+		}
+		$this->log       = $logging ?? ($GLOBALS['logging'] ?? null);
+		$this->generator = $generator ?? ($GLOBALS['generator'] ?? null);
 
 		// set village id
 		if ($sessionWid !== null) $this->wid = $sessionWid;
+		elseif (isset($_SESSION['wid'])) $this->wid = $_SESSION['wid'];
 		else $this->wid = $this->sess->villages[0];
 
 		// preload caches (safe warmup)
@@ -100,7 +118,7 @@ class Village {
 		// validate existence
 		if (!$this->db->checkVilExist($this->wid)) {
 			$this->wid = $this->db->getVillageID($this->sess->uid);
-			if ($sessionWid !== null) $_SESSION['wid'] = $this->wid;
+			$_SESSION['wid'] = $this->wid;
 		}
 
 		$this->LoadTown();
@@ -118,8 +136,8 @@ class Village {
 		// would run once per request; with an explicit tick (called once, from the
 		// bootstrap) that guard is no longer needed. A repeated clear on a second
 		// instance only means a cold cache, not a correctness bug.
-		$db = get_class($this->db);
-		$db::clearVillageCache();
+		$dbClass = ($this->db instanceof \MYSQLi_DB) ? \MYSQLi_DB::class : get_class($this->db);
+		$dbClass::clearVillageCache();
 
 		$this->calculateProduction();
 		$this->processProduction();
@@ -152,9 +170,11 @@ class Village {
 	private function LoadTown(): void {
 		$this->infoarray = $this->db->getVillage($this->wid);
 
-		if ($this->infoarray['owner'] != $this->sess->uid && !$this->sess->isAdmin) {
+		if (is_array($this->infoarray) && $this->infoarray['owner'] != $this->sess->uid && empty($this->sess->isAdmin)) {
 			unset($_SESSION['wid']);
-			$this->log->addIllegal($this->sess->uid, $this->wid, 1);
+			if ($this->log) {
+				$this->log->addIllegal($this->sess->uid, $this->wid, 1);
+			}
 
 			$this->wid = $this->sess->villages[0];
 			$this->infoarray = $this->db->getVillage($this->wid);
@@ -460,6 +480,7 @@ class Village {
 // include_once-d, so this block runs only once per request.
 // "new Village" stays safe for additional instances (admin switch).
 
+if (!defined('TRAVIANZ_TEST_MODE') || defined('TRAVIANZ_RUN_VILLAGE_BOOTSTRAP')) {
 if (!isset($village)) {
     global $database, $session, $technology, $logging, $generator,
            $bid1, $bid2, $bid3, $bid4, $bid5, $bid6, $bid7, $bid8, $bid9, $bid45;
@@ -473,7 +494,7 @@ if (!isset($village)) {
 
 $village->tick();
 $village->ActionControl();
-$building = new Building($database, $session, $village, $logging, $technology, $generator, $bids);
+$building = new Building($database, $session, $village, $logging, $technology, $generator, $GLOBALS);
 
 // automation
 // P2: if a dedicated cron is running (cron.php), we no longer trigger automation
@@ -509,5 +530,6 @@ if (!$__cronActive) {
 		}
 		fclose($__automationLock);
 	}
+}
 }
 ?>

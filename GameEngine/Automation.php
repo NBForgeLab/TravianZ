@@ -69,14 +69,14 @@ include_once("Data/buidata.php");
 include_once("Data/unitdata.php");
 include_once("Data/hero_full.php");
 include_once("Data/cp.php");
+include_once("Generator.php");
+include_once("Multisort.php");
+include_once("Technology.php");
+include_once("Building.php");
 include_once("Units.php");
 include_once("Battle.php");
 include_once("AllianceBonus.php");
-include_once("Technology.php");
 include_once("Ranking.php");
-include_once("Generator.php");
-include_once("Multisort.php");
-include_once("Building.php");
 include_once("Artifacts.php");
 
 // === Faza S2: clasa Automation este impartita in trait-uri pe domenii (GameEngine/Automation/) ===
@@ -157,12 +157,12 @@ class Automation {
     public $bid40;
     public $u99;
 
-    public function __construct(IDbConnection $database, Artifacts $artifacts = null) {
+    public function __construct(?IDbConnection $database = null, ?Artifacts $artifacts = null) {
         global $ranking, $units, $battle, $technology, $hero_levels, $heroItemCatalog, 
                $bid0, $bid1, $bid2, $bid3, $bid4, $bid5, $bid6, $bid7, $bid8, $bid9, 
                $bid10, $bid11, $bid17, $bid18, $bid19, $bid23, $bid28, $bid34, $bid38, $bid39, $bid40, $u99;
         
-        $this->database = $database;
+        $this->database = $database ?? ($GLOBALS['database'] ?? null);
         $this->ranking = $ranking;
         $this->units = $units;
         $this->battle = $battle;
@@ -267,7 +267,7 @@ class Automation {
     }
 }
 
-if (!defined('TRAVIANZ_TEST_MODE')) {
+if (!defined('TRAVIANZ_TEST_MODE') && !defined('AUTOMATION_MANUAL_RUN')) {
     global $database;
     $automation = new Automation($database);
     $automation->run();

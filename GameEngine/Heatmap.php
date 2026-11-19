@@ -39,8 +39,22 @@ class Heatmap
         ];
     }
 
+    /** @var mysqli|null Optional test seam connection override. */
+    private static ?mysqli $linkOverride = null;
+
+    /**
+     * Test seam: inject or clear a mysqli connection without modifying globals.
+     */
+    public static function setLink(?mysqli $link): void
+    {
+        self::$linkOverride = $link;
+    }
+
     private static function link()
     {
+        if (self::$linkOverride !== null) {
+            return self::$linkOverride;
+        }
         if (isset($GLOBALS['link']) && $GLOBALS['link']) {
             return $GLOBALS['link'];
         }

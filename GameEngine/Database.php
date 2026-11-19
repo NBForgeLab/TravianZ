@@ -492,11 +492,15 @@ class MYSQLi_DB implements IDbConnection {
 	        // $this->dblink is FALSE here, so we cannot call mysqli_error() on it.
 	        // Use mysqli_connect_error() and show a friendly, actionable message.
 	        $error = mysqli_connect_error();
-	        die("Database connection failed: " . htmlspecialchars(
+	        $msg = "Database connection failed: " . htmlspecialchars(
 	            $error !== null && $error !== ''
 	                ? $error
 	                : 'could not connect to the database server. Please check the host, port and credentials. (When running with Docker, the database host is usually "db", not "localhost".)'
-	        ));
+	        );
+	        if (defined('TRAVIANZ_TEST_MODE')) {
+	            throw new \RuntimeException($msg);
+	        }
+	        die($msg);
 	    }
 
 		// Faza 2 Global Chat (09.09.2026): FIX critic - linia asta rula "SET NAMES

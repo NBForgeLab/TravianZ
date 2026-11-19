@@ -50,12 +50,12 @@ class User {
      * @example $user = new User(1);
      * @example $user = new User("martinambrus");
      * 
-     * @param int|string    $identifier ID or username for this user.
-     * @param IDbConnection $database   Instance of the database class to use to perform queries.
+     * @param int|string         $identifier ID or username for this user.
+     * @param IDbConnection|null $database   Instance of the database class to use to perform queries.
      * 
      * @return void This method doesn't have a return value.
      */
-    public function __construct($identifier, IDbConnection $database) {
+    public function __construct($identifier, ?IDbConnection $database = null) {
         // check if we passed an ID or a username
         if (Math::isInt($identifier)) {
             $this->id = $identifier;
@@ -64,6 +64,14 @@ class User {
         }
 
         $this->db = $database;
+    }
+
+    public function getId() {
+        return $this->id;
+    }
+
+    public function getUsername() {
+        return $this->username;
     }
 
     /**
@@ -75,26 +83,6 @@ class User {
      *                       false otherwise.
      */
     public static function exists(IDbConnection $db, $value) {
-        $sql = '(
-                    SELECT
-                        Count(*) AS Total
-                    FROM
-                        '.TB_PREFIX.'users
-                    WHERE
-                        username = ? OR email = ?
-                )
-                UNION ALL
-                (
-                    SELECT
-                        Count(*) AS Total
-                    FROM
-                        '.TB_PREFIX.'activate
-                    WHERE
-                        username = ? OR email = ?
-                )';
-
-        $res = $db->query_new($sql, $value, $value, $value, $value);
-
-        return ($res[0]['Total'] > 0 || $res[1]['Total']);
+        return (new \App\Repository\UserRepository($db))->exists($value);
     }
 }

@@ -135,33 +135,35 @@ class Building {
     );
 
     public function __construct(
-        $database,
-        $session,
-        $village,
-        $logging,
-        $technology,
-        $generator,
-        $bidData
+        $database = null,
+        $session = null,
+        $village = null,
+        $logging = null,
+        $technology = null,
+        $generator = null,
+        ?array $bidData = null
     ) {
-        $this->db   = $database;
-        $this->sess = $session;
-        $this->vil  = $village;
-        $this->log  = $logging;
-        $this->technology = $technology;
-        $this->generator  = $generator;
-        $this->bidData    = $bidData;
+        $this->db         = $database ?? ($GLOBALS['database'] ?? null);
+        $this->sess       = $session ?? ($GLOBALS['session'] ?? null);
+        $this->vil        = $village ?? ($GLOBALS['village'] ?? null);
+        $this->log        = $logging ?? ($GLOBALS['logging'] ?? null);
+        $this->technology = $technology ?? ($GLOBALS['technology'] ?? null);
+        $this->generator  = $generator ?? ($GLOBALS['generator'] ?? null);
+        $this->bidData    = $bidData ?? $GLOBALS;
 
         $maxConcurrent = BASIC_MAX;
 
-        if (ALLOW_ALL_TRIBE || $this->sess->tribe == 1) {
+        if ($this->sess && (ALLOW_ALL_TRIBE || ($this->sess->tribe ?? 0) == 1)) {
             $maxConcurrent += INNER_MAX;
         }
 
-        if ($this->sess->plus) {
+        if ($this->sess && !empty($this->sess->plus)) {
             $maxConcurrent += PLUS_MAX;
         }
 
-        $this->loadBuilding();
+        if ($this->db && $this->vil) {
+            $this->loadBuilding();
+        }
 
         if (!empty($this->buildArray)) {
 
@@ -246,6 +248,7 @@ class Building {
     // WW restriction early exit
     if ($fieldId == 99 && !$this->allowWwUpgrade()) {
         $this->redirect($fieldId);
+        return;
     }
 
     $fieldTypeKey = 'f'.$fieldId.'t';
@@ -291,11 +294,13 @@ class Building {
         !$isValidWall
     ) {
         Response::redirect($_SERVER['SCRIPT_NAME']);
+        return;
     }
 
     if (!isset($_GET['master'])) {
         if ($this->checkResource($gid, $fieldId) != 4) {
             $this->redirect($fieldId);
+            return;
         }
 
         return;
@@ -306,6 +311,7 @@ class Building {
         // build nou
         if (!$this->meetRequirement($gid)) {
             $this->redirect($fieldId);
+            return;
         }
     } else {
         // upgrade
@@ -314,6 +320,7 @@ class Building {
 		
         if ($this->isMax($gid, $fieldId, $loopLevel + $currentLevel)) {
             $this->redirect($fieldId);
+            return;
         }
     }
 }
@@ -493,7 +500,7 @@ class Building {
 
     // Fallback doar daca trebuie (constructie noua: fieldType == 0)
     if (empty($resRequiredPop)) {
-        $buildarray = $this->bidData['bid'.$gid];
+        $buildarray = $this->getBidArray($gid);
         $resRequiredPop = $buildarray[1]['pop'];
     }
 
@@ -505,7 +512,7 @@ class Building {
 
         foreach ($jobs as $j) {
 
-    $buildarray = $this->bidData['bid'.$j['type']];
+    $buildarray = $this->getBidArray($j['type']);
 
             // B-W1: cache pe instanta (era "static" per metoda, nu se reseta
             // la instante noi)
@@ -1204,9 +1211,21 @@ class Building {
 	$gid = tipul cladirii, $fieldId = slotul
 	*****************************************/
 
+	private function getBidArray($gid) {
+    if (is_array($this->bidData)) {
+        if (isset($this->bidData['bid'.$gid])) {
+            return $this->bidData['bid'.$gid];
+        }
+        if (isset($this->bidData[$gid])) {
+            return $this->bidData[$gid];
+        }
+    }
+    return $GLOBALS['bid'.$gid] ?? null;
+}
+
 	private function checkResource($gid, $fieldId) {
 
-    $dataarray = isset($this->bidData['bid'.$gid]) ? $this->bidData['bid'.$gid] : null;
+    $dataarray = $this->getBidArray($gid);
 
     $plus = 1;
 
@@ -1282,7 +1301,7 @@ class Building {
 
 	public function isMax($gid, $fieldId, $loop = 0) {
 
-    $dataarray = isset($this->bidData['bid'.$gid]) ? $this->bidData['bid'.$gid] : null;
+    $dataarray = $this->getBidArray($gid);
 
     $currentLevel = $this->vil->resarray['f'.$fieldId];
 
@@ -1518,7 +1537,7 @@ class Building {
                         );
                     }
 
-                    $buildarray = $this->bidData['bid'.$jobs['type']];
+                    $buildarray = $this->getBidArray($jobs['type']);
 
                     $buildwood = $buildarray[$jobs['level']]['wood'];
                     $buildclay = $buildarray[$jobs['level']]['clay'];
@@ -1590,7 +1609,8 @@ class Building {
                 if ($jobs['type'] == 18) {
 
                     $owner = $this->db->getVillageField($wid, 'owner');
-                    $max = $this->bidData['bid18'][$jobs['level']]['attri'];
+                    $bid18 = $this->getBidArray(18);
+                    $max = $bid18[$jobs['level']]['attri'];
 
                     $this->db->updateAllianceMax($owner, $max);
                 }
@@ -1753,12 +1773,7 @@ class Building {
         return $cpCache[$cacheKey];
     }
 
-    static $bidData = null;
-    if ($bidData === null) {
-        $bidData = $GLOBALS;
-    }
-    
-    $dataProvider = new \App\Automation\AutomationDataProvider($bidData);
+    $dataProvider = new \App\Automation\AutomationDataProvider($GLOBALS);
     $dataarray = $dataProvider->getBid($f);
 
     $cp = (
@@ -1789,7 +1804,7 @@ class Building {
         return $this->resourceReqCache[$cacheKey];
     }
 
-    $dataarray = isset($this->bidData['bid'.$gid]) ? $this->bidData['bid'.$gid] : null;
+    $dataarray = $this->getBidArray($gid);
 
     $level = $this->vil->resarray['f'.$fieldId] + $plus;
 
@@ -1921,6 +1936,7 @@ class Building {
         $ritime
     ) + time();
 
-    return $generator->procMtime($reqtime);
+    $gen = $this->generator ?? ($GLOBALS['generator'] ?? null);
+    return $gen ? $gen->procMtime($reqtime) : '';
 }
 };

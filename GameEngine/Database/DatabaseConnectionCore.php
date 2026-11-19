@@ -41,7 +41,7 @@ trait DatabaseConnectionCore {
         return $data;
     }
 
-    private function clearQueryCache(?string $prefix = null): void {
+    public function clearQueryCache(?string $prefix = null): void {
         if ($prefix === null) $this->queryCache = [];
         else foreach (array_keys($this->queryCache) as $k) if (strpos($k, $prefix)===0) unset($this->queryCache[$k]);
     }
@@ -64,7 +64,7 @@ trait DatabaseConnectionCore {
             }
         }
 
-        $attempts = 15;
+        $attempts = defined('TRAVIANZ_TEST_MODE') ? 1 : 15;
         $waitMicros = 1000000; // 1 second
 
         for ($i = 0; $i < $attempts; $i++) {
@@ -139,7 +139,7 @@ trait DatabaseConnectionCore {
 	        // value feeds for a single prepared statement, so we just use
 	        // the first array value to actually prepare the statement
 	        // and determine all the binding types
-	        if (count($params) == 1) {
+	        if (count($params) == 1 && is_array($params[0])) {
 	            $paramsArray = $params[0];
 	            $is_multi_query = true;
 	        } else {
@@ -393,5 +393,13 @@ trait DatabaseConnectionCore {
 
 	function return_link() {
 		return $this->dblink;
+	}
+
+	public function affected_rows() {
+		return ($this->dblink instanceof \mysqli) ? mysqli_affected_rows($this->dblink) : 0;
+	}
+
+	public function num_rows($result) {
+		return ($result instanceof \mysqli_result) ? mysqli_num_rows($result) : 0;
 	}
 }
