@@ -61,26 +61,16 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Valori
 // ---------------------------------------------------------------------------
-$wood     = max(0, (int)($_POST['wood'] ?? 0));
-$clay     = max(0, (int)($_POST['clay'] ?? 0));
-$iron     = max(0, (int)($_POST['iron'] ?? 0));
-$crop     = max(0, (int)($_POST['crop'] ?? 0));
-$maxstore = max(0, (int)($_POST['maxstore'] ?? 0));
-$maxcrop  = max(0, (int)($_POST['maxcrop'] ?? 0));
+$wood = max(0, (int)($_POST['wood'] ?? 0));
+$clay = max(0, (int)($_POST['clay'] ?? 0));
+$iron = max(0, (int)($_POST['iron'] ?? 0));
+$crop = max(0, (int)($_POST['crop'] ?? 0));
 
 // ---------------------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------------------
-$database->query(
-    "UPDATE " . TB_PREFIX . "vdata SET 
-        wood = $wood,
-        clay = $clay,
-        iron = $iron,
-        crop = $crop,
-        maxstore = $maxstore,
-        maxcrop = $maxcrop
-     WHERE wref = $id"
-);
+$resourceEditor = new \App\Admin\Services\ResourceEditorService($database);
+$resourceEditor->updateResources($id, $_POST);
 
 // ---------------------------------------------------------------------------
 // Log admin

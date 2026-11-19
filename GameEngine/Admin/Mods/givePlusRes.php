@@ -37,8 +37,7 @@ for ($i = 0; $i < 5; $i++) {
     }
 }
 
-include_once($autoprefix . "GameEngine/Database.php");
-
+require_once(__DIR__ . '/../../Database.php');
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
@@ -48,46 +47,13 @@ if (!$admin || (int)$admin['access'] !== 9) {
     admin_deny('You must be signed in as an administrator to view this page. Your session may have expired — please return to the admin panel and sign in again.');
 }
 
-$wood = (int)($_POST['wood'] ?? 0) * 86400;
-$clay = (int)($_POST['clay'] ?? 0) * 86400;
-$iron = (int)($_POST['iron'] ?? 0) * 86400;
-$crop = (int)($_POST['crop'] ?? 0) * 86400;
-
-if ($wood + $clay + $iron + $crop == 0) {
-    header("Location: ../../../Admin/admin.php?p=givePlusRes&e=0");
-    exit;
-}
-
 $time = time();
 
-// ---------------------------------------------------------------------------
-// Update în masă
-// ---------------------------------------------------------------------------
-if ($wood > 0) {
-    $database->query("UPDATE " . TB_PREFIX . "users SET b1 = IF(b1 < $time, $time + $wood, b1 + $wood) WHERE id > 3");
+$handler = new \App\Admin\Services\GivePlusResHandler($database);
+if ($handler->givePlusRes($_POST, (int)$_SESSION['id'], $time)) {
+    header("Location: ../../../Admin/admin.php?p=givePlusRes&g=1");
+} else {
+    header("Location: ../../../Admin/admin.php?p=givePlusRes&e=0");
 }
-if ($clay > 0) {
-    $database->query("UPDATE " . TB_PREFIX . "users SET b2 = IF(b2 < $time, $time + $clay, b2 + $clay) WHERE id > 3");
-}
-if ($iron > 0) {
-    $database->query("UPDATE " . TB_PREFIX . "users SET b3 = IF(b3 < $time, $time + $iron, b3 + $iron) WHERE id > 3");
-}
-if ($crop > 0) {
-    $database->query("UPDATE " . TB_PREFIX . "users SET b4 = IF(b4 < $time, $time + $crop, b4 + $crop) WHERE id > 3");
-}
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$logText = "Gave res bonuses to all: wood=" . ($_POST['wood'] ?? 0) . "d, clay=" . ($_POST['clay'] ?? 0) . "d, iron=" . ($_POST['iron'] ?? 0) . "d, crop=" . ($_POST['crop'] ?? 0) . "d";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
-
-header("Location: ../../../Admin/admin.php?p=givePlusRes&g=1");
 exit;
 ?>

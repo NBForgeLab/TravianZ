@@ -30,6 +30,7 @@ if (!isset($_SESSION['access']) || $_SESSION['access'] < ADMIN) {
 // itself (it does not go through admin.php's central csrf_verify()).
 require_once(__DIR__ . '/../csrf.php');
 csrf_verify();
+require_once(__DIR__ . '/../../../autoloader.php');
 
 /*
 |--------------------------------------------------------------------------
@@ -91,151 +92,12 @@ if (
         exit;
     }
 
-    $subject = $database->escape($_SESSION['mass_subject']);
+    $subject = $_SESSION['mass_subject'];
     $message = $_SESSION['mass_message'];
-    $color = $database->escape(
-        $_SESSION['mass_color'] ?: 'black'
-    );
+    $color = $_SESSION['mass_color'] ?: 'black';
 
-    /*
-    |--------------------------------------------------------------------------
-    | BBCode
-    |--------------------------------------------------------------------------
-    */
-
-	$message = preg_replace_callback(
-    "/\[img\](.*?)\[\/img\]/is",
-    function ($m) {
-
-        $url = trim($m[1]);
-
-        if (!preg_match('#^https?://#i', $url)) {
-            return '';
-        }
-
-        $safe = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-
-        return '<img src="' . $safe . '" alt="" />';
-    },
-    $message
-	);
-
-	$message = preg_replace_callback(
-    "/\[url\](.*?)\[\/url\]/is",
-    function ($m) {
-
-        $url = trim($m[1]);
-
-        if (!preg_match('#^https?://#i', $url)) {
-            return htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-        }
-
-        $safe = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-
-        return '<a href="' .
-               $safe .
-               '" target="_blank" rel="noopener noreferrer">' .
-               $safe .
-               '</a>';
-    },
-    $message
-	);
-
-	$message = preg_replace_callback(
-    "/\[url=(.*?)\](.*?)\[\/url\]/is",
-    function ($m) {
-
-        $url = trim($m[1]);
-        $text = htmlspecialchars($m[2], ENT_QUOTES, 'UTF-8');
-
-        if (!preg_match('#^https?://#i', $url)) {
-            return $text;
-        }
-
-        $safe = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-
-        return '<a href="' .
-               $safe .
-               '" target="_blank" rel="noopener noreferrer">' .
-               $text .
-               '</a>';
-    },
-    $message
-	);
-
-    $message = "[message]".$message."[/message]";
-
-    $message = $database->escape($message);
-
-    /*
-    |--------------------------------------------------------------------------
-    | ALL PLAYERS
-    |--------------------------------------------------------------------------
-    */
-
-    $result = mysqli_query(
-        $database->dblink,
-        "SELECT id
-         FROM ".TB_PREFIX."users
-         WHERE id > 5
-         ORDER BY id ASC"
-    );
-
-    $rows = [];
-
-    $time = time();
-
-    while ($user = mysqli_fetch_assoc($result)) {
-
-        $uid = (int)$user['id'];
-
-        $rows[] =
-        "(".
-            $uid.",".
-            "1,".
-            "'<span style=\"color:".$color.";\">".$subject."</span>',".
-            "'".$message."',".
-            "0,".
-            "0,".
-            "0,".
-            $time.",".
-            "0,".
-            "0,".
-            "0,".
-            "0,".
-            "0,".
-            "0".
-        ")";
-    }
-
-    if (!empty($rows)) {
-
-        $sql =
-        "INSERT INTO ".TB_PREFIX."mdata
-        (
-            target,
-            owner,
-            topic,
-            message,
-            viewed,
-            archived,
-            send,
-            time,
-            deltarget,
-            delowner,
-            alliance,
-            player,
-            coor,
-            report
-        )
-        VALUES
-        ".implode(",", $rows);
-
-        mysqli_query(
-            $database->dblink,
-            $sql
-        );
-    }
+    $service = new \App\Admin\Services\MassMessageService($database);
+    $service->sendMassMessage($subject, $message, $color);
 
     unset(
         $_SESSION['mass_subject'],

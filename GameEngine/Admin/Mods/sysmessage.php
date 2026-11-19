@@ -41,6 +41,7 @@ for ($i = 0; $i < 6; $i++) {
         break;
     }
 }
+$sysMsgService = new \App\Admin\Services\SystemMessageService($database, $autoprefix);
 
 /*
 |--------------------------------------------------------------------------
@@ -79,50 +80,15 @@ if (isset($_POST['action']) && $_POST['action'] == 'execute') {
         exit;
     }
 
-    $subject = trim($_SESSION['sys_subject']);
-    $message = trim($_SESSION['sys_message']);
-    $color   = trim($_SESSION['sys_color'] ?: 'black');
-
-    // Compose the HTML body: coloured subject heading + message (line breaks kept).
-    $body  = '<div style="color:' . $color . ';font-weight:bold;font-size:14px;margin-bottom:8px">' . $subject . '</div>';
-    $body .= $message;
-
-    // %TEKST% is injected into a PHP double-quoted string inside text_format.tpl,
-    // so escape backslash, double-quote and $ to avoid breaking the string or
-    // allowing code injection. str_replace (not preg_replace) so the replacement
-    // is treated literally.
-    $safe = str_replace(['\\', '"', '$'], ['\\\\', '\\"', '\\$'], $body);
-
-    $format = @file_get_contents($autoprefix . 'Templates/text_format.tpl');
-    if ($format === false) {
-        die("Cannot read Templates/text_format.tpl");
+    try {
+        $sysMsgService->postSystemMessage(
+            trim($_SESSION['sys_subject']),
+            trim($_SESSION['sys_message']),
+            trim($_SESSION['sys_color'] ?: 'black')
+        );
+    } catch (Exception $e) {
+        die($e->getMessage());
     }
-
-    // Inlocuim DOAR atribuirea reala, nu orice aparitie a marcajului.
-    //
-    // BUG REPARAT: text_format.tpl continea marcajul si intr-un comentariu din
-    // antetul de credite ("Preserved original placeholder logic (%TEKST%)").
-    // str_replace le lovea pe amandoua, deci mesajul ajungea si in mijlocul
-    // comentariului. Textul avea ghilimele si linii noi, care inchideau blocul
-    // de comentariu si rupeau fisierul - de aici "imi rupe jocul".
-    //
-    // Tiparul de mai jos prinde exact linia de atribuire, deci un marcaj ramas
-    // intr-un comentariu nu mai poate face rau.
-    $pattern = '/\$txt\s*=\s*"%TEKST%"\s*;/';
-    $out     = preg_replace($pattern, '$txt = "' . str_replace('$', '\\$', $safe) . '";', $format, 1, $count);
-
-    if ($out === null || $count !== 1) {
-        // Sablonul nu mai arata cum ne asteptam: mai bine oprim decat sa
-        // scriem un fisier stricat peste unul care functioneaza.
-        die("Cannot update Templates/text.tpl: the placeholder was not found exactly once in text_format.tpl");
-    }
-
-    if (@file_put_contents($autoprefix . 'Templates/text.tpl', $out) === false) {
-        die("Cannot write Templates/text.tpl (check permissions)");
-    }
-
-    // Make the message visible to every player (they will see it on next page).
-    $database->setUsersOk(1);
 
     unset($_SESSION['sys_subject'], $_SESSION['sys_message'], $_SESSION['sys_color']);
 

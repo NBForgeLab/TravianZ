@@ -1,4 +1,6 @@
 <?php
+require_once(__DIR__ . '/../../../autoloader.php');
+use App\Admin\Services\RegBlockService;
 #################################################################################
 ##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
 ## --------------------------------------------------------------------------- ##
@@ -26,7 +28,9 @@ for ($i = 0; $i < 5; $i++) {
     if (file_exists($autoprefix . 'autoloader.php')) break;
 }
 include_once($autoprefix . "GameEngine/Database.php");
-include_once($autoprefix . "GameEngine/RegBlock.php");
+// Removed manual include of RegBlock.php as we use service now.
+
+$regBlockService = new RegBlockService($database);
 
 $admid = (int)($_SESSION['id'] ?? 0);
 
@@ -44,7 +48,7 @@ if ($do === 'add') {
     $type  = $_POST['type']  ?? '';
     $value = $_POST['value'] ?? '';
     $note  = $_POST['note']  ?? '';
-    list($ok, $msg) = RegBlock::add($type, $value, $note, $admid);
+    list($ok, $msg) = $regBlockService->add($type, $value, $note, $admid);
 
     if ($ok) {
         $logMsg = 'Registration block added: ' . $type . ' = ' . RegBlock_safe($value);
@@ -58,7 +62,7 @@ if ($do === 'add') {
 
 if ($do === 'remove') {
     $id = (int)($_POST['id'] ?? 0);
-    if ($id > 0 && RegBlock::remove($id)) {
+    if ($id > 0 && $regBlockService->remove($id)) {
         mysqli_query($GLOBALS['link'],
             "INSERT INTO " . TB_PREFIX . "admin_log VALUES (0, " . $admid . ", 'Registration block removed (id " . $id . ")', " . time() . ")");
         header("Location: ../../../Admin/admin.php?p=blockReg&msg=" . urlencode('Block removed.'));

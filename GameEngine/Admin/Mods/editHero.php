@@ -76,49 +76,28 @@ if (isset($_POST['id'], $_POST['hid'])) {
 
     if ($hrestype < 0 || $hrestype > 4) { $hrestype = 0; }
 
-    // Coloanele T4 se scriu doar daca exista: pe un server care nu a rulat
-    // add-hero-resources.sql, interogarea ar esua si s-ar pierde TOATA salvarea.
-    $hHasResCols = false;
-    $hColCheck = mysqli_query($database->dblink, "SHOW COLUMNS FROM " . TB_PREFIX . "hero LIKE 'resources'");
-    if ($hColCheck && mysqli_num_rows($hColCheck) > 0) { $hHasResCols = true; }
-
     $experience = isset($hero_levels[$hlvl]) ? (int)$hero_levels[$hlvl] : 0;
-    $hnameEsc = $database->escape($hname);
 
-    $q = "UPDATE " . TB_PREFIX . "hero SET 
-            unit = $hunit,
-            name = '$hnameEsc',
-            level = $hlvl,
-            points = $exp,
-            experience = $experience,
-            health = '$hhealth',
-            attack = $hatk,
-            defence = $hdef,
-            attackbonus = $hob,
-            defencebonus = $hdb,
-            regeneration = $hrege"
-        . ($hHasResCols ? ",
-            resources = $hres,
-            res_type = $hrestype" : "")
-        . "
-          WHERE heroid = $hid AND uid = $id";
-
-    $return = $database->query($q);
- 
-// ---------------------------------------------------------------------------
-// Log admin - adaptat pentru tabelul tău
-// ---------------------------------------------------------------------------
+    $heroService = new \App\Admin\Services\HeroSettingsService($database, TB_PREFIX);
+    $return = $heroService->updateHero($id, $hid, [
+        'unit'         => $hunit,
+        'name'         => $hname,
+        'level'        => $hlvl,
+        'points'       => $exp,
+        'experience'   => $experience,
+        'health'       => $hhealth,
+        'attack'       => $hatk,
+        'defence'      => $hdef,
+        'attackbonus'  => $hob,
+        'defencebonus' => $hdb,
+        'regeneration' => $hrege,
+        'resources'    => $hres,
+        'res_type'     => $hrestype,
+    ]);
 
     if ($return) {
         $adminId = (int)$_SESSION['id'];
-        $time = time();
-        $logText = "Changed hero info for user <a href='admin.php?p=player&uid=$id'>$id</a> (hero $hid)";
-        $logEsc = $database->escape($logText);
-
-        $database->query(
-            "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-            "VALUES (0, '$adminId', '$logEsc', $time)"
-        );
+        $heroService->logAdminAction($adminId, "Changed hero info for user <a href='admin.php?p=player&uid=$id'>$id</a> (hero $hid)");
         $status = "&cs=1";
     }
 }

@@ -58,30 +58,12 @@ if (!$admin || (int)$admin['access'] !== 9) {
     admin_deny('You must be signed in as an administrator to view this page. Your session may have expired — please return to the admin panel and sign in again.');
 }
 
-// ---------------------------------------------------------------------------
-// Valori
-// ---------------------------------------------------------------------------
-$ap  = (int)($_POST['off'] ?? 0);
-$dp  = (int)($_POST['def'] ?? 0);
-$rr  = (int)($_POST['res'] ?? 0);
+$ap = (int)($_POST['off'] ?? 0);
+$dp = (int)($_POST['def'] ?? 0);
+$rr = (int)($_POST['res'] ?? 0);
 
-// ---------------------------------------------------------------------------
-// Update
-// ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "users SET ap = $ap, dp = $dp, RR = $rr WHERE id = $id");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Changed weekly stats for user <a href='admin.php?p=player&uid=$id'>$id</a> (ap=$ap, dp=$dp, RR=$rr)";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$handler = new \App\Admin\Services\EditWeekHandler($database);
+$handler->handle($id, $ap, $dp, $rr, (int)$_SESSION['id']);
 
 header("Location: ../../../Admin/admin.php?p=player&uid=" . $id);
 exit;

@@ -57,29 +57,13 @@ if ($reason === '') {
     exit;
 }
 
-$reasonEsc = $database->escape($reason);
-$time = time();
 $adminId = (int)$session;
 
 // ---------------------------------------------------------------------------
 // Unban
 // ---------------------------------------------------------------------------
-$database->query(
-    "UPDATE " . TB_PREFIX . "banlist 
-     SET active = 0, end = $time 
-     WHERE reason = '$reasonEsc' AND active = 1"
-);
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$logText = "Mass unban for reason='$reasonEsc'";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$service = new \App\Admin\Services\UnbanService($database);
+$service->unbanByReason($reason, $adminId);
 
 header("Location: ../../../Admin/admin.php?p=ban&u=1");
 exit;

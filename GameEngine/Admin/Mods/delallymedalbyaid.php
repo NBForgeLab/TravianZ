@@ -37,6 +37,9 @@ for ($i = 0; $i < 5; $i++) {
 include_once($autoprefix . "GameEngine/config.php");
 include_once($autoprefix . "GameEngine/Database.php");
 
+use App\Admin\Services\AllianceAdminService;
+$allianceService = new AllianceAdminService($database, TB_PREFIX);
+
 // ---------------------------------------------------------------------------
 // Input - folosim un singur ID pentru alianță
 // ---------------------------------------------------------------------------
@@ -59,21 +62,13 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Ștergere logică - toate medaliile alianței
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "allimedal SET del = 1 WHERE allyid = $aid AND del = 0");
-$affected = mysqli_affected_rows($database->dblink);
+$affected = $allianceService->deleteAllianceMedalsByAllyId($aid);
 
 // ---------------------------------------------------------------------------
 // Log admin
 // ---------------------------------------------------------------------------
 $adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Deleted all medals ($affected) for alliance <a href='admin.php?p=alliance&aid=$aid'>$aid</a>";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$allianceService->logAdminAction($adminId, "Deleted all medals ($affected) for alliance <a href='admin.php?p=alliance&aid=$aid'>$aid</a>");
 
 header("Location: ../../../Admin/admin.php?p=alliance&aid=" . $aid . "&deleted=$affected");
 exit;

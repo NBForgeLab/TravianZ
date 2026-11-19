@@ -38,6 +38,7 @@ for ($i = 0; $i < 5; $i++) {
 }
 
 include_once($autoprefix . "GameEngine/Database.php");
+$villageService = new \App\Admin\Services\VillageService($database);
 
 // ---------------------------------------------------------------------------
 // Verificare admin
@@ -58,32 +59,18 @@ if ($id <= 0) {
 // ---------------------------------------------------------------------------
 // Construiește SET dinamic f1-f40
 // ---------------------------------------------------------------------------
-$sets = [];
+$buildings = [];
 for ($i = 1; $i <= 40; $i++) {
-    $lvl = (int)($_POST["id{$i}level"] ?? 0);
-    $gid = (int)($_POST["id{$i}gid"] ?? 0);
-    $sets[] = "f$i = $lvl, f{$i}t = $gid";
+    $buildings["id{$i}level"] = (int)($_POST["id{$i}level"] ?? 0);
+    $buildings["id{$i}gid"] = (int)($_POST["id{$i}gid"] ?? 0);
 }
-$setSql = implode(", ", $sets);
 
 // ---------------------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "fdata SET $setSql WHERE vref = $id");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
 $adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Recalculated buildings for village $id";
-$logEsc = $database->escape($logText);
+$villageService->updateVillageBuildings($id, $buildings, $adminId);
 
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
-
-header("Location: ../../../Admin/admin.php?action=recountPop&did=" . $id);
+header("Location: ../../../Admin/admin.php?p=village&did=" . $id);
 exit;
 ?>

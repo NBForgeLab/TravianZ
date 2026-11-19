@@ -19,17 +19,12 @@ if ($_SESSION['access'] < MULTIHUNTER) {
 
 // This Mod is POSTed to directly, so verify the CSRF token itself.
 csrf_verify();
+require_once(__DIR__ . '/../../../autoloader.php');
 
-include_once("../../config.php");
-
-// autoloader (find it walking up, like the other Mods)
-$autoprefix = '';
-for ($i = 0; $i < 5; $i++) {
-    $autoprefix = str_repeat('../', $i);
-    if (file_exists($autoprefix . 'autoloader.php')) break;
-}
-include_once($autoprefix . "GameEngine/Database.php");
-include_once($autoprefix . "GameEngine/PushProtection.php");
+include_once(__DIR__ . '/../../config.php');
+include_once(__DIR__ . '/../../Database.php');
+include_once(__DIR__ . '/../../PushProtection.php');
+$ppService = new \App\Admin\Services\PushProtectionService($database);
 
 $admid = (int)($_SESSION['id'] ?? 0);
 $uid   = (int)($_POST['uid'] ?? 0);
@@ -58,14 +53,7 @@ if ($uid > 3) {
         $limit = 0;
     }
 
-    PushProtection::setOverride($uid, $mode, $limit, $note, $admid);
-
-    $modeLabel = $mode === PushProtection::OV_UNLIMITED ? 'exempt'
-        : ($mode === PushProtection::OV_CUSTOM ? ('custom cap ' . $limit) : 'cleared');
-    $logMsg = 'Push protection override for uid ' . $uid . ' set to <b>' . $modeLabel . '</b>';
-    $logMsg = mysqli_real_escape_string($GLOBALS['link'], $logMsg);
-    mysqli_query($GLOBALS['link'],
-        "INSERT INTO " . TB_PREFIX . "admin_log VALUES (0, " . $admid . ", '" . $logMsg . "', " . time() . ")");
+    $ppService->setOverride($uid, $mode, $limit, $note, $admid);
 }
 
 header("Location: ../../../Admin/admin.php?p=pushprot");

@@ -59,44 +59,17 @@ if (!$admin || (int)$admin['access'] !== 9) {
     admin_deny('You must be signed in as an administrator to view this page. Your session may have expired — please return to the admin panel and sign in again.');
 }
 
-// ---------------------------------------------------------------------------
-// Verifică sat și noul owner
-// ---------------------------------------------------------------------------
-$village = $database->getVillage($did);
-if (!$village) {
+$handler = new \App\Admin\Services\EditVillageOwnerHandler($database);
+$result = $handler->handle($did, $newowner, (int)$_SESSION['id']);
+
+if ($result['status'] === 'novillage') {
     header("Location: ../../../Admin/admin.php?p=admin&e=novillage");
     exit;
-}
-
-$newUser = $database->getUserArray($newowner, 1);
-if (!$newUser) {
+} elseif ($result['status'] === 'nouser') {
     header("Location: ../../../Admin/admin.php?p=village&did=$did&e=nouser");
     exit;
 }
 
-$oldOwner = (int)$village['owner'];
-
-// ---------------------------------------------------------------------------
-// Update
-// ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "vdata SET owner = $newowner WHERE wref = $did");
-
-// actualizează și owner în oaze ocupate de sat (opțional dar recomandat)
-$database->query("UPDATE " . TB_PREFIX . "odata SET owner = $newowner WHERE conqured = $did");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Changed owner for village <a href='admin.php?p=village&did=$did'>$did</a> from $oldOwner to <a href='admin.php?p=player&uid=$newowner'>$newowner</a>";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
-
-header("Location: ../../../Admin/admin.php?p=player&uid=" . $newowner);
+header("Location: ../../../Admin/admin.php?p=player&uid=" . $result['newowner']);
 exit;
 ?>

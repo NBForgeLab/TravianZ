@@ -1,4 +1,6 @@
 <?php
+require_once(__DIR__ . '/../../../autoloader.php');
+use App\Admin\Services\CpService;
 #################################################################################
 ##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
 ## --------------------------------------------------------------------------- ##
@@ -41,7 +43,8 @@ $sessionaccess = $access['access'];
 
 if($sessionaccess != 9) admin_deny('You must be signed in as an administrator to view this page. Your session may have expired — please return to the admin panel and sign in again.');
 
-mysqli_query($GLOBALS["link"], "UPDATE ".TB_PREFIX."users SET cp = cp + ".(int) $_POST['cp']." WHERE id = ".$id."");
+$cpService = new CpService($database);
+$cpService->updateCp($id, (int) $_POST['cp']);
 
 header("Location: ../../../Admin/admin.php?p=player&uid=".$id."");
 ?>

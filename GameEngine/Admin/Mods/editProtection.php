@@ -39,6 +39,9 @@ for ($i = 0; $i < 5; $i++) {
 
 include_once($autoprefix . "GameEngine/Database.php");
 
+use App\Admin\Services\EditProtectionService;
+$editProtectionService = new EditProtectionService($database, TB_PREFIX);
+
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
@@ -62,29 +65,19 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Calcul protecție
 // ---------------------------------------------------------------------------
-$time = time();
-$protection = $days > 0 ? $time + ($days * 86400) : 0;
-
-$database->query("UPDATE " . TB_PREFIX . "users SET protect = $protection WHERE id = $id");
+$editProtectionService->updateProtection($id, $days);
 
 // ---------------------------------------------------------------------------
 // Log admin
 // ---------------------------------------------------------------------------
 $adminId = (int)$_SESSION['id'];
-$time = time(); // asigură-te că $time e definit înainte
 
 // FIX: username + ID formatat
 $targetName = $database->getUserField($id, 'username', 0) ?: 'UID '.$id;
-$targetNameSafe = htmlspecialchars($targetName, ENT_QUOTES, 'UTF-8');
 
-$logText = "Set protection for user <a href='admin.php?p=player&uid=$id'>$targetNameSafe</a> to $days days";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$editProtectionService->logProtectionChange($adminId, $id, $targetName, $days);
 
 header("Location: ../../../Admin/admin.php?p=player&uid=" . $id);
 exit;
+
 ?>

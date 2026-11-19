@@ -81,27 +81,20 @@ if (!empty($_POST['bonus_apply'])) {
     }
 }
 
-$tag    = $database->escape(substr(trim($_POST['tag'] ?? ''), 0, 8));
-$name   = $database->escape(substr(trim($_POST['name'] ?? ''), 0, 25));
-$leader = (int)($_POST['leader'] ?? 0);
-$max    = (int)($_POST['max'] ?? 0);
-$max    = max(3, min(60, $max));
-$notice = $database->escape($_POST['notice'] ?? '');
-$desc   = $database->escape($_POST['desc'] ?? '');
+$tag = $database->escape(substr(trim($_POST['tag'] ?? ''), 0, 8));
 
 // ---------------------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------------------
-$database->query(
-    "UPDATE " . TB_PREFIX . "alidata SET 
-        tag = '$tag',
-        name = '$name',
-        leader = $leader,
-        `max` = $max,
-        notice = '$notice',
-        `desc` = '$desc'
-     WHERE id = $aid"
-);
+$service = new \App\Admin\Services\EditAliService($database, TB_PREFIX);
+$service->updateAlliance($aid, [
+    'tag' => $_POST['tag'] ?? '',
+    'name' => $_POST['name'] ?? '',
+    'leader' => $_POST['leader'] ?? 0,
+    'max' => $_POST['max'] ?? 0,
+    'notice' => $_POST['notice'] ?? '',
+    'desc' => $_POST['desc'] ?? ''
+]);
 
 // ---------------------------------------------------------------------------
 // Log admin - aceeași structură ca editUser
@@ -113,8 +106,8 @@ foreach ($bonusUpdates as $btype => $level) {
         "INSERT INTO " . TB_PREFIX . "alliance_bonus (aid, btype, level, pool, upgrade_end)
          VALUES ($aid, $btype, $level, 0, 0)
          ON DUPLICATE KEY UPDATE
-            upgrade_end = IF(level <> $level OR $level = " . AllianceBonus::MAX_LEVEL . ", 0, upgrade_end),
-            pool = IF($level = " . AllianceBonus::MAX_LEVEL . ", 0, pool),
+            upgrade_end = IF(level <> $level OR $level = " . \AllianceBonus::MAX_LEVEL . ", 0, upgrade_end),
+            pool = IF($level = " . \AllianceBonus::MAX_LEVEL . ", 0, pool),
             level = $level"
     );
     if (!$ok) {
@@ -122,17 +115,11 @@ foreach ($bonusUpdates as $btype => $level) {
     }
 }
 
-$time = time();
 $logText = "Edited alliance <a href='admin.php?p=alliance&aid=$aid'>$tag</a>";
 if ($bonusUpdates) {
     $logText .= ' | Alliance bonus levels: ' . json_encode($bonusUpdates);
 }
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$admid', '$logEsc', $time)"
-);
+$service->logAdminAction($admid, $logText);
 
 header("Location: ../../../Admin/admin.php?p=alliance&aid=$aid&edited=1");
 exit;

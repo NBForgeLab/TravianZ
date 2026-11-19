@@ -16,6 +16,7 @@ if($_SESSION['access'] < 9) die(ACCESS_DENIED_ADMIN);
 // itself (it does not go through admin.php's central csrf_verify()).
 require_once(__DIR__ . '/../csrf.php');
 csrf_verify();
+require_once(__DIR__ . '/../../../autoloader.php');
 
 include_once("../../Database.php");
 $id = (int) $_POST['id'];
@@ -226,7 +227,8 @@ $myFile = "../../config.php";
 		    die("<br/><br/><br/>Can't replace file: GameEngine\\config.php");
 		}
 
-$database->query("Insert into ".TB_PREFIX."admin_log values (0,".$id.",'Changed Admin Info',".time().")");
+$service = new \App\Admin\Services\EditAdminInfoService($database, TB_PREFIX);
+$service->logAdminAction($id, 'Changed Admin Info');
 
 header("Location: ../../../Admin/admin.php?p=config");
 

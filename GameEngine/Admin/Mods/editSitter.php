@@ -63,7 +63,8 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "users SET sit1 = $sit1, sit2 = $sit2 WHERE id = $id");
+$sitterEditor = new \App\Admin\Services\SitterEditorService($database);
+$sitterEditor->updateSitters($id, $sit1, $sit2);
 
 // ---------------------------------------------------------------------------
 // Log admin

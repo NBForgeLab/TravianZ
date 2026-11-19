@@ -24,20 +24,13 @@ if (empty($_SESSION['access']) || $_SESSION['access'] < 9) {
 require_once(__DIR__ . '/../csrf.php');
 csrf_verify();
 
-include_once("../../config.php");
+require_once("../../config.php");
+require_once(__DIR__ . '/../../../autoloader.php');
+require_once(__DIR__ . '/../../Database.php');
 
-// ---------------------------------------------------------------------------
-// Autoloader path
-// ---------------------------------------------------------------------------
-$autoprefix = '';
-for ($i = 0; $i < 5; $i++) {
-    $autoprefix = str_repeat('../', $i);
-    if (file_exists($autoprefix . 'autoloader.php')) {
-        break;
-    }
-}
+use App\Admin\Services\MaintenanceResetGoldService;
 
-include_once($autoprefix . "GameEngine/Database.php");
+$service = new MaintenanceResetGoldService($database);
 
 // ---------------------------------------------------------------------------
 // Verificare admin
@@ -51,20 +44,7 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Reset gold
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "users SET gold = 0 WHERE id > 0");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Reset gold to 0 for all users";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$service->resetGoldForAllUsers($session);
 
 header("Location: ../../../Admin/admin.php?p=maintenenceResetGold&g=1");
 exit;

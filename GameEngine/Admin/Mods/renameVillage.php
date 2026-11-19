@@ -38,6 +38,7 @@ for ($i = 0; $i < 5; $i++) {
 }
 
 include_once($autoprefix . "GameEngine/Database.php");
+$villageService = new \App\Admin\Services\VillageService($database);
 
 // ---------------------------------------------------------------------------
 // Input
@@ -62,21 +63,8 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------------------
-$nameEsc = $database->escape($nameOrig);
-$database->query("UPDATE " . TB_PREFIX . "vdata SET name = '$nameEsc' WHERE wref = $did");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
 $adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Renamed village <a href='admin.php?p=village&did=$did'>$did</a> to '$nameEsc'";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$villageService->renameVillage($did, $nameOrig, $adminId);
 
 header("Location: ../../../Admin/admin.php?p=village&did=" . $did);
 exit;

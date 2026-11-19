@@ -23,20 +23,13 @@ if (empty($_SESSION['access']) || $_SESSION['access'] < 9) {
 require_once(__DIR__ . '/../csrf.php');
 csrf_verify();
 
-include_once("../../config.php");
+require_once("../../config.php");
+require_once(__DIR__ . '/../../../autoloader.php');
+require_once(__DIR__ . '/../../Database.php');
 
-// ---------------------------------------------------------------------------
-// Autoloader path
-// ---------------------------------------------------------------------------
-$autoprefix = '';
-for ($i = 0; $i < 5; $i++) {
-    $autoprefix = str_repeat('../', $i);
-    if (file_exists($autoprefix . 'autoloader.php')) {
-        break;
-    }
-}
+use App\Admin\Services\MaintenanceCleanBanDataService;
 
-include_once($autoprefix . "GameEngine/Database.php");
+$service = new MaintenanceCleanBanDataService($database);
 
 // ---------------------------------------------------------------------------
 // Verificare admin
@@ -50,20 +43,7 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Truncate banlist
 // ---------------------------------------------------------------------------
-$database->query("TRUNCATE TABLE " . TB_PREFIX . "banlist");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Cleared banlist (TRUNCATE)";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$service->cleanBanList($session);
 
 header("Location: ../../../Admin/admin.php?p=ban&c=1");
 exit;

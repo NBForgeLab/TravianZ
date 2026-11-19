@@ -49,30 +49,8 @@ if ($days <= 0) {
     exit;
 }
 
-$plusdur = $days * 86400;
-$time = time();
-
-// ---------------------------------------------------------------------------
-// Update în masă – fără loop
-// ---------------------------------------------------------------------------
-// Dacă plus < now, pornește de acum, altfel adaugă la timpul existent
-$database->query(
-    "UPDATE " . TB_PREFIX . "users 
-     SET plus = IF(plus < $time, $time + $plusdur, plus + $plusdur) 
-     WHERE id > 3"
-);
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$logText = "Gave $days days Plus to all players";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$handler = new \App\Admin\Services\GivePlusHandler($database);
+$handler->handle($days, (int)$_SESSION['id']);
 
 header("Location: ../../../Admin/admin.php?p=givePlus&g=1");
 exit;

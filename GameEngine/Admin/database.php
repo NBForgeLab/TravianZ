@@ -58,9 +58,11 @@ class adm_DB {
     var $connection;
     var $database;
 
-    function __construct($database) {
-        $this->database = $database;
-        $this->connection = $this->database->return_link();
+    function __construct($database = null) {
+        $this->database = $database ?? ($GLOBALS['database'] ?? null);
+        $this->connection = ($this->database && method_exists($this->database, 'return_link'))
+            ? $this->database->return_link()
+            : ($this->database->dblink ?? null);
     }
 
     /* ---------------- Login admin ---------------- */
@@ -222,43 +224,13 @@ class adm_DB {
     /* ---------------- Pedepsire jucător ---------------- */
 
 	function Punish($post) {
-		$villages = $this->database->getProfileVillages($post['uid']);
-		$user = $this->database->getUserArray($post['uid'], 1);
-		$logPunishment = '';
-
-    for ($i = 0; $i < count($villages); $i++) {
-        $vid = (int)$villages[$i]['wref'];
-
-        // 1. pedeapsă procent populație
-        if (!empty($post['punish'])) {
-            $punish = (int)$post['punish'];
-            $logPunishment = "<b>-". $punish ."%</b> population";
-            $popOld = (int)$villages[$i]['pop'];
-            $proc = 100 - $punish;
-            $pop = floor(($popOld / 100) * $proc);
-            if ($pop < 2) { $pop = 2; }
-            $this->PunishBuilding($vid, $proc, $pop);
-        }
-
-        // 2. ștergere trupe - CORECTAT
-        if (!empty($post['del_troop'])) {
-            $logPunishment = "<b>troops removal</b>";
-            $tribe = (int)$user['tribe'];
-            // 1=Romani (1-10), 2=Teutoni (11-20), 3=Gali (21-30), 4=Natura (31-40), 5=Natari (41-50)
-            $unitStart = ($tribe >= 1 && $tribe <= 9) ? (($tribe - 1) * 10 + 1) : 1;
-            $this->DelUnits($vid, $unitStart);
-        }
-
-        // 3. golire depozite
-        if (!empty($post['clean_ware'])) {
-            $logPunishment = "<b>emptying warehouses</b>";
-            $time = time();
-            $q = "UPDATE ". TB_PREFIX ."vdata SET `wood`='0', `clay`='0', `iron`='0', `crop`='0', `lastupdate`='$time' WHERE wref=$vid";
-            mysqli_query($this->connection, $q);
-        }
-    }
-
-    mysqli_query($this->connection, "INSERT INTO ". TB_PREFIX ."admin_log VALUES (0,". (int)$_SESSION['id'] .",'Punished user: <a href=\'admin.php?p=player&uid=". (int)$post['uid'] ."\'>". (int)$post['uid'] ."</a> with ". $logPunishment ."',". time() .")");
+		$service = new \App\GameEngine\Admin\AdminService($this->database, (int)($_SESSION['id'] ?? 0));
+		$service->punish(
+			(int)($post['uid'] ?? 0),
+			$post['punish'] ?? null,
+			$post['del_troop'] ?? null,
+			$post['clean_ware'] ?? null
+		);
 	}
 
 	function PunishBuilding($vid, $proc, $pop) {
@@ -1030,7 +1002,9 @@ class adm_DB {
     }
 };
 
-$database = new MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, (defined('SQL_PORT')? SQL_PORT : 3306));
-$admin = new adm_DB($database);
-include("function.php");
+if (!defined('TRAVIANZ_TEST_MODE')) {
+    $database = new MYSQLi_DB(SQL_SERVER, SQL_USER, SQL_PASS, SQL_DB, (defined('SQL_PORT')? SQL_PORT : 3306));
+    $admin = new adm_DB($database);
+    include("function.php");
+}
 ?>

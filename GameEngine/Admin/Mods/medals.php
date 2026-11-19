@@ -32,22 +32,24 @@ for ($i = 0; $i < 5; $i++) {
 }
 
 include_once($autoprefix."GameEngine/Database.php");
+$medalService = new \App\Admin\Services\MedalService($database);
+$uid = (int) ($_POST['uid'] ?? $_POST['userid'] ?? 0);
 
 if(isset($_POST['medalid']) && !empty($_POST['medalid']) && is_numeric($_POST['medalid'])){
     $medalID = (int) $_POST['medalid'];
-    mysqli_query($database->dblink, "UPDATE ".TB_PREFIX."medal set del = 1 WHERE id = ".$medalID."");
+    $userID = (int) ($_POST['uid'] ?? 0);
+    $uid = $userID;
+    $admid = (int) $_SESSION['id'];
+    $name  = $database->escape((string) $database->getUserField($userID, "username", 0));
+    $medalService->deleteMedal($medalID, $admid, $userID, $name);
 }
 elseif(isset($_POST['userid']) && !empty($_POST['userid']) && is_numeric($_POST['userid'])){
     $userID = (int) $_POST['userid'];
-    mysqli_query($database->dblink, "UPDATE ".TB_PREFIX."medal set del = 1 WHERE userid = ".$userID."");
+    $uid = $userID;
+    $admid = (int) $_SESSION['id'];
+    $name  = $database->escape((string) $database->getUserField($userID, "username", 0));
+    $medalService->deleteMedalsForUser($userID, $admid, $name);
 }
-
-$admid = (int) $_SESSION['id'];
-$uid   = (int) ($_POST['uid'] ?? 0);
-$name  = $database->escape((string) $database->getUserField($uid, "username", 0));
-$medalLogId = isset($medalID) ? $medalID : 0;
-//TODO: Make a dedicated method for logging
-mysqli_query($database->dblink, "INSERT INTO ".TB_PREFIX."admin_log values (0, $admid, 'Deleted medal id [#".$medalLogId."] from the user <a href=\'admin.php?p=player&uid=$uid\'>$name</a> ',".time().")");
 
 header("Location: ../../../Admin/admin.php?p=player&uid=".$uid);
 ?>

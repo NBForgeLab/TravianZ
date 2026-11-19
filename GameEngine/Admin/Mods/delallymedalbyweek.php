@@ -37,6 +37,9 @@ for ($i = 0; $i < 5; $i++) {
 include_once($autoprefix . "GameEngine/config.php");
 include_once($autoprefix . "GameEngine/Database.php");
 
+use App\Admin\Services\AllianceAdminService;
+$allianceService = new AllianceAdminService($database, TB_PREFIX);
+
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
@@ -59,21 +62,13 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Ștergere logică pe săptămână
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "allimedal SET del = 1 WHERE week = $deleteweek AND del = 0");
-$affected = mysqli_affected_rows($database->dblink);
+$affected = $allianceService->deleteAllianceMedalsByWeek($deleteweek);
 
 // ---------------------------------------------------------------------------
 // Log admin
 // ---------------------------------------------------------------------------
 $adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Deleted all alliance medals for week $deleteweek ($affected rows)";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$allianceService->logAdminAction($adminId, "Deleted all alliance medals for week $deleteweek ($affected rows)");
 
 header("Location: ../../../Admin/admin.php?p=delallymedal&week=$deleteweek&deleted=$affected");
 exit;

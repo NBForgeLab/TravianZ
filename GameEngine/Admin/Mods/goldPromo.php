@@ -18,15 +18,14 @@ if ($_SESSION['access'] < 9) {
 
 csrf_verify();
 
-include_once("../../config.php");
+require_once("../../config.php");
+require_once(__DIR__ . '/../../../autoloader.php');
+require_once(__DIR__ . '/../../Database.php');
+require_once(__DIR__ . '/../../GoldShop.php');
 
-$autoprefix = '';
-for ($i = 0; $i < 5; $i++) {
-    $autoprefix = str_repeat('../', $i);
-    if (file_exists($autoprefix . 'autoloader.php')) break;
-}
-include_once($autoprefix . "GameEngine/Database.php");
-include_once($autoprefix . "GameEngine/GoldShop.php");
+use App\Admin\Services\GoldPromoService;
+
+$goldPromoService = new GoldPromoService($database);
 
 $admid = (int)($_SESSION['id'] ?? 0);
 
@@ -52,7 +51,7 @@ if ($do === 'create') {
 
     $note = $_POST['note'] ?? '';
 
-    list($ok, $msg) = GoldShop::createCode($code, $gold, $maxUses, $perUser, $expires, $note, $admid);
+    list($ok, $msg) = $goldPromoService->createCode($code, $gold, $maxUses, $perUser, $expires, $note, $admid);
     if ($ok) {
         $logMsg = mysqli_real_escape_string($GLOBALS['link'],
             'Promo code created: ' . GoldShop::normCode($code) . ' (' . (int)$gold . ' gold)');
@@ -63,13 +62,13 @@ if ($do === 'create') {
     $id     = (int)($_POST['id'] ?? 0);
     $active = (int)($_POST['active'] ?? 0);
     if ($id > 0) {
-        GoldShop::setActive($id, $active);
+        $goldPromoService->setActive($id, $active);
         $msg = $active ? 'Code enabled.' : 'Code disabled.';
     }
 } elseif ($do === 'delete') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id > 0) {
-        GoldShop::deleteCode($id);
+        $goldPromoService->deleteCode($id);
         mysqli_query($GLOBALS['link'],
             "INSERT INTO " . TB_PREFIX . "admin_log VALUES (0, " . $admid . ", 'Promo code deleted (id " . $id . ")', " . time() . ")");
         $msg = 'Code deleted.';

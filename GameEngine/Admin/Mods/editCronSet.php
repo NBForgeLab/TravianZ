@@ -84,86 +84,20 @@ if ($regenerateKey || $cronKey === '') {
 // Editarea chirurgicala a fisierului de configuratie
 // ---------------------------------------------------------------------------
 $configFile = "../../config.php";
-$config     = @file_get_contents($configFile);
-
-if ($config === false) {
-    die("<br/><br/><br/>Can't read file: GameEngine\\config.php");
+$cronService = new \App\Admin\Services\CronSettingsService($database, TB_PREFIX, $configFile);
+try {
+    $cronService->updateCronSettings([
+        'loop'          => $loop,
+        'tick'          => $tick,
+        'cronKey'       => $cronKey,
+        'cleanReports'  => $cleanReports,
+        'cleanChat'     => $cleanChat,
+        'cleanMessages' => $cleanMessages,
+    ]);
+} catch (\Exception $e) {
+    die("<br/><br/><br/>" . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
 }
 
-/**
- * Inlocuieste valoarea unei constante daca linia exista; altfel intoarce false
- * ca apelantul sa stie ca trebuie inserata.
- *
- * $rawValue se scrie exact asa cum e dat (deja citat pentru siruri).
- */
-function cron_set_define(&$text, $constant, $rawValue)
-{
-    $pattern = "/define\s*\(\s*(['\"])" . preg_quote($constant, '/') . "\\1\s*,.*?\)\s*;/s";
-
-    if (!preg_match($pattern, $text)) {
-        return false;
-    }
-
-    // str_replace pe potrivirea gasita, ca sa nu interpretam $ sau \ din valoare
-    // ca referinte de grup (capcana clasica a lui preg_replace).
-    preg_match($pattern, $text, $m);
-    $text = str_replace($m[0], "define('" . $constant . "', " . $rawValue . ");", $text);
-
-    return true;
-}
-
-$missing = array();
-
-if (!cron_set_define($config, 'CRON_LOOP_SECONDS', (string) $loop)) {
-    $missing[] = "define('CRON_LOOP_SECONDS', " . $loop . ");";
-}
-
-if (!cron_set_define($config, 'CRON_TICK_SECONDS', (string) $tick)) {
-    $missing[] = "define('CRON_TICK_SECONDS', " . $tick . ");";
-}
-
-if (!cron_set_define($config, 'CRON_KEY', "'" . addcslashes($cronKey, "'\\") . "'")) {
-    $missing[] = "define('CRON_KEY', '" . addcslashes($cronKey, "'\\") . "');";
-}
-
-if (!cron_set_define($config, 'CLEANUP_REPORTS_DAYS', (string) $cleanReports)) {
-    $missing[] = "define('CLEANUP_REPORTS_DAYS', " . $cleanReports . ");";
-}
-
-if (!cron_set_define($config, 'CLEANUP_CHAT_DAYS', (string) $cleanChat)) {
-    $missing[] = "define('CLEANUP_CHAT_DAYS', " . $cleanChat . ");";
-}
-
-if (!cron_set_define($config, 'CLEANUP_MESSAGES_DAYS', (string) $cleanMessages)) {
-    $missing[] = "define('CLEANUP_MESSAGES_DAYS', " . $cleanMessages . ");";
-}
-
-// Server instalat inainte ca aceste constante sa existe: le adaugam dupa
-// AUTOMATION_LOCK_FILE_NAME (locul lor din template).
-if (!empty($missing)) {
-    $anchorPattern = "/define\s*\(\s*(['\"])AUTOMATION_LOCK_FILE_NAME\\1\s*,.*?\)\s*;/s";
-
-    $block = "\n\n//////////////////////////////////\n"
-           . "// *****  CRON / AUTOMATION *****//\n"
-           . "//////////////////////////////////\n"
-           . implode("\n", $missing);
-
-    if (preg_match($anchorPattern, $config, $anchor)) {
-        $config = str_replace($anchor[0], $anchor[0] . $block, $config);
-    } else {
-        // fara ancora: adaugam la finalul fisierului, inaintea eventualului
-        // tag de inchidere PHP (atentie: nu-l scriem literal in comentariu,
-        // fiindca intr-un comentariu "//" ar inchide chiar blocul PHP curent)
-        $config = preg_replace('/\?>\s*$/', '', $config) . $block . "\n";
-    }
-}
-
-$fh = @fopen($configFile, 'w') or die("<br/><br/><br/>Can't open file: GameEngine\\config.php");
-fwrite($fh, $config);
-fclose($fh);
-
-$database->query(
-    "Insert into " . TB_PREFIX . "admin_log values (0," . $id . ",'Changed Cron, Automation & Cleanup Settings'," . time() . ")"
-);
+$cronService->logAdminAction($id, 'Changed Cron, Automation & Cleanup Settings');
 
 header("Location: ../../../Admin/admin.php?p=config");

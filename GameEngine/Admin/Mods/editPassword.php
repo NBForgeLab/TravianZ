@@ -39,6 +39,9 @@ for ($i = 0; $i < 5; $i++) {
 
 include_once($autoprefix . "GameEngine/Database.php");
 
+use App\Admin\Services\EditPasswordService;
+$editPasswordService = new EditPasswordService($database, TB_PREFIX);
+
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
@@ -60,34 +63,21 @@ if (!$admin || (int)$admin['access'] !== 9) {
 }
 
 // ---------------------------------------------------------------------------
-// Hash parolă
-// ---------------------------------------------------------------------------
-$pass = password_hash($newpw, PASSWORD_BCRYPT, ['cost' => 12]);
-$passEsc = $database->escape($pass);
-
-// ---------------------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "users SET password = '$passEsc' WHERE id = $id");
+$editPasswordService->updatePassword($id, $newpw);
 
 // ---------------------------------------------------------------------------
 // Log admin
 // ---------------------------------------------------------------------------
 $adminId = (int)$_SESSION['id'];
-$time = time();
 
 // FIX: luăm username în loc de ID brut
 $targetName = $database->getUserField($id, 'username', 0) ?: 'UID '.$id;
-$targetNameSafe = htmlspecialchars($targetName, ENT_QUOTES, 'UTF-8');
 
-$logText = "Changed password for user <a href='admin.php?p=player&uid=$id'>$targetNameSafe</a>";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$editPasswordService->logPasswordChange($adminId, $id, $targetName);
 
 header("Location: ../../../Admin/admin.php?p=player&uid=" . $id . "&pw=1");
 exit;
+
 ?>

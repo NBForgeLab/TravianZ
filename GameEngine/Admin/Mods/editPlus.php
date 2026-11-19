@@ -39,6 +39,9 @@ for ($i = 0; $i < 5; $i++) {
 
 include_once($autoprefix . "GameEngine/Database.php");
 
+use App\Admin\Services\EditPlusService;
+$editPlusService = new EditPlusService($database, TB_PREFIX);
+
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
@@ -74,20 +77,17 @@ foreach ($bonusDuration as $key => $add) {
     }
 }
 
-$database->updateUserField($id, array_keys($bonusDuration), array_values($bonusDuration), 1);
+$editPlusService->updatePlusBonuses($id, $bonusDuration);
 
 // ---------------------------------------------------------------------------
 // Log admin
 // ---------------------------------------------------------------------------
 $adminId = (int)$_SESSION['id'];
 $logText = "Updated Plus/bonuses for user <a href='admin.php?p=player&uid=$id'>$id</a> (plus={$_POST['plus']}d, wood={$_POST['wood']}d, clay={$_POST['clay']}d, iron={$_POST['iron']}d, crop={$_POST['crop']}d)";
-$logEsc = $database->escape($logText);
 
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$editPlusService->logPlusChange($adminId, $id, $logText);
 
-header("Location: ../../../Admin/admin.php?p=player&uid=" . $id);
+header("Location: ../../../Admin/admin.php?p=player&uid=$id");
 exit;
+
 ?>

@@ -59,21 +59,14 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Ștergere logică - medalii jucători pe săptămână
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "medal SET del = 1 WHERE week = $deleteweek AND del = 0");
-$affected = mysqli_affected_rows($database->dblink);
+$service = new \App\Admin\Services\DeletemedalbyweekService($database, TB_PREFIX);
+$affected = $service->deleteMedalsByWeek($deleteweek);
 
 // ---------------------------------------------------------------------------
 // Log admin
 // ---------------------------------------------------------------------------
 $adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Deleted player medals for week $deleteweek ($affected rows)";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$service->logAdminAction($adminId, "Deleted player medals for week $deleteweek ($affected rows)");
 
 header("Location: ../../../Admin/admin.php?p=delmedal&week=$deleteweek&deleted=$affected");
 exit;

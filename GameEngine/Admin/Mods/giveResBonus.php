@@ -37,8 +37,7 @@ for ($i = 0; $i < 5; $i++) {
     }
 }
 
-include_once($autoprefix . "GameEngine/Database.php");
-
+require_once(__DIR__ . '/../../Database.php');
 // ---------------------------------------------------------------------------
 // Verificare admin
 // ---------------------------------------------------------------------------
@@ -52,30 +51,13 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // Input
 // ---------------------------------------------------------------------------
 $gold = (int)($_POST['gold'] ?? 0);
-if ($gold <= 0) {
-    header("Location: ../../../Admin/admin.php?p=maintenenceResetPlusBonus&e=0");
-    exit;
-}
-
 $time = time();
 
-// ---------------------------------------------------------------------------
-// Update
-// ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "users SET gold = gold + $gold WHERE id > 3");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$logText = "Gave $gold gold to all players";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
-
-header("Location: ../../../Admin/admin.php?p=maintenenceResetPlusBonus&g=1");
+$handler = new \App\Admin\Services\GiveResBonusHandler($database);
+if ($handler->giveResBonus($gold, (int)$_SESSION['id'], $time)) {
+    header("Location: ../../../Admin/admin.php?p=maintenenceResetPlusBonus&g=1");
+} else {
+    header("Location: ../../../Admin/admin.php?p=maintenenceResetPlusBonus&e=0");
+}
 exit;
 ?>

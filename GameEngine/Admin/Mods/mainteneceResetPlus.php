@@ -51,20 +51,8 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Reset Plus
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "users SET plus = 0 WHERE id > 0");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Reset Plus to 0 for all users";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$service = new \App\Admin\Services\ResetPlusService($database);
+$service->resetAllPlus((int)$_SESSION['id']);
 
 header("Location: ../../../Admin/admin.php?p=maintenenceResetPlus&g=1");
 exit;

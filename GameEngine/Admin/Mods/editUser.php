@@ -59,43 +59,10 @@ if (!$admin || (int)$admin['access'] !== 9) {
 }
 
 // ---------------------------------------------------------------------------
-// Câmpuri
-// ---------------------------------------------------------------------------
-$email_raw = trim($_POST['email'] ?? '');
-$email     = filter_var($email_raw, FILTER_VALIDATE_EMAIL) ? $email_raw : '';
-$email     = $database->escape($email);
-
-$tribe    = max(1, min(9, (int)($_POST['tribe'] ?? 1)));
-
-// BUG-3: store location/descriptions raw. escape() keeps the interpolated UPDATE
-// SQL-safe and strip_tags() drops markup; every display site (player.tpl,
-// playerinfo.tpl, editUser.tpl) escapes with htmlspecialchars(), so the extra
-// RemoveXSS() here only double-escaped the stored value (literal &quot; entities).
-$location_raw = trim($_POST['location'] ?? '');
-$location = $database->escape(mb_substr(strip_tags($location_raw), 0, 50));
-
-$desc1_raw = $_POST['desc1'] ?? '';
-$desc1 = $database->escape(mb_substr(strip_tags($desc1_raw, '<b><i><u><br>'), 0, 5000));
-
-$desc2_raw = $_POST['desc2'] ?? '';
-$desc2 = $database->escape(mb_substr(strip_tags($desc2_raw, '<b><i><u><br>'), 0, 5000));
-
-$quest_raw = trim($_POST['quest'] ?? '');
-$quest = $database->escape(mb_substr(strip_tags($quest_raw), 0, 200));
-
-// ---------------------------------------------------------------------------
 // Update
 // ---------------------------------------------------------------------------
-$database->query(
-    "UPDATE " . TB_PREFIX . "users SET 
-        email = '$email',
-        tribe = $tribe,
-        location = '$location',
-        desc1 = '$desc1',
-        desc2 = '$desc2',
-        quest = '$quest'
-     WHERE id = $id"
-);
+$userEditor = new \App\Admin\Services\UserEditorService($database);
+$userEditor->updateProfile($id, $_POST);
 
 // ---------------------------------------------------------------------------
 // Log admin

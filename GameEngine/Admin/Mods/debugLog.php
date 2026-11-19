@@ -1,4 +1,6 @@
 <?php
+require_once(__DIR__ . '/../../../autoloader.php');
+use App\Admin\Services\DebugLogService;
 #################################################################################
 ##              -= YOU MAY NOT REMOVE OR CHANGE THIS NOTICE =-                 ##
 ## --------------------------------------------------------------------------- ##
@@ -38,33 +40,31 @@ for ($i = 0; $i < 5; $i++) {
 }
 $logFile = $autoprefix . 'var/log/debug-players.log';
 
-$uid = (int)($_SESSION['id_user'] ?? 0);
+$uid = (int)($_SESSION['id'] ?? $_SESSION['id_user'] ?? 0);
 $do  = $_REQUEST['do'] ?? '';
+
+$debugLogService = new DebugLogService($database, $logFile);
 
 switch ($do) {
 
     case 'save':
-        $database->setDebugSettings(
+        $debugLogService->saveSettings(
             isset($_POST['lvl_warning']),
             isset($_POST['lvl_notice']),
             isset($_POST['lvl_deprecated']),
             isset($_POST['lvl_fatal']),
             $_POST['max_size_mb'] ?? 5,
-            $_POST['auto_off_hours'] ?? 6
+            $_POST['auto_off_hours'] ?? 6,
+            $uid
         );
-        $database->query("Insert into ".TB_PREFIX."admin_log values (0,".$uid.",'Changed Debug Error Log settings',".time().")");
         break;
 
     case 'toggle':
-        $active = (int)($_POST['active'] ?? 0);
-        $database->setDebugMode($active, $uid);
-        $database->query("Insert into ".TB_PREFIX."admin_log values (0,".$uid.",'".($active ? 'Enabled' : 'Disabled')." Debug Error Log',".time().")");
+        $debugLogService->toggle($_POST['active'] ?? 0, $uid);
         break;
 
     case 'clear':
-        @file_put_contents($logFile, '');
-        @unlink($logFile . '.1');
-        $database->query("Insert into ".TB_PREFIX."admin_log values (0,".$uid.",'Cleared Debug Error Log',".time().")");
+        $debugLogService->clear($uid);
         break;
 
     case 'download':

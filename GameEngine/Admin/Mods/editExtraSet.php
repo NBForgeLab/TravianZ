@@ -189,39 +189,19 @@ $myFile = "../../config.php";
 		tz_config_set($text, '%PLUS_PACKAGE_E_PRICE%', (defined('PLUS_PACKAGE_E_PRICE') ? PLUS_PACKAGE_E_PRICE : '49,99'));
 		tz_config_set($text, '%PLUS_PACKAGE_E_GOLD%', (defined('PLUS_PACKAGE_E_GOLD') ? PLUS_PACKAGE_E_GOLD : '2000'));
 
-		// Ultima verificare: rezolva orice placeholder pe care acest modul
-		// nu il trateaza. TREBUIE apelata dupa toate tz_config_set() si
-		// inainte de scriere - altfel setarile modulului ar fi ignorate.
-		$text = tz_config_finalize($text);
-
-		// SCRIERE IN SIGURANTA.
-		//
-		// Inainte, fisierul se deschidea cu 'w' la INCEPUTUL scriptului, adica se
-		// golea imediat. Orice eroare aparuta pana la fwrite lasa config.php GOL
-		// si serverul mort. Acum scriem intai intr-un fisier temporar si abia la
-		// final il punem in locul celui vechi, printr-o redenumire atomica.
-		$tmpFile = $myFile . '.tmp';
-		$fh = fopen($tmpFile, 'w') or die("<br/><br/><br/>Can't open file: GameEngine\\config.php");
-
-		if (fwrite($fh, $text) === false) {
-		    fclose($fh);
-		    @unlink($tmpFile);
-		    die("<br/><br/><br/>Can't write file: GameEngine\\config.php");
+		// Ultima verificare + scriere atomica prin ExtraSettingsService
+		$extraService = new \App\Admin\Services\ExtraSettingsService($database, TB_PREFIX, $myFile);
+		try {
+		    $extraService->updateExtraSettings(
+		        ['templateContents' => $text, 'values' => []],
+		        'tz_config_set',
+		        'tz_config_finalize'
+		    );
+		} catch (\Exception $e) {
+		    die("<br/><br/><br/>" . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
 		}
 
-		fclose($fh);
-
-		// pastram o copie a variantei anterioare, pentru orice eventualitate
-		if (is_file($myFile)) {
-		    @copy($myFile, $myFile . '.bak');
-		}
-
-		if (!rename($tmpFile, $myFile)) {
-		    @unlink($tmpFile);
-		    die("<br/><br/><br/>Can't replace file: GameEngine\\config.php");
-		}
-
-$database->query("Insert into ".TB_PREFIX."admin_log values (0,".$id.",'Changed Extra server settings',".time().")");
+$extraService->logAdminAction($id, 'Changed Extra server settings');
 
 header("Location: ../../../Admin/admin.php?p=config");
 

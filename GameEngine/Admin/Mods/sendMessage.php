@@ -39,6 +39,7 @@ for ($i = 0; $i < 5; $i++) {
 }
 
 include_once($autoprefix . "GameEngine/Database.php");
+$messageService = new \App\Admin\Services\MessageService($database);
 
 // ---------------------------------------------------------------------------
 // INPUT
@@ -61,69 +62,9 @@ if ($uid <= 0 || $message === '') {
 }
 
 // ---------------------------------------------------------------------------
-// SANITIZARE
+// SEND MESSAGE
 // ---------------------------------------------------------------------------
-$topicEsc = $database->escape($topic);
-$msgEsc   = $database->escape($message);
-
-$time = time();
-
-// ---------------------------------------------------------------------------
-// INSERT MESAJ (FULL FIX)
-// ---------------------------------------------------------------------------
-$sql = "
-INSERT INTO " . TB_PREFIX . "mdata 
-(
-    target,
-    owner,
-    topic,
-    message,
-    viewed,
-    archived,
-    send,
-    time,
-    deltarget,
-    delowner,
-    alliance,
-    player,
-    coor,
-    report
-)
-VALUES
-(
-    $uid,
-    $adminId,
-    '$topicEsc',
-    '$msgEsc',
-    0,
-    0,
-    0,
-    $time,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
-)
-";
-
-$result = $database->query($sql);
-
-if (!$result) {
-    die("Message insert failed: " . $database->getError());
-}
-
-// ---------------------------------------------------------------------------
-// LOG ADMIN ACTION
-// ---------------------------------------------------------------------------
-$logText = "Sent message to uid $uid: '$topicEsc'";
-$logEsc  = $database->escape($logText);
-
-$database->query("
-INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`)
-VALUES (0, $adminId, '$logEsc', $time)
-");
+$messageService->sendMessage($uid, $adminId, $topic, $message);
 
 // ---------------------------------------------------------------------------
 // REDIRECT SUCCESS

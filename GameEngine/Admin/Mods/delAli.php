@@ -33,6 +33,9 @@ for ($i = 0; $i < 5; $i++) {
 }
 include_once($autoprefix . "GameEngine/Database.php");
 
+use App\Admin\Services\AllianceAdminService;
+$allianceService = new AllianceAdminService($database, TB_PREFIX);
+
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
@@ -53,47 +56,14 @@ if (!$admin || (int)$admin['access'] !== 9) {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Scoate toți membrii
+// 1-4. Ștergere alianță
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "users SET alliance = 0 WHERE alliance = $aid");
-
-// ---------------------------------------------------------------------------
-// 2. Șterge structura alianței
-// ---------------------------------------------------------------------------
-$database->query("DELETE FROM " . TB_PREFIX . "alidata WHERE id = $aid");
-$database->query("DELETE FROM " . TB_PREFIX . "ali_permission WHERE alliance = $aid");
-$database->query("DELETE FROM " . TB_PREFIX . "ali_invite WHERE alliance = $aid");
-$database->query("DELETE FROM " . TB_PREFIX . "ali_log WHERE aid = $aid");
-
-// ---------------------------------------------------------------------------
-// 3. Șterge diplomația
-// ---------------------------------------------------------------------------
-$database->query("DELETE FROM " . TB_PREFIX . "diplomacy WHERE alli1 = $aid OR alli2 = $aid");
-
-// ---------------------------------------------------------------------------
-// 4. Șterge forumul - CORECTAT pentru structura ta
-// ---------------------------------------------------------------------------
-// întâi posturile (prin topic)
-$database->query("DELETE p FROM " . TB_PREFIX . "forum_post p 
-    INNER JOIN " . TB_PREFIX . "forum_topic t ON p.topic = t.id 
-    WHERE t.alliance = $aid");
-
-// apoi topicurile
-$database->query("DELETE FROM " . TB_PREFIX . "forum_topic WHERE alliance = $aid");
-
-// apoi categoriile
-$database->query("DELETE FROM " . TB_PREFIX . "forum_cat WHERE alliance = $aid");
+$allianceService->deleteAlliance($aid);
 
 // ---------------------------------------------------------------------------
 // Log admin
 // ---------------------------------------------------------------------------
-$time = time();
-$logText = "Deleted alliance ID $aid";
-$logEsc = $database->escape($logText);
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$admid', '$logEsc', $time)"
-);
+$allianceService->logAdminAction($admid, "Deleted alliance ID $aid");
 
 header("Location: ../../../Admin/admin.php?p=search&delali=1");
 exit;

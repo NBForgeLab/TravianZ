@@ -51,20 +51,8 @@ if (!$admin || (int)$admin['access'] !== 9) {
 // ---------------------------------------------------------------------------
 // Reset bonusuri
 // ---------------------------------------------------------------------------
-$database->query("UPDATE " . TB_PREFIX . "users SET b1 = 0, b2 = 0, b3 = 0, b4 = 0 WHERE id > 0");
-
-// ---------------------------------------------------------------------------
-// Log admin
-// ---------------------------------------------------------------------------
-$adminId = (int)$_SESSION['id'];
-$time = time();
-$logText = "Reset resource bonuses (b1-b4) to 0 for all users";
-$logEsc = $database->escape($logText);
-
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$adminId', '$logEsc', $time)"
-);
+$service = new \App\Admin\Services\ResetPlusBonusService($database);
+$service->resetAllPlusBonus((int)$_SESSION['id']);
 
 header("Location: ../../../Admin/admin.php?p=maintenenceResetPlusBonus&g=1");
 exit;

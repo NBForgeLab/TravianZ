@@ -32,6 +32,7 @@ for ($i = 0; $i < 5; $i++) {
     if (file_exists($autoprefix . 'autoloader.php')) { break; }
 }
 include_once($autoprefix . "GameEngine/Database.php");
+use App\Admin\Services\DeleteUserHandler;
 
 // ---------------------------------------------------------------------------
 // Input
@@ -59,90 +60,8 @@ if ($uid == $admid) {
     die('<script>alert("Nu te poti sterge pe tine!");history.back();</script>');
 }
 
-$target = $database->getUserArray($uid, 1);
-if (!$target) { die("User not found"); }
-$username = $database->escape($target['username']);
-
-// ---------------------------------------------------------------------------
-// 1. Ia toate satele
-// ---------------------------------------------------------------------------
-$vilIds = [];
-$res = $database->query("SELECT wref FROM " . TB_PREFIX . "vdata WHERE owner = $uid");
-while ($r = mysqli_fetch_assoc($res)) { $vilIds[] = (int)$r['wref']; }
-$ids = $vilIds ? implode(',', $vilIds) : '0';
-
-// ---------------------------------------------------------------------------
-// 2. Șterge tot ce ține de sate (doar tabele din dump)
-// ---------------------------------------------------------------------------
-if ($ids !== '0') {
-    $database->query("UPDATE " . TB_PREFIX . "wdata SET occupied = 0 WHERE id IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "vdata WHERE wref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "fdata WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "bdata WHERE wid IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "abdata WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "tdata WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "units WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "training WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "research WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "demolition WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "build_log WHERE wid IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "tech_log WHERE wid IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "market WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "movement WHERE `from` IN ($ids) OR `to` IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "attacks WHERE vref IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "enforcement WHERE vref IN ($ids) OR `from` IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "prisoners WHERE wref IN ($ids) OR `from` IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "route WHERE wid IN ($ids)");
-    $database->query("DELETE FROM " . TB_PREFIX . "ww_attacks WHERE vid IN ($ids)");
-
-    // farmlist + raidlist
-    $fl = $database->query("SELECT id FROM " . TB_PREFIX . "farmlist WHERE wref IN ($ids)");
-    $flIds = [];
-    while($f = mysqli_fetch_assoc($fl)) { $flIds[] = (int)$f['id']; }
-    if ($flIds) {
-        $fids = implode(',', $flIds);
-        $database->query("DELETE FROM " . TB_PREFIX . "raidlist WHERE lid IN ($fids)");
-    }
-    $database->query("DELETE FROM " . TB_PREFIX . "farmlist WHERE wref IN ($ids)");
-}
-
-// ---------------------------------------------------------------------------
-// 3. Șterge datele de user (doar tabele existente în dump)
-// ---------------------------------------------------------------------------
-$database->query("DELETE FROM " . TB_PREFIX . "users WHERE id = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "hero WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "mdata WHERE target = $uid OR owner = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "ndata WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "medal WHERE userid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "gold_fin_log WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "links WHERE userid = $uid");
-// Tabela "active" a fost eliminata; ultima activitate sta in users.timestamp,
-// iar randul utilizatorului se sterge oricum mai jos.
-$database->query("DELETE FROM " . TB_PREFIX . "online WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "chat WHERE id_user = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "login_log WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "banlist WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "deleting WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "password WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "illegal_log WHERE user = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "ali_invite WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "ali_permission WHERE uid = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "forum_post WHERE owner = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "forum_topic WHERE owner = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "artefacts WHERE owner = $uid");
-$database->query("DELETE FROM " . TB_PREFIX . "artefacts_chrono WHERE uid = $uid");
-
-// ---------------------------------------------------------------------------
-// 4. Log admin - identic cu delAli
-// ---------------------------------------------------------------------------
-$time = time();
-$logText = "Deleted player ID $uid ($username)";
-$logEsc = $database->escape($logText);
-$database->query(
-    "INSERT INTO " . TB_PREFIX . "admin_log (`id`, `user`, `log`, `time`) " .
-    "VALUES (0, '$admid', '$logEsc', $time)"
-);
+$handler = new DeleteUserHandler($database);
+$handler->handle($uid, $admid);
 
 header("Location: ../../../Admin/admin.php?p=search&deluser=1");
 exit;
-?>

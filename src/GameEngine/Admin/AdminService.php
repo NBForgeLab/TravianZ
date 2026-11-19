@@ -8,8 +8,18 @@ class AdminService {
 
     public function __construct($database, $adminId) {
         $this->database = $database;
-        $this->connection = $database->return_link();
-        $this->adminId = $adminId;
+        $this->connection = (is_object($database) && method_exists($database, 'return_link'))
+            ? $database->return_link()
+            : ($database->dblink ?? null);
+        $this->adminId = (int)$adminId;
+    }
+
+    private function execSql(string $sql): void {
+        if ($this->connection instanceof \mysqli) {
+            mysqli_query($this->connection, $sql);
+        } elseif (is_object($this->database) && method_exists($this->database, 'query')) {
+            $this->database->query($sql);
+        }
     }
 
     public function punish($uid, $punish, $delTroop, $cleanWare) {
@@ -41,22 +51,22 @@ class AdminService {
                 $logPunishment = "<b>emptying warehouses</b>";
                 $time = time();
                 $q = "UPDATE ". TB_PREFIX ."vdata SET `wood`='0', `clay`='0', `iron`='0', `crop`='0', `lastupdate`='$time' WHERE wref=$vid";
-                mysqli_query($this->connection, $q);
+                $this->execSql($q);
             }
         }
 
-        mysqli_query($this->connection, "INSERT INTO ". TB_PREFIX ."admin_log VALUES (0,". (int)$this->adminId .",'Punished user: <a href=\'admin.php?p=player&uid=". (int)$uid ."\'>". (int)$uid ."</a> with ". $logPunishment ."',". time() .")");
+        $this->execSql("INSERT INTO ". TB_PREFIX ."admin_log VALUES (0,". (int)$this->adminId .",'Punished user: <a href=\'admin.php?p=player&uid=". (int)$uid ."\'>". (int)$uid ."</a> with ". $logPunishment ."',". time() .")");
     }
 
     private function punishBuilding($vid, $proc, $pop) {
-        mysqli_query($this->connection, "UPDATE ". TB_PREFIX ."vdata SET pop=". (int)$pop ." WHERE wref=" . (int)$vid);
+        $this->execSql("UPDATE ". TB_PREFIX ."vdata SET pop=". (int)$pop ." WHERE wref=" . (int)$vid);
         
         $fdata = $this->database->getResourceLevel($vid);
         for ($i = 1; $i <= 40; $i++) {
             if ($fdata['f'.$i] > 1) {
                 $zm = ($fdata['f'.$i] / 100) * $proc;
                 $zm = ($zm < 1) ? 1 : floor($zm);
-                mysqli_query($this->connection, "UPDATE ". TB_PREFIX ."fdata SET `f$i`='$zm' WHERE `vref`=" . (int)$vid);
+                $this->execSql("UPDATE ". TB_PREFIX ."fdata SET `f$i`='$zm' WHERE `vref`=" . (int)$vid);
             }
         }
     }
@@ -67,6 +77,6 @@ class AdminService {
             $sets[] = "`u$i`='0'";
         }
         $q = "UPDATE ". TB_PREFIX ."units SET ". implode(', ', $sets) ." WHERE `vref`=" . (int)$vid;
-        mysqli_query($this->connection, $q);
+        $this->execSql($q);
     }
 }
