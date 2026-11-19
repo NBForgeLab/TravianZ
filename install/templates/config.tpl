@@ -93,7 +93,7 @@ $dbPrefix = $_SESSION['install_random_prefix'];
   <div class="grid-2 tz-mt-2">
     <div><label>Server name</label><input class="input" name="servername" id="servername" value="TravianZ"></div>
     <div><label>Timezone</label>
-      <select class="input" name="tzone">
+      <select class="input" name="tzone" onchange="refresh(this.value)">
         <option value="1,Africa/Dakar" <?=$tz==1?'selected':''?>>Africa</option>
         <option value="2,America/New_York" <?=$tz==2?'selected':''?>>America</option>
         <option value="13,America/Sao_Paulo" <?=$tz==13?'selected':''?>>Brazil</option>
@@ -185,9 +185,9 @@ $dbPrefix = $_SESSION['install_random_prefix'];
   <div class="card" data-group="database">
     <h3 class="tz-card-title">SERVER URLS</h3>
     <div class="tz-field-group">
-      <div><label>Server</label><input class="input" name="server" id="server_url" value="http://<?=$_SERVER['HTTP_HOST']?>/"></div>
-      <div><label>Domain</label><input class="input" name="domain" id="domain_url" value="http://<?=$_SERVER['HTTP_HOST']?>/"></div>
-      <div><label>Homepage</label><input class="input" name="homepage" id="homepage" value="http://<?=$_SERVER['HTTP_HOST']?>/"></div>
+      <div><label>Server</label><input class="input" name="server" id="server_url" value="http://<?=htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost', ENT_QUOTES, 'UTF-8')?>/"></div>
+      <div><label>Domain</label><input class="input" name="domain" id="domain_url" value="http://<?=htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost', ENT_QUOTES, 'UTF-8')?>/"></div>
+      <div><label>Homepage</label><input class="input" name="homepage" id="homepage" value="http://<?=htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost', ENT_QUOTES, 'UTF-8')?>/"></div>
       <div><label>Medal Interval</label><select class="input" name="medalinterval"><option value="0">none</option><option value="(3600*24)">1 day</option><option value="(3600*24*2)">2 days</option><option value="(3600*24*3)">3 days</option><option value="(3600*24*4)">4 days</option><option value="(3600*24*5)">5 days</option><option value="(3600*24*6)">6 days</option><option value="(3600*24*7)" selected>7 days</option></select></div>
       <div><label>Great Workshop</label><select class="input" name="great_wks"><option value="true">true</option><option value="false" selected>false</option></select></div>
       <div><label>WW enabled</label><select class="input" name="ww"><option value="true">true</option><option value="false" selected>false</option></select></div>
@@ -224,7 +224,6 @@ $mechs = [
 	'new_function_tribe_huns'             => 'New Tribe: Huns',
 	'new_function_tribe_egipteans'        => 'New Tribe: Egyptians',
 	'new_function_tribe_spartans'         => 'New Tribe: Spartans',
-	'new_function_tribe_vikings'          => 'New Tribe: Vikings',
 	'new_function_tribe_vikings'          => 'New Tribe: Vikings',
 	'new_function_registration_gold'      => 'Registration Bonus Gold'
 ];

@@ -24,7 +24,9 @@ if (isset($_GET['c']) && $_GET['c'] == 1) {
     echo '<div class="tz-alert tz-alert-error"><strong>Error importing database.</strong> Check the configuration and database credentials.</div>';
 }
 if (isset($_GET['err']) && $_GET['err'] == 1) {
-    echo '<div class="tz-alert tz-alert-error">Existing structure found! Please remove tables with prefix <b>' . TB_PREFIX . '</b> from database <b>' . SQL_DB . '</b>.</div>';
+    $safePrefix = htmlspecialchars(defined('TB_PREFIX') ? (string)TB_PREFIX : 'tz_', ENT_QUOTES, 'UTF-8');
+    $safeDb = htmlspecialchars(defined('SQL_DB') ? (string)SQL_DB : '', ENT_QUOTES, 'UTF-8');
+    echo '<div class="tz-alert tz-alert-error">Existing structure found! Please remove tables with prefix <b>' . $safePrefix . '</b> from database <b>' . $safeDb . '</b>.</div>';
 }
 ?>
 <form action="process.php" method="post" id="dataform">

@@ -24,7 +24,8 @@ if (isset($_GET['c']) && $_GET['c'] == '1') {
     echo '<div class="tz-alert tz-alert-error">Error creating wdata. Check configuration or file permissions.</div>';
 }
 if (isset($_GET['err']) && $_GET['err'] == '1') {
-    echo '<div class="tz-alert tz-alert-error">Existing World Data found! Empty tables <i>' . TB_PREFIX . 'odata, ' . TB_PREFIX . 'units, ' . TB_PREFIX . 'vdata, ' . TB_PREFIX . 'wdata</i>.</div>';
+    $safePrefix = htmlspecialchars(defined('TB_PREFIX') ? (string)TB_PREFIX : 'tz_', ENT_QUOTES, 'UTF-8');
+    echo '<div class="tz-alert tz-alert-error">Existing World Data found! Empty tables <i>' . $safePrefix . 'odata, ' . $safePrefix . 'units, ' . $safePrefix . 'vdata, ' . $safePrefix . 'wdata</i>.</div>';
 }
 $autoStartCroppers = isset($_GET['startCroppers']) && $_GET['startCroppers'] === '1';
 ?>

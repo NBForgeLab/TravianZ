@@ -65,7 +65,7 @@ class Process {
 		} elseif (isset($_POST['subwdata'])) {
 			$this->createWdata();
 		} elseif (isset($_POST['subacc'])) {
-			header("Location: include/accounts.php");
+			require __DIR__ . '/include/accounts.php';
 			exit;
 		} else {
 			header("Location: index.php");
