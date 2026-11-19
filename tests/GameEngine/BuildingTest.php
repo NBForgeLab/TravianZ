@@ -46,11 +46,9 @@ class BuildingTest extends TestCase
                      ->with($this->equalTo(1))
                      ->willReturn([]);
         
-        // Inject mock - constructor calls loadBuilding() which calls getJobs()
-        // If it uses the injected mock, this will pass.
-        $building = new Building($this->mockDb, $this->sess, $this->vil, $this->log, [], null, []);
+        $building = new Building($this->mockDb, $this->sess, $this->vil, $this->log, null, null, ['bid19' => $GLOBALS['bid19']]);
         
-        // If we reach here, the mock was used and the expectation was met
-        $this->assertTrue(true);
+        $this->assertInstanceOf(Building::class, $building);
+        $this->assertSame([], $building->buildArray);
     }
 }

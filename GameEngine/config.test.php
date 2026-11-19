@@ -11,9 +11,12 @@ define('ALLOW_ALL_TRIBE', false);
 define('WORLD_MAX', 400);
 define('SITTER_PERM_REINF', 1);
 define('SITTER_PERM_ATTACK', 2);
-define('SITTER_PERM_RAID', 3);
-define('MULTIHUNTER', 1);
-define('ADMIN', 2);
+define('SITTER_PERM_RAID', 4);
+if (!defined('SITTER_PERM_BUY')) define('SITTER_PERM_BUY', 8);
+if (!defined('SITTER_PERM_GOLD')) define('SITTER_PERM_GOLD', 16);
+if (!defined('SITTER_PERM_RES')) define('SITTER_PERM_RES', 32);
+define('MULTIHUNTER', 8);
+define('ADMIN', 9);
 define('ADMIN_ALLOW_INCOMING_RAIDS', false);
 
 // Added missing constants for tests

@@ -1,15 +1,16 @@
 <?php
 namespace Tests;
 
-require_once __DIR__ . '/../DatabaseTestCase.php';
+use PHPUnit\Framework\TestCase;
 
-class ArtifactsTest extends DatabaseTestCase
+class ArtifactsTest extends TestCase
 {
-    public function testArtifactsInitialization()
+    public function testArtifactsInitializationAndConstants()
     {
-        // Use the global database initialized in DatabaseTestCase
+        $db = $this->createMock(\MYSQLi_DB::class);
         $config = $this->createMock(\App\GameEngine\IConfig::class);
-        $artifacts = new \Artifacts($GLOBALS['database'], $config);
+        $artifacts = new \Artifacts($db, $config);
         $this->assertInstanceOf(\Artifacts::class, $artifacts);
+        $this->assertSame(3, \Artifacts::NATARS_UID);
     }
 }

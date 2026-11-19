@@ -1,13 +1,14 @@
 <?php
 namespace Tests\GameEngine;
 
-require_once __DIR__ . '/../DatabaseTestCase.php';
+use PHPUnit\Framework\TestCase;
 
-use Tests\DatabaseTestCase;
-
-class AllianceTest extends DatabaseTestCase
+class AllianceTest extends TestCase
 {
     private $alliance;
+    private $mockDatabase;
+    private $mockSession;
+    private $mockForm;
 
     protected function setUp(): void
     {
@@ -108,6 +109,8 @@ class AllianceTest extends DatabaseTestCase
         $this->alliance->procAlliForm(['s' => 1, 'o' => 2, 'a_user' => 2]);
         $output = ob_get_clean();
         
-        $this->assertEquals(0, $this->mockForm->returnErrors());
+        $errors = $this->mockForm->getErrors();
+        $this->assertArrayHasKey('perm', $errors);
+        $this->assertStringContainsString('target', $errors['perm']);
     }
 }

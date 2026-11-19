@@ -1,14 +1,17 @@
 <?php
 namespace Tests\GameEngine;
-require_once __DIR__ . '/../bootstrap_lite.php';
 require_once __DIR__ . '/../../GameEngine/Message.php';
 
 use PHPUnit\Framework\TestCase;
 
 class MessageTest extends TestCase {
     private $dbMock;
+    private $savedDatabase;
+    private $savedSession;
 
     protected function setUp(): void {
+        $this->savedDatabase = $GLOBALS['database'] ?? null;
+        $this->savedSession = $GLOBALS['session'] ?? null;
         $this->dbMock = new class {
             public function getUnreadMessagesCount($uid) { return 0; }
             public function getUnreadNoticesCount($uid) { return 0; }
@@ -23,6 +26,12 @@ class MessageTest extends TestCase {
             public $plus = false;
             public $access = 0;
         };
+    }
+
+    protected function tearDown(): void {
+        $GLOBALS['database'] = $this->savedDatabase;
+        $GLOBALS['session'] = $this->savedSession;
+        parent::tearDown();
     }
 
     public function testMessageCanBeInstantiated() {

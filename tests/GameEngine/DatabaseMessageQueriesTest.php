@@ -64,6 +64,8 @@ class DatabaseMessageQueriesTest extends \Tests\DatabaseTestCase
         $this->database->archiveNotice([$id], $uid);
         
         $notices = $this->database->getNotice($uid);
-        $this->assertCount(0, $notices); // Archived notices might not be in getNotice which filters by del=0.
+        $this->assertCount(1, $notices);
+        $this->assertEquals(9, (int)$notices[0]['ntype']);
+        $this->assertEquals(1, (int)$notices[0]['archive']);
     }
 }

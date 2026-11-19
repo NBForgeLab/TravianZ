@@ -1,17 +1,14 @@
 <?php
 namespace Tests\GameEngine\Automation;
 
-require_once __DIR__ . '/../../../GameEngine/Automation/AutomationDataProvider.php';
-require_once __DIR__ . '/../../../GameEngine/Automation/AutomationVillageUpkeepService.php';
 require_once __DIR__ . '/../../../GameEngine/Database.php';
 require_once __DIR__ . '/../../../GameEngine/Building.php';
-require_once __DIR__ . '/../../DatabaseTestCase.php';
 
-use Tests\DatabaseTestCase;
+use PHPUnit\Framework\TestCase;
 use App\Automation\AutomationVillageUpkeepService;
 use App\Automation\AutomationDataProvider;
 
-class AutomationVillageUpkeepServiceTest extends DatabaseTestCase
+class AutomationVillageUpkeepServiceTest extends TestCase
 {
     private $service;
     private $mockDatabase;
@@ -21,16 +18,16 @@ class AutomationVillageUpkeepServiceTest extends DatabaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // Mock the class MYSQLi_DB, not the interface IDbConnection
         $this->mockDatabase = $this->getMockBuilder(\MYSQLi_DB::class)
                                    ->disableOriginalConstructor()
                                    ->getMock();
         $this->mockDataProvider = $this->createMock(AutomationDataProvider::class);
-        $this->mockDependencyProvider = $this->getMockBuilder(\stdClass::class)
-                                     ->addMethods(['procClimbers', 'bountysortOasis', 'getAllUnits', 'bountyGetResourceProd'])
-                                     ->getMock();
-        // Set up the mock database with a reachable dblink property
-        $this->mockDatabase->dblink = new \mysqli();
+        $this->mockDependencyProvider = new class {
+            public function procClimbers($owner) {}
+            public function bountysortOasis($id) {}
+            public function getAllUnits($id) { return []; }
+            public function bountyGetResourceProd($id) { return []; }
+        };
         
         $this->service = new AutomationVillageUpkeepService($this->mockDatabase, $this->mockDataProvider, $this->mockDependencyProvider);
     }
@@ -38,12 +35,14 @@ class AutomationVillageUpkeepServiceTest extends DatabaseTestCase
     public function testRecountPop()
     {
         $vid = 1;
+        $resRow = [];
+        for ($i = 1; $i <= 40; $i++) {
+            $resRow['f' . $i] = ($i === 1) ? 1 : 0;
+            $resRow['f' . $i . 't'] = ($i === 1) ? 1 : 0;
+        }
         $this->mockDatabase->expects($this->atLeastOnce())
             ->method('getResourceLevel')
-            ->willReturnMap([
-                [$vid, true, ['f1' => 1, 'f1t' => 1]],
-                [$vid, false, ['f1' => 1, 'f1t' => 1]]
-            ]);
+            ->willReturn($resRow);
         
         $this->mockDataProvider->expects($this->once())
             ->method('getBid')
@@ -51,8 +50,6 @@ class AutomationVillageUpkeepServiceTest extends DatabaseTestCase
             ->willReturn([0 => ['pop' => 0], 1 => ['pop' => 1]]);
         
         $this->mockDatabase->method('getVillageField')->willReturn(1);
-        // Building::recountCP expects a database parameter, might be triggered and call getResourceLevel again.
-        // Assuming Building::recountCP doesn't need to call getResourceLevel or we can mock it out if needed.
         
         $pop = $this->service->recountPop($vid);
         $this->assertEquals(1, $pop);

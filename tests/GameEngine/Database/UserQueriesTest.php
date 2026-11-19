@@ -9,18 +9,25 @@ use Tests\DatabaseTestCase;
 class UserQueriesTest extends DatabaseTestCase
 {
     private $db;
+    private $savedSession;
 
     protected function setUp(): void
     {
         parent::setUp();
-        // Assuming $GLOBALS['database'] is set by DatabaseTestCase
+        $this->savedSession = $GLOBALS['session'] ?? null;
         $this->db = $GLOBALS['database'];
-        
+
         // Mock global session to avoid warnings
         $GLOBALS['session'] = new class {
             public $uid = 0;
             public $username = 'Tester';
         };
+    }
+
+    protected function tearDown(): void
+    {
+        $GLOBALS['session'] = $this->savedSession;
+        parent::tearDown();
     }
 
     public function testRegisterAndGetUserField()
@@ -37,15 +44,15 @@ class UserQueriesTest extends DatabaseTestCase
 
     public function testCheckFriendsDoesNotRelyOnGlobals()
     {
-        // Setup dummy user
+        // Setup dummy user with a sparse friend slot
         $uid = $this->db->register('FriendTest', 'password', 'test@example.com', 1, 'act123');
-        
-        // Mock global session explicitly for this test if needed, but it should not be accessed
-        $GLOBALS['session'] = null; // Ensure it's not set
-        
-        // This should run without accessing $GLOBALS['session']
+        $this->db->query("UPDATE " . TB_PREFIX . "users SET friend0 = 0, friend1 = 42 WHERE id = $uid");
+
+        // Ensure globals are not required cleanly
+        $GLOBALS['session'] = null;
+
         $this->db->checkFriends($uid);
-        
-        $this->assertTrue(true);
+
+        $this->assertEquals(42, (int)$this->db->getUserField($uid, 'friend0', 0, false));
     }
 }

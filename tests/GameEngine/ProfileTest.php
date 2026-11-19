@@ -1,31 +1,76 @@
 <?php
 namespace Tests\GameEngine;
 
-use Tests\DatabaseTestCase;
+require_once __DIR__ . '/../../GameEngine/Profile.php';
+
+use PHPUnit\Framework\TestCase;
 use Profile;
 
-class ProfileTest extends DatabaseTestCase
+class ProfileTest extends TestCase
 {
-    private $profile;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        // Manually inject dependencies
-        // Assuming $GLOBALS['database'] is set by DatabaseTestCase
-        $session = $this->createMock(\Session::class);
-        $form = $this->createMock(\Form::class);
-        
-        $this->profile = new Profile($GLOBALS['database'], $session, $form);
-    }
-
     public function testProcProfileWithSitterDoesNothing()
     {
-        // Mock isSitter check by forcing it to return true
-        // This is hard since isSitter is private and uses $this->session
-        // Maybe I don't need to test isSitter if it's private.
-        // I can test that it doesn't call updateProfile when isSitter is true.
-        
-        $this->assertTrue(true);
+        $database = $this->getMockBuilder(\MYSQLi_DB::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $database->expects($this->never())->method('query');
+        $database->expects($this->never())->method('submitProfile');
+
+        $session = new class {
+            public $uid = 5;
+            public function isSitterSession() { return true; }
+        };
+        $form = $this->createMock(\Form::class);
+
+        $profile = new Profile($database, $session, $form);
+        $profile->procProfile([
+            'ft' => 'p1',
+            'jahr' => '2000',
+            'monat' => '01',
+            'tag' => '01',
+            'mw' => 1,
+            'ort' => 'Rome',
+            'be1' => 'Right',
+            'be2' => 'Left',
+        ]);
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function testProcProfileUpdatesDescriptionAndRejectsXssVillageName()
+    {
+        $database = $this->getMockBuilder(\MYSQLi_DB::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $database->expects($this->once())
+            ->method('submitProfile')
+            ->with(5, 1, 'Rome', '2000-01-01', 'Left', 'Right');
+        $database->method('getProfileVillages')->willReturn([
+            ['wref' => 100],
+            ['wref' => 101],
+        ]);
+        $database->expects($this->once())
+            ->method('setVillageName')
+            ->with(101, 'ValidVillage');
+
+        $session = new class {
+            public $uid = 5;
+            public function isSitterSession() { return false; }
+        };
+        $form = $this->createMock(\Form::class);
+
+        $profile = new Profile($database, $session, $form);
+        $profile->procProfile([
+            'ft' => 'p1',
+            'jahr' => '2000',
+            'monat' => '01',
+            'tag' => '01',
+            'mw' => 1,
+            'ort' => 'Rome',
+            'be1' => 'Right',
+            'be2' => 'Left',
+            'dname0' => '<script>alert(1)</script>',
+            'dname1' => 'ValidVillage',
+        ]);
     }
 }

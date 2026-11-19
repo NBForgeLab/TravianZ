@@ -1,9 +1,10 @@
 <?php
 namespace Tests\GameEngine;
-require_once __DIR__ . '/../DatabaseTestCase.php';
 require_once __DIR__ . '/../../GameEngine/Message.php';
 
-class MessageCoverageTest extends \Tests\DatabaseTestCase
+use PHPUnit\Framework\TestCase;
+
+class MessageCoverageTest extends TestCase
 {
     private $message;
 

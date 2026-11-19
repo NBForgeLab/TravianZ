@@ -10,7 +10,7 @@ interface MockableDb extends IDbConnection {
     public function getHero($uid);
 }
 
-class BattleTest extends \Tests\DatabaseTestCase
+class BattleTest extends TestCase
 {
     private $database;
     private $session;
@@ -18,15 +18,23 @@ class BattleTest extends \Tests\DatabaseTestCase
     private $village;
     private $unitsbytype;
 
+    private $savedDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
-        global $database;
-        $this->database = $database;
+        $this->savedDatabase = $GLOBALS['database'] ?? null;
+        $this->database = $this->createMock(\MYSQLi_DB::class);
         $this->session = $this->createMock(Session::class);
         $this->form = $this->createMock(stdClass::class);
         $this->village = $this->createMock(stdClass::class);
         $this->unitsbytype = $this->createMock(stdClass::class);
+    }
+
+    protected function tearDown(): void
+    {
+        $GLOBALS['database'] = $this->savedDatabase;
+        parent::tearDown();
     }
 
     public function testProcSimHandlesInvalidTribe()
@@ -53,7 +61,7 @@ class BattleTest extends \Tests\DatabaseTestCase
 
     public function testGetBattleHeroThrowsErrorWithoutDependencies() {
         // Clear globals to force failure
-        $originalDb = $GLOBALS['database'];
+        $originalDb = $GLOBALS['database'] ?? null;
         unset($GLOBALS['database']);
         $battle = new Battle(null, null, null, null, null);
 
@@ -64,9 +72,11 @@ class BattleTest extends \Tests\DatabaseTestCase
 
         // When database is null, calling getHero on it will throw a TypeError (or Error)
         $this->expectException(Error::class);
-        $method->invoke($battle, 1);
-        
-        $GLOBALS['database'] = $originalDb;
+        try {
+            $method->invoke($battle, 1);
+        } finally {
+            $GLOBALS['database'] = $originalDb;
+        }
     }
 
     public function testUsesGlobalsIfArgumentsAreNull()

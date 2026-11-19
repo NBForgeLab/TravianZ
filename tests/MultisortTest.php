@@ -44,4 +44,37 @@ class MultisortTest extends TestCase
         $result = $this->sorter->sorte($offers, 'duration', true, 2);
         $this->assertEquals(['fast', 'medium', 'slow'], array_column($result, 'id'));
     }
+
+    public function testCaseInsensitiveNaturalSorting()
+    {
+        $naturalNames = [
+            ['id' => 1, 'name' => 'Village10'],
+            ['id' => 2, 'name' => 'village2'],
+            ['id' => 3, 'name' => 'Village1'],
+        ];
+
+        $result = $this->sorter->sorte($naturalNames, 'name', true, 1);
+        $this->assertEquals(['Village1', 'village2', 'Village10'], array_column($result, 'name'));
+    }
+
+    public function testEqualKeysKeepExistingRelativeOrder()
+    {
+        $ties = [
+            ['id' => 'first', 'score' => 10],
+            ['id' => 'second', 'score' => 10],
+        ];
+
+        $result = $this->sorter->sorte($ties, 'score', true, 2);
+        $this->assertEquals(['first', 'second'], array_column($result, 'id'));
+    }
+
+    public function testEmptySortCriteriaReturnsInputArray()
+    {
+        $rankings = [
+            ['id' => 'a', 'x' => 0, 'y' => 0, 'pop' => 1],
+            ['id' => 'b', 'x' => 1, 'y' => 0, 'pop' => 9],
+        ];
+
+        $this->assertEquals($rankings, $this->sorter->sorte($rankings));
+    }
 }

@@ -9,6 +9,8 @@ class BattleMathTest extends TestCase
 {
     public function testSigma(): void
     {
+        $this->assertSame(0.0, BattleMath::sigma(0));
+        $this->assertSame(0.0, BattleMath::sigma(-1));
         $this->assertEquals(0.5, BattleMath::sigma(1));
         // sigma(0.5) = pow(0.5, 1.5) / 2 = 0.35355 / 2 = 0.17677
         $this->assertEqualsWithDelta(0.17677, BattleMath::sigma(0.5), 0.0001);
@@ -35,10 +37,10 @@ class BattleMathTest extends TestCase
     public function testCalculateCatapultsDamage(): void
     {
         $damage = BattleMath::calculateCatapultsDamage(10, 1, 1, 1, 1, 1);
-        // divider = 1*1 = 1
-        // efficiency = floor(10/1) = 10
-        // sigma(1) = 0.5
-        // 4 * 0.5 * 10 * 1 / 1 = 20
         $this->assertEquals(20, $damage);
+
+        // Zero durability, strongerBuildings, and moraleBonus must not throw DivisionByZeroError
+        $zeroMoraleDamage = BattleMath::calculateCatapultsDamage(10, 1, 0, 1, 0, 0);
+        $this->assertEquals(20, $zeroMoraleDamage);
     }
 }

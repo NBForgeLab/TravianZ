@@ -47,4 +47,19 @@ class DatabaseTest extends \Tests\DatabaseTestCase
         
         $this->assertEquals($initialCount + 1, $property->getValue($this->database));
     }
+
+    public function testQueryNewSupportsSingleScalarParameter()
+    {
+        $rows = $this->database->query_new("SELECT ? AS num", 42);
+        $this->assertIsArray($rows);
+        $this->assertCount(1, $rows);
+        $this->assertEquals(42, (int)$rows[0]['num']);
+    }
+
+    public function testNumRowsReturnsRowCountForResult()
+    {
+        $res = $this->database->query("SELECT 1 AS a UNION ALL SELECT 2 AS a");
+        $this->assertEquals(2, $this->database->num_rows($res));
+        $this->assertEquals(0, $this->database->num_rows(false));
+    }
 }
